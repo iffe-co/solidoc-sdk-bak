@@ -1,0 +1,16 @@
+node_modules/
+.idea/
+.DS_Store
+.vscode
+*.swp
+*.lock
+*.js
+.nyc_output
+
+app/**/*.js
+test/**/*.js
+config/**/*.js
+app/**/*.map
+test/**/*.map
+config/**/*.map
+package-lock.json
