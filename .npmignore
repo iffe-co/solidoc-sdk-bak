@@ -6,12 +6,6 @@ node_modules
 *.lock
 .nyc_output
 
-app/**/*.js
-test/**/*.js
-config/**/*.js
-app/**/*.map
-test/**/*.map
-config/**/*.map
 package-lock.json
 
 test
