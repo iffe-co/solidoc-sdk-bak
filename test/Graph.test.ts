@@ -5,10 +5,10 @@ import Page from '../src/Page';
 describe('Page', () => {
   let page: Page;
   let turtle = '<http://example.org/alice/a> <http://purl.org/dc/terms/title> "Alice\'s Profile";';
-  turtle += ' <http://www.solidoc.net/ontologies#NextBlock> <http://example.org/alice/a#tag1>.';
+  turtle += ' <http://www.solidoc.net/ontologies#nextBlock> <http://example.org/alice/a#tag1>.';
   turtle += '<http://example.org/alice/a#tag1> a <http://www.solidoc.net/ontologies#Paragraph>;';
-  turtle += ' <http://www.solidoc.net/ontologies#NextBlock> <http://example.org/alice/b>;';
-  turtle += ' <http://www.solidoc.net/ontologies#Content> "Paragraph 1".';
+  turtle += ' <http://www.solidoc.net/ontologies#nextBlock> <http://example.org/alice/b>;';
+  turtle += ' <http://www.solidoc.net/ontologies#content> "Paragraph 1".';
   turtle += '<http://example.org/alice/b> a <http://www.solidoc.net/ontologies#SolidPage>.';
 
   beforeEach(() => {

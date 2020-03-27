@@ -1,4 +1,4 @@
-import Paragraph from '../src/Paragraph';
+import Block from '../src/Block';
 import { PageHead } from '../src/Page';
 import * as n3 from 'n3';
 import * as assert from 'power-assert';
@@ -6,14 +6,14 @@ import * as assert from 'power-assert';
 const parser = new n3.Parser();
 
 describe('Paragraph', () => {
-  let para: Paragraph;
+  let para: Block;
   let turtle = '<http://example.org/alice#tag1> a <http://www.solidoc.net/ontologies#Paragraph>;';
-  turtle += ' <http://www.solidoc.net/ontologies#NextBlock> <http://example.org/alice#tag2>;';
-  turtle += ' <http://www.solidoc.net/ontologies#Content> "This is a paragraph".';
+  turtle += ' <http://www.solidoc.net/ontologies#nextBlock> <http://example.org/alice#tag2>;';
+  turtle += ' <http://www.solidoc.net/ontologies#content> "This is a paragraph".';
   const quads: any[] = parser.parse(turtle);
 
   beforeEach(() => {
-    para = new Paragraph('http://example.org/alice#tag1');
+    para = new Block('http://example.org/alice#tag1');
   });
   it('parses quads and converts to readable Json', () => {
     quads.forEach(para.fromQuad);
@@ -54,7 +54,7 @@ describe('Paragraph', () => {
 describe('PageHead', () => {
   let head: PageHead;
   let turtle = '<http://example.org/alice> <http://purl.org/dc/terms/title> "Alice\'s Profile";';
-  turtle += ' <http://www.solidoc.net/ontologies#NextBlock> <http://example.org/alice#tag1>.';
+  turtle += ' <http://www.solidoc.net/ontologies#nextBlock> <http://example.org/alice#tag1>.';
   const quads: any[] = parser.parse(turtle);
 
   beforeEach(() => {

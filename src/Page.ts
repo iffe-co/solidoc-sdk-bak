@@ -1,5 +1,5 @@
 import { NamedNodeProperty, TextProperty } from './Property';
-import Paragraph from './Paragraph';
+import Block from './Block';
 import Graph from './Graph';
 import Subject from './Subject';
 
@@ -8,7 +8,7 @@ export class PageHead extends Subject {
   constructor(uri) {
     super(uri);
     this._predicates.title = new TextProperty('http://purl.org/dc/terms/title', 'title');
-    this._predicates.next = new NamedNodeProperty('http://www.solidoc.net/ontologies#NextBlock', 'next');
+    this._predicates.next = new NamedNodeProperty('http://www.solidoc.net/ontologies#nextBlock', 'next');
   }
   public getSparqlForUpdate = (graph: string): string => {
     let sparql = '';
@@ -25,6 +25,6 @@ export default class Page extends Graph {
     this._nodes[uri] = new PageHead(uri);
   }
   protected _addPlaceHolder = (uri: string) => {
-    this._nodes[uri] || (this._nodes[uri] = new Paragraph(uri));
+    this._nodes[uri] || (this._nodes[uri] = new Block(uri));
   }
 }
