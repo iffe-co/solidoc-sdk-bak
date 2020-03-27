@@ -4,6 +4,8 @@
     "target": "es2017",
     "module": "commonjs",
     "strict": true,
+    "declaration": true,
+    "outDir": "./dist",
     "noImplicitAny": false,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,

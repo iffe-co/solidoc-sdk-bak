@@ -2,8 +2,10 @@
   "name": "solidoc-sdk",
   "version": "0.0.1",
   "description": "Solidoc Data-structure Handling",
-  "private": true,
+  "main": "./dist/index.js",
+  "type": "./dist/index.d.ts",
   "scripts": {
+    "build": "tsc",
     "test": "ts-node ./node_modules/mocha/bin/mocha test/*.ts --reporter spec"
   },
   "dependencies": {
@@ -19,6 +21,11 @@
   },
   "engines": {
     "node": ">=8.9.0"
+  },
+  "homepage": "https://github.com/solidoc/solidoc-sdk",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/solidoc/solidoc-sdk.git"
   },
   "author": "liuwei",
   "license": "MIT"

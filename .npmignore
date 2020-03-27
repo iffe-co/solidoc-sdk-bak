@@ -1,5 +1,4 @@
 node_modules
-dist
 .idea
 .DS_Store
 .vscode
@@ -15,3 +14,9 @@ app/**/*.map
 test/**/*.map
 config/**/*.map
 package-lock.json
+
+test
+src
+
+dist/test
+dist/src/*.d.ts
