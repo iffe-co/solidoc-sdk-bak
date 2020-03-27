@@ -8,8 +8,8 @@ node_modules
 
 package-lock.json
 
-test
-src
+test/
+src/
 index.ts
 
 dist/test
