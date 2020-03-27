@@ -4,7 +4,6 @@ node_modules
 .vscode
 *.swp
 *.lock
-*.js
 .nyc_output
 
 app/**/*.js
