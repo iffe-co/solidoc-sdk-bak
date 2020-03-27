@@ -5,9 +5,9 @@ import Page from '../src/Page';
 describe('Page', () => {
   let page: Page;
   let turtle = '<http://example.org/alice/a> <http://purl.org/dc/terms/title> "Alice\'s Profile";';
-  turtle += ' <http://www.solidoc.net/ontologies#NextParagraph> <http://example.org/alice/a#tag1>.';
+  turtle += ' <http://www.solidoc.net/ontologies#NextBlock> <http://example.org/alice/a#tag1>.';
   turtle += '<http://example.org/alice/a#tag1> a <http://www.solidoc.net/ontologies#Paragraph>;';
-  turtle += ' <http://www.solidoc.net/ontologies#NextParagraph> <http://example.org/alice/b>;';
+  turtle += ' <http://www.solidoc.net/ontologies#NextBlock> <http://example.org/alice/b>;';
   turtle += ' <http://www.solidoc.net/ontologies#Content> "Paragraph 1".';
   turtle += '<http://example.org/alice/b> a <http://www.solidoc.net/ontologies#SolidPage>.';
 
@@ -19,7 +19,7 @@ describe('Page', () => {
     assert.deepStrictEqual(page.toJson(), {
       id: 'http://example.org/alice/a',
       title: "Alice's Profile",
-      paragraphs: [
+      blocks: [
         { id: 'tag1', type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Paragraph 1' },
         { id: 'http://example.org/alice/b', type: 'http://www.solidoc.net/ontologies#SolidPage', content: '' },
       ],
@@ -32,7 +32,7 @@ describe('Page', () => {
     assert.deepStrictEqual(page.toJson(), {
       id: 'http://example.org/alice/a',
       title: "Alice's Profile",
-      paragraphs: [
+      blocks: [
         { id: 'tag1', type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Paragraph 1' },
         { id: 'http://example.org/alice/b', type: 'http://www.solidoc.net/ontologies#SolidPage', content: '' },
       ],
@@ -41,7 +41,7 @@ describe('Page', () => {
     assert.deepStrictEqual(page.toJson(), {
       id: 'http://example.org/alice/a',
       title: "Alice's Profile",
-      paragraphs: [
+      blocks: [
         { id: 'tag2', type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Inserted paragraph' },
         { id: 'tag1', type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Paragraph 1' },
         { id: 'http://example.org/alice/b', type: 'http://www.solidoc.net/ontologies#SolidPage', content: '' },
@@ -56,7 +56,7 @@ describe('Page', () => {
     assert.deepStrictEqual(page.toJson(), {
       id: 'http://example.org/alice/a',
       title: "Alice's Profile",
-      paragraphs: [
+      blocks: [
         { id: 'tag1', type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Paragraph 1' },
         { id: 'tag2', type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Inserted paragraph' },
         { id: 'http://example.org/alice/b', type: 'http://www.solidoc.net/ontologies#SolidPage', content: '' },
@@ -71,7 +71,7 @@ describe('Page', () => {
     assert.deepStrictEqual(page.toJson(), {
       id: 'http://example.org/alice/a',
       title: "Alice's Profile",
-      paragraphs: [
+      blocks: [
         { id: 'tag1', type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Paragraph 1' },
         { id: 'http://example.org/alice/b', type: 'http://www.solidoc.net/ontologies#SolidPage', content: '' },
         { id: 'tag2', type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Inserted paragraph' },
@@ -85,7 +85,7 @@ describe('Page', () => {
     assert.deepStrictEqual(page.toJson(), {
       id: 'http://example.org/alice/a',
       title: "Alice's Profile",
-      paragraphs: [
+      blocks: [
         { id: 'http://example.org/alice/b', type: 'http://www.solidoc.net/ontologies#SolidPage', content: '' },
       ],
     });
@@ -99,7 +99,7 @@ describe('Page', () => {
     assert.deepStrictEqual(page.toJson(), {
       id: 'http://example.org/alice/a',
       title: "Alice's Profile",
-      paragraphs: [
+      blocks: [
         { id: 'tag1', type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Paragraph 1' },
       ],
     });
@@ -114,7 +114,7 @@ describe('Page', () => {
     assert.deepStrictEqual(page.toJson(), {
       id: 'http://example.org/alice/a',
       title: "Alice's Profile",
-      paragraphs: [
+      blocks: [
         { id: 'tag1', type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Paragraph 1' },
       ],
     });
@@ -130,7 +130,7 @@ describe('Page', () => {
     assert.deepStrictEqual(page.toJson(), {
       id: 'http://example.org/alice/a',
       title: "Alice's Profile",
-      paragraphs: [
+      blocks: [
         { id: 'tag1', type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Paragraph 1' },
         { id: 'http://example.org/alice/b', type: 'http://www.solidoc.net/ontologies#SolidPage', content: '' },
       ],
@@ -145,7 +145,7 @@ describe('Page', () => {
     assert.deepStrictEqual(page.toJson(), {
       id: 'http://example.org/alice/a',
       title: "Alice's Profile",
-      paragraphs: [
+      blocks: [
         { id: 'http://example.org/alice/b', type: 'http://www.solidoc.net/ontologies#SolidPage', content: '' },
         { id: 'tag1', type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Paragraph 1' },
       ],

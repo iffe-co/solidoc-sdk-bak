@@ -33,14 +33,14 @@ export default abstract class Graph {
     let nextNodeUri = headJson.next;
     delete headJson.next;
 
-    const paragraphs: any[] = [];
+    const blocks: any[] = [];
     while (nextNodeUri) {
       const nodeJson = this._nodes[nextNodeUri].toJson();
       nextNodeUri = nodeJson.next;
       delete nodeJson.next;
-      paragraphs.push(nodeJson);
+      blocks.push(nodeJson);
     }
-    return { ...headJson, paragraphs };
+    return { ...headJson, blocks };
   }
 
   public set = (nodeUri: string, options) => {

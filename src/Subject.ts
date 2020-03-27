@@ -1,6 +1,6 @@
 import Property from './Property';
 
-// a subject could be a paragraph or a record
+// a subject could be a head or a block
 export default abstract class Subject {
   protected _uri: string
   protected _predicates: { [key: string]: Property } = {}

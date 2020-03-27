@@ -8,7 +8,7 @@ const parser = new n3.Parser();
 describe('Paragraph', () => {
   let para: Paragraph;
   let turtle = '<http://example.org/alice#tag1> a <http://www.solidoc.net/ontologies#Paragraph>;';
-  turtle += ' <http://www.solidoc.net/ontologies#NextParagraph> <http://example.org/alice#tag2>;';
+  turtle += ' <http://www.solidoc.net/ontologies#NextBlock> <http://example.org/alice#tag2>;';
   turtle += ' <http://www.solidoc.net/ontologies#Content> "This is a paragraph".';
   const quads: any[] = parser.parse(turtle);
 
@@ -54,7 +54,7 @@ describe('Paragraph', () => {
 describe('PageHead', () => {
   let head: PageHead;
   let turtle = '<http://example.org/alice> <http://purl.org/dc/terms/title> "Alice\'s Profile";';
-  turtle += ' <http://www.solidoc.net/ontologies#NextParagraph> <http://example.org/alice#tag1>.';
+  turtle += ' <http://www.solidoc.net/ontologies#NextBlock> <http://example.org/alice#tag1>.';
   const quads: any[] = parser.parse(turtle);
 
   beforeEach(() => {
