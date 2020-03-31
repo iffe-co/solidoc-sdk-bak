@@ -22,6 +22,7 @@ describe('Paragraph', () => {
       type: 'http://www.solidoc.net/ontologies#Paragraph',
       content: 'This is a paragraph',
       next: 'http://example.org/alice#tag2',
+      child: ''
     });
     assert(para.get('next'), 'http://example.org/alice#tag2');
   });
@@ -46,6 +47,7 @@ describe('Paragraph', () => {
       type: 'http://www.solidoc.net/ontologies#Paragraph',
       content: 'This is a paragraph',
       next: 'http://example.org/alice#tag2',
+      child: ''
     });
     assert(para.get('next') === 'http://example.org/alice#tag2');
   });
@@ -54,7 +56,7 @@ describe('Paragraph', () => {
 describe('PageHead', () => {
   let head: PageHead;
   let turtle = '<http://example.org/alice> <http://purl.org/dc/terms/title> "Alice\'s Profile";';
-  turtle += ' <http://www.solidoc.net/ontologies#nextBlock> <http://example.org/alice#tag1>.';
+  turtle += ' <http://www.solidoc.net/ontologies#firstChild> <http://example.org/alice#tag1>.';
   const quads: any[] = parser.parse(turtle);
 
   beforeEach(() => {
@@ -65,8 +67,8 @@ describe('PageHead', () => {
     assert.deepStrictEqual(head.toJson(), {
       id: 'http://example.org/alice',
       title: "Alice's Profile",
-      next: 'http://example.org/alice#tag1',
+      child: 'http://example.org/alice#tag1',
     });
-    assert(head.get('next') === 'http://example.org/alice#tag1');
+    assert(head.get('child') === 'http://example.org/alice#tag1');
   });
 });

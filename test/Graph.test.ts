@@ -1,154 +1,109 @@
 // import Graph from '../../../../app/data_model/ldp/Graph';
-import * as assert from 'power-assert';
 import Page from '../src/Page';
+import * as assert from 'power-assert';
+
+const pageUri = 'http://example.org/alice/a';
+const blockUri1 = pageUri + '#tag1'
+const blockUri2 = pageUri + '#tag2'
+const blockUri3 = 'http://example.org/alice/b';
+
+const blockJson1 = { id: 'tag1', type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Paragraph 1' };
+const blockJson2 = { id: 'tag2', type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Inserted paragraph' };
+const blockJson3 = { id: blockUri3, type: 'http://www.solidoc.net/ontologies#SolidPage', content: '' };
 
 describe('Page', () => {
   let page: Page;
-  let turtle = '<http://example.org/alice/a> <http://purl.org/dc/terms/title> "Alice\'s Profile";';
-  turtle += ' <http://www.solidoc.net/ontologies#nextBlock> <http://example.org/alice/a#tag1>.';
-  turtle += '<http://example.org/alice/a#tag1> a <http://www.solidoc.net/ontologies#Paragraph>;';
-  turtle += ' <http://www.solidoc.net/ontologies#nextBlock> <http://example.org/alice/b>;';
-  turtle += ' <http://www.solidoc.net/ontologies#content> "Paragraph 1".';
-  turtle += '<http://example.org/alice/b> a <http://www.solidoc.net/ontologies#SolidPage>.';
+  let turtle = `<${pageUri}> <http://purl.org/dc/terms/title> "Alice\'s Profile";`;
+  turtle += ` <http://www.solidoc.net/ontologies#firstChild> <${blockUri1}>.`;
+  turtle += `<${blockUri1}> a <http://www.solidoc.net/ontologies#Paragraph>;`;
+  turtle += ` <http://www.solidoc.net/ontologies#nextBlock> <${blockUri3}>;`;
+  turtle += ` <http://www.solidoc.net/ontologies#content> "Paragraph 1".`;
+  turtle += `<${blockUri3}> a <http://www.solidoc.net/ontologies#SolidPage>.`;
 
   beforeEach(() => {
-    page = new Page('http://example.org/alice/a');
+    page = new Page(pageUri);
+    page.fromTurtle(turtle);
   });
   it('parses from quads', () => {
-    page.fromTurtle(turtle);
     assert.deepStrictEqual(page.toJson(), {
-      id: 'http://example.org/alice/a',
+      id: pageUri,
       title: "Alice's Profile",
-      blocks: [
-        { id: 'tag1', type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Paragraph 1' },
-        { id: 'http://example.org/alice/b', type: 'http://www.solidoc.net/ontologies#SolidPage', content: '' },
-      ],
+      children: [blockJson1, blockJson3],
     });
   });
   it('inserts a paragraph to the head', () => {
-    page.fromTurtle(turtle);
-    page.insertNode('http://example.org/alice/a#tag2', 'http://example.org/alice/a');
-    page.set('http://example.org/alice/a#tag2', { type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Inserted paragraph' });
-    assert.deepStrictEqual(page.toJson(), {
-      id: 'http://example.org/alice/a',
-      title: "Alice's Profile",
-      blocks: [
-        { id: 'tag1', type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Paragraph 1' },
-        { id: 'http://example.org/alice/b', type: 'http://www.solidoc.net/ontologies#SolidPage', content: '' },
-      ],
-    });
+    page.insertNodeBelow(pageUri, blockUri2);
+    page.set(blockUri2, { type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Inserted paragraph' });
+    assert.deepStrictEqual(page.toJson().children, [blockJson1, blockJson3]);
     page.commit();
-    assert.deepStrictEqual(page.toJson(), {
-      id: 'http://example.org/alice/a',
-      title: "Alice's Profile",
-      blocks: [
-        { id: 'tag2', type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Inserted paragraph' },
-        { id: 'tag1', type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Paragraph 1' },
-        { id: 'http://example.org/alice/b', type: 'http://www.solidoc.net/ontologies#SolidPage', content: '' },
-      ],
-    });
+    assert.deepStrictEqual(page.toJson().children, [blockJson2, blockJson1, blockJson3]);
   });
   it('inserts a paragraph in the middle', () => {
-    page.fromTurtle(turtle);
-    page.insertNode('http://example.org/alice/a#tag2', 'http://example.org/alice/a#tag1');
-    page.set('http://example.org/alice/a#tag2', { type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Inserted paragraph' });
+    page.insertNodeAfter(blockUri1, blockUri2);
+    page.set(blockUri2, { type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Inserted paragraph' });
     page.commit();
-    assert.deepStrictEqual(page.toJson(), {
-      id: 'http://example.org/alice/a',
-      title: "Alice's Profile",
-      blocks: [
-        { id: 'tag1', type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Paragraph 1' },
-        { id: 'tag2', type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Inserted paragraph' },
-        { id: 'http://example.org/alice/b', type: 'http://www.solidoc.net/ontologies#SolidPage', content: '' },
-      ],
-    });
+    assert.deepStrictEqual(page.toJson().children, [blockJson1, blockJson2, blockJson3]);
   });
   it('inserts a paragraph to the end', () => {
-    page.fromTurtle(turtle);
-    page.insertNode('http://example.org/alice/a#tag2', 'http://example.org/alice/b');
-    page.set('http://example.org/alice/a#tag2', { type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Inserted paragraph' });
+    page.insertNodeAfter(blockUri3, blockUri2);
+    page.set(blockUri2, { type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Inserted paragraph' });
     page.commit();
-    assert.deepStrictEqual(page.toJson(), {
-      id: 'http://example.org/alice/a',
-      title: "Alice's Profile",
-      blocks: [
-        { id: 'tag1', type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Paragraph 1' },
-        { id: 'http://example.org/alice/b', type: 'http://www.solidoc.net/ontologies#SolidPage', content: '' },
-        { id: 'tag2', type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Inserted paragraph' },
-      ],
-    });
+    assert.deepStrictEqual(page.toJson().children, [blockJson1, blockJson3, blockJson2]);
   });
   it('deletes a paragraph in the middle', () => {
-    page.fromTurtle(turtle);
-    page.deleteNode('http://example.org/alice/a#tag1');
+    page.deleteNode(blockUri1);
     page.commit();
     assert.deepStrictEqual(page.toJson(), {
-      id: 'http://example.org/alice/a',
+      id: pageUri,
       title: "Alice's Profile",
-      blocks: [
-        { id: 'http://example.org/alice/b', type: 'http://www.solidoc.net/ontologies#SolidPage', content: '' },
-      ],
+      children: [blockJson3],
     });
     // TODO:
-    // assert(page._nodes['http://example.org/alice/a#tag1']===undefined);
+    // assert(page._nodes[blockUri1]===undefined);
   });
   it('deletes a paragraph in the end', () => {
-    page.fromTurtle(turtle);
-    page.deleteNode('http://example.org/alice/b');
+    page.deleteNode(blockUri3);
     page.commit();
     assert.deepStrictEqual(page.toJson(), {
-      id: 'http://example.org/alice/a',
+      id: pageUri,
       title: "Alice's Profile",
-      blocks: [
-        { id: 'tag1', type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Paragraph 1' },
-      ],
+      children: [blockJson1],
     });
     // TODO:
-    // expect(page._nodes['http://example.org/alice/b']).toBe(undefined);
+    // expect(page._nodes[blockUri3]).toBe(undefined);
   });
   it('deletes an already-deleted paragraph', () => {
-    page.fromTurtle(turtle);
-    page.deleteNode('http://example.org/alice/b');
-    page.deleteNode('http://example.org/alice/b');
+    page.deleteNode(blockUri3);
+    page.deleteNode(blockUri3);
     page.commit();
     assert.deepStrictEqual(page.toJson(), {
-      id: 'http://example.org/alice/a',
+      id: pageUri,
       title: "Alice's Profile",
-      blocks: [
-        { id: 'tag1', type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Paragraph 1' },
-      ],
+      children: [blockJson1],
     });
     // TODO:
-    // expect(page._nodes['http://example.org/alice/b']).toBe(undefined);
+    // expect(page._nodes[blockUri3]).toBe(undefined);
   });
   it('deletes a just-inserted paragraph', () => {
-    page.fromTurtle(turtle);
-    page.insertNode('http://example.org/alice/a#tag2', 'http://example.org/alice/a#tag1');
-    page.set('http://example.org/alice/a#tag2', { type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Inserted paragraph' });
-    page.deleteNode('http://example.org/alice/a#tag2');
+    page.insertNodeAfter(blockUri1, blockUri2);
+    page.set(blockUri2, { type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Inserted paragraph' });
+    page.deleteNode(blockUri2);
     page.commit();
     assert.deepStrictEqual(page.toJson(), {
-      id: 'http://example.org/alice/a',
+      id: pageUri,
       title: "Alice's Profile",
-      blocks: [
-        { id: 'tag1', type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Paragraph 1' },
-        { id: 'http://example.org/alice/b', type: 'http://www.solidoc.net/ontologies#SolidPage', content: '' },
-      ],
+      children: [blockJson1, blockJson3],
     });
     // TODO:
-    // expect(page._nodes['http://example.org/alice/a#tag2']).toBe(undefined);
+    // expect(page._nodes[blockUri2]).toBe(undefined);
   });
   it('moves a paragraph to a new position', () => {
-    page.fromTurtle(turtle);
-    page.moveNode('http://example.org/alice/b', 'http://example.org/alice/a');
+    page.moveNodeBelow(pageUri, blockUri3);
     page.commit();
     assert.deepStrictEqual(page.toJson(), {
-      id: 'http://example.org/alice/a',
+      id: pageUri,
       title: "Alice's Profile",
-      blocks: [
-        { id: 'http://example.org/alice/b', type: 'http://www.solidoc.net/ontologies#SolidPage', content: '' },
-        { id: 'tag1', type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Paragraph 1' },
-      ],
+      children: [blockJson3, blockJson1],
     });
   });
 });

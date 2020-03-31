@@ -7,7 +7,9 @@ export default class Block extends Subject {
     // TODO: type/next can be extract to Subject super()
     this._predicates.type = new NamedNodeProperty('http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'type');
     this._predicates.next = new NamedNodeProperty('http://www.solidoc.net/ontologies#nextBlock', 'next');
+    this._predicates.child = new NamedNodeProperty('http://www.solidoc.net/ontologies#firstChild', 'child');
     this._predicates.content = new TextProperty('http://www.solidoc.net/ontologies#content', 'content');
+    this.isDeleted = false
   }
 
   public getSparqlForUpdate = (graph: string): string => {

@@ -1,4 +1,5 @@
 import Subject from './Subject';
+import Block from './Block'
 import * as n3 from 'n3';
 
 const parser = new n3.Parser();
@@ -29,18 +30,29 @@ export default abstract class Graph {
     if (!this._isReady) {
       throw new Error(`the graph ${this._uri} is not ready for read`);
     }
-    const headJson = this._nodes[this._uri].toJson();
-    let nextNodeUri = headJson.next;
-    delete headJson.next;
+    return this._getCascaded(this._uri)
+  }
 
-    const blocks: any[] = [];
+  private _getCascaded = (nodeUri: string): any => {
+    const nodeJson = this._nodes[nodeUri].toJson();
+    if (nodeJson.child) {
+      nodeJson.children = this._getChildrenOf(nodeJson)
+    }
+    delete nodeJson.child
+    return nodeJson
+  }
+
+  private _getChildrenOf = (parentJson: any): any[] => {
+    const children: any[] = []
+
+    let nextNodeUri = parentJson.child;
     while (nextNodeUri) {
-      const nodeJson = this._nodes[nextNodeUri].toJson();
+      const nodeJson = this._getCascaded(nextNodeUri);
       nextNodeUri = nodeJson.next;
       delete nodeJson.next;
-      blocks.push(nodeJson);
+      children.push(nodeJson);
     }
-    return { ...headJson, blocks };
+    return children
   }
 
   public set = (nodeUri: string, options) => {
@@ -74,26 +86,34 @@ export default abstract class Graph {
     });
   }
 
-  public insertNode = (thisUri: string, prevUri: string) => {
+  public insertNodeAfter = (prevUri: string, thisUri: string) => {
+    this._insertNodePreparation(thisUri, prevUri);
+    const nextUri: string = this._nodes[prevUri].get('next');
+    this._nodes[prevUri].set({ next: thisUri });
+    this._nodes[thisUri].set({ next: nextUri });
+    return;
+  }
+
+  public insertNodeBelow = (parentUri: string, thisUri: string) => {
+    this._insertNodePreparation(thisUri, parentUri);
+    const childUri: string = this._nodes[parentUri].get('child');
+    this._nodes[parentUri].set({ child: thisUri });
+    this._nodes[thisUri].set({ next: childUri });
+    return;
+  }
+
+  private _insertNodePreparation = (thisUri: string, relativeUri: string) => {
     if (!this._isReady) {
       throw new Error(`the graph ${this._uri} is not ready for insert node`);
     } else if (this._nodes[thisUri] && !this._nodes[thisUri].isDeleted) {
       throw new Error('Trying to insert an existing node: ' + thisUri);
-    } else if (!this._nodes[prevUri] || this._nodes[prevUri].isDeleted) {
-      throw new Error('The prev node does not exist: ' + prevUri);
-    } else if (thisUri === prevUri) {
-      throw new Error('To insert a node same as the prev: ' + prevUri);
+    } else if (!this._nodes[relativeUri] || this._nodes[relativeUri].isDeleted) {
+      throw new Error('The prev node does not exist: ' + relativeUri);
+    } else if (thisUri === relativeUri) {
+      throw new Error('To insert a node same as the relative: ' + relativeUri);
     }
     this._addPlaceHolder(thisUri);
-    // this._nodes[thisUri].set(options);
     this._nodes[thisUri].isDeleted = false;
-
-    // prevUri || (prevUri = this._uri)
-    const nextUri: string = this._nodes[prevUri].get('next');
-    this._nodes[prevUri].set({ next: thisUri });
-    this._nodes[thisUri].set({ next: nextUri });
-
-    return;
   }
 
   public deleteNode = (thisUri: string) => {
@@ -106,19 +126,59 @@ export default abstract class Graph {
       return; // keep deletion idempotent
     }
 
-    let prev: Subject = this._nodes[headUri];
-    while (prev && prev.get('next') !== thisUri) {
-      prev = this._nodes[(prev.get('next'))];
+    let relative: Subject = this._traversePreOrder(headUri, this._findRelative, thisUri)
+    if (relative && relative instanceof Block && relative.get('next') === thisUri) {
+      const nextUri: string = this._nodes[thisUri].get('next');
+      relative.set({ next: nextUri }); // the last node's next will be set as ''
+    } else if (relative && relative.get('child') === thisUri) {
+      const nextUri: string = this._nodes[thisUri].get('next');
+      relative.set({ child: nextUri }); // the last node's next will be set as ''
     }
-    // the last node's next will be set as ''
-    const nextUri: string = this._nodes[thisUri].get('next');
-    prev && prev.set({ next: nextUri });
+
+    this._traversePreOrder(thisUri, this._setDeleted, null);
     this._nodes[thisUri].isDeleted = true;
   }
 
-  public moveNode = (thisUri: string, newPrevUri: string) => {
+  private _traversePreOrder = (headUri: string, doSomething: (node: Subject, param?: any) => any, param: any): any => {
+    let head: Subject = this._nodes[headUri];
+    let res = doSomething(head, param);
+    if (res) return res
+
+    let nodeUri = head.get('child');
+    let node: Subject = this._nodes[nodeUri];
+
+    while (node) {
+      let res = doSomething(node, param);
+      if (res) return res
+
+      if (node.get('child')) {
+        this._traversePreOrder(nodeUri, doSomething, param);
+      }
+      let nextUri = node.get('next');
+      node = this._nodes[nextUri];
+    }
+    return undefined
+  }
+
+  private _findRelative = (node: Subject, targetUri: string): Subject | undefined => {
+    if (node.get('child') === targetUri) return node
+    if (node instanceof Block && node.get('next') === targetUri) return node
+    return undefined
+  }
+
+  private _setDeleted = (node: Subject): undefined => {
+    node.isDeleted = true
+    return undefined
+  }
+
+  public moveNodeAfter = (newPrevUri: string, thisUri: string) => {
     this.deleteNode(thisUri);
-    this.insertNode(thisUri, newPrevUri);
+    this.insertNodeAfter(newPrevUri, thisUri);
+  }
+
+  public moveNodeBelow = (newParentUri: string, thisUri: string) => {
+    this.deleteNode(thisUri);
+    this.insertNodeBelow(newParentUri, thisUri);
   }
 
   public isReady = (): boolean => {

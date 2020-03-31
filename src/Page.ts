@@ -8,7 +8,7 @@ export class PageHead extends Subject {
   constructor(uri) {
     super(uri);
     this._predicates.title = new TextProperty('http://purl.org/dc/terms/title', 'title');
-    this._predicates.next = new NamedNodeProperty('http://www.solidoc.net/ontologies#nextBlock', 'next');
+    this._predicates.child = new NamedNodeProperty('http://www.solidoc.net/ontologies#firstChild', 'child');
   }
   public getSparqlForUpdate = (graph: string): string => {
     let sparql = '';
