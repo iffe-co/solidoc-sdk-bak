@@ -85,7 +85,7 @@ export default abstract class Graph {
   }
 
   public insertNodeAfter = (prevUri: string, thisUri: string) => {
-    this._insertNodePreparation(thisUri, prevUri);
+    this._insertNodePreparation(prevUri, thisUri);
     const nextUri: string = this._nodes[prevUri].get('next');
     this._nodes[prevUri].set({ next: thisUri });
     this._nodes[thisUri].set({ next: nextUri });
@@ -93,20 +93,20 @@ export default abstract class Graph {
   }
 
   public insertNodeBelow = (parentUri: string, thisUri: string) => {
-    this._insertNodePreparation(thisUri, parentUri);
+    this._insertNodePreparation(parentUri, thisUri);
     const childUri: string = this._nodes[parentUri].get('child');
     this._nodes[parentUri].set({ child: thisUri });
     this._nodes[thisUri].set({ next: childUri });
     return;
   }
 
-  private _insertNodePreparation = (thisUri: string, relativeUri: string) => {
+  private _insertNodePreparation = (relativeUri: string, thisUri: string) => {
     if (!this._isReady) {
       throw new Error(`the graph ${this._uri} is not ready for insert node`);
     } else if (this._nodes[thisUri] && !this._nodes[thisUri].isDeleted) {
       throw new Error('Trying to insert an existing node: ' + thisUri);
     } else if (!this._nodes[relativeUri] || this._nodes[relativeUri].isDeleted) {
-      throw new Error('The prev node does not exist: ' + relativeUri);
+      throw new Error('The relative node does not exist: ' + relativeUri);
     } else if (thisUri === relativeUri) {
       throw new Error('To insert a node same as the relative: ' + relativeUri);
     }
@@ -120,10 +120,15 @@ export default abstract class Graph {
       throw new Error(`the graph ${this._uri} is not ready for delete node`);
     } else if (thisUri === headUri) {
       throw new Error('Trying to delete the head node: ' + thisUri);
-    } else if (!this._nodes[thisUri] || this._nodes[thisUri].isDeleted) {
-      return; // keep deletion idempotent
+    } else if (!this._nodes[thisUri]) {
+      throw new Error('The node is already deleted: ' + thisUri);
     }
+    this._disconnect(thisUri);
+    this._traversePreOrder(thisUri, this._setDeleted, null);
+  }
 
+  private _disconnect = (thisUri: string) => {
+    const headUri: string = this._uri;
     const nextUri: string = this._nodes[thisUri].get('next');
     let relative: Subject = this._traversePreOrder(headUri, this._findRelative, thisUri)
     if (relative && relative instanceof Block && relative.get('next') === thisUri) {
@@ -131,8 +136,6 @@ export default abstract class Graph {
     } else if (relative && relative.get('child') === thisUri) {
       relative.set({ child: nextUri }); // the last node's next will be set as ''
     }
-
-    this._traversePreOrder(thisUri, this._setDeleted, null);
   }
 
   private _traversePreOrder = (headUri: string, doSomething: (node: Subject, param?: any) => any, param: any): any => {
@@ -168,13 +171,35 @@ export default abstract class Graph {
   }
 
   public moveNodeAfter = (newPrevUri: string, thisUri: string) => {
-    this.deleteNode(thisUri);
+    this._moveNodePreparation(newPrevUri, thisUri)
     this.insertNodeAfter(newPrevUri, thisUri);
   }
 
   public moveNodeBelow = (newParentUri: string, thisUri: string) => {
-    this.deleteNode(thisUri);
+    this._moveNodePreparation(newParentUri, thisUri)
     this.insertNodeBelow(newParentUri, thisUri);
+  }
+
+  private _moveNodePreparation = (relativeUri: string, thisUri: string) => {
+    if (!this._isReady) {
+      throw new Error(`the graph ${this._uri} is not ready for insert node`);
+    } else if (this._nodes[thisUri] && this._nodes[thisUri].isDeleted) {
+      throw new Error('Trying to move a deleted node: ' + thisUri);
+    } else if (!this._nodes[relativeUri] || this._nodes[relativeUri].isDeleted) {
+      throw new Error('The relative node does not exist: ' + relativeUri);
+    } else if (thisUri === relativeUri) {
+      throw new Error('The moving node is the same as the relative: ' + relativeUri);
+    }
+
+    console.log(thisUri)
+    console.log(relativeUri)
+    let node: Subject = this._traversePreOrder(thisUri, this._findRelative, relativeUri)
+    console.log(node)
+    if (node && node.get('next')!==relativeUri) { // TODO: ugly exception! The traverse will mostly find a decendent, unless the two nodes are neighboring brothers
+      throw new Error('Trying to append the node to its decendent')
+    }
+    this._disconnect(thisUri);
+    this._nodes[thisUri].isDeleted = true; // to avoid throw during insertion, will soon be set back
   }
 
   public isReady = (): boolean => {
