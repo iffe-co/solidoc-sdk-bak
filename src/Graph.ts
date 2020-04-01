@@ -33,26 +33,24 @@ export default abstract class Graph {
     return this._getCascaded(this._uri)
   }
 
-  private _getCascaded = (nodeUri: string): any => {
-    const nodeJson = this._nodes[nodeUri].toJson();
-    if (nodeJson.child) {
-      nodeJson.children = this._getChildrenOf(nodeJson)
-    }
-    delete nodeJson.child
-    return nodeJson
-  }
+  private _getCascaded = (headUri: string): any => {
+    const headJson = this._nodes[headUri].toJson();
+    if (!headJson.child) { delete headJson.child; return headJson}
+    headJson.children = []
 
-  private _getChildrenOf = (parentJson: any): any[] => {
-    const children: any[] = []
+    let nodeUri = headJson.child;
+    let node: Subject = this._nodes[nodeUri];
 
-    let nextNodeUri = parentJson.child;
-    while (nextNodeUri) {
-      const nodeJson = this._getCascaded(nextNodeUri);
-      nextNodeUri = nodeJson.next;
-      delete nodeJson.next;
-      children.push(nodeJson);
+    while (node) {
+      const json = this._getCascaded(nodeUri);
+
+      nodeUri = json.next;
+      delete json.next;
+      headJson.children.push(json);
+      node = this._nodes[nodeUri];
     }
-    return children
+    delete headJson.child
+    return headJson
   }
 
   public set = (nodeUri: string, options) => {
@@ -126,17 +124,15 @@ export default abstract class Graph {
       return; // keep deletion idempotent
     }
 
+    const nextUri: string = this._nodes[thisUri].get('next');
     let relative: Subject = this._traversePreOrder(headUri, this._findRelative, thisUri)
     if (relative && relative instanceof Block && relative.get('next') === thisUri) {
-      const nextUri: string = this._nodes[thisUri].get('next');
       relative.set({ next: nextUri }); // the last node's next will be set as ''
     } else if (relative && relative.get('child') === thisUri) {
-      const nextUri: string = this._nodes[thisUri].get('next');
       relative.set({ child: nextUri }); // the last node's next will be set as ''
     }
 
     this._traversePreOrder(thisUri, this._setDeleted, null);
-    this._nodes[thisUri].isDeleted = true;
   }
 
   private _traversePreOrder = (headUri: string, doSomething: (node: Subject, param?: any) => any, param: any): any => {
@@ -148,15 +144,15 @@ export default abstract class Graph {
     let node: Subject = this._nodes[nodeUri];
 
     while (node) {
-      let res = doSomething(node, param);
+      let res = this._traversePreOrder(nodeUri, doSomething, param);
       if (res) return res
 
-      if (node.get('child')) {
-        this._traversePreOrder(nodeUri, doSomething, param);
-      }
-      let nextUri = node.get('next');
-      node = this._nodes[nextUri];
+
+      
+      nodeUri = node.get('next');
+      node = this._nodes[nodeUri];
     }
+
     return undefined
   }
 
