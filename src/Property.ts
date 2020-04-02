@@ -20,7 +20,7 @@ export default abstract class Property {
 
   public toJson = (): any => {
     const json: any = {};
-    json[this.name] = this.value;
+    json[this.name] = this.uncommitted;
     return json;
   }
 

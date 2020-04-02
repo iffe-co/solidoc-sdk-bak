@@ -191,10 +191,7 @@ export default abstract class Graph {
       throw new Error('The moving node is the same as the relative: ' + relativeUri);
     }
 
-    console.log(thisUri)
-    console.log(relativeUri)
     let node: Subject = this._traversePreOrder(thisUri, this._findRelative, relativeUri)
-    console.log(node)
     if (node && node.get('next')!==relativeUri) { // TODO: ugly exception! The traverse will mostly find a decendent, unless the two nodes are neighboring brothers
       throw new Error('Trying to append the node to its decendent')
     }
