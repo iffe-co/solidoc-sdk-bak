@@ -2,120 +2,123 @@ import { Block, PageHead } from './Block';
 import { Graph } from './Graph';
 
 class Page extends Graph {
+  protected _blocks: { [uri: string]: Block } = {}
   constructor(uri: string) {
     super(uri);
-    this._nodes[uri] = new PageHead(uri);
+    this._blocks[uri] = new PageHead(uri);
+    this._nodes = this._blocks
   }
   protected _addPlaceHolder = (uri: string) => {
-    this._nodes[uri] || (this._nodes[uri] = new Block(uri));
+    this._blocks[uri] || (this._blocks[uri] = new Block(uri));
   }
 
   public toJson = (): any => {
     if (!this._isReady) {
       throw new Error(`the graph ${this._uri} is not ready for read`);
     }
-    return this._getCascaded(this._uri)
+    return this._getCascaded(this._getHead())
   }
 
-  private _getCascaded = (headUri: string): any => {
-    let head: Block = this._nodes[headUri];
+  private _getCascaded = (head: Block): any => {
     const headJson = head.toJson();
-
-    let blockUri = head.get('child');
-    let block: Block = this._nodes[blockUri];
+    let block: Block = this._getChild(head);
 
     while (block) {
-      let blockJson = this._getCascaded(blockUri)
+      let blockJson = this._getCascaded(block)
       headJson.children.push(blockJson)
 
-      blockUri = block.get('next');
-      block = this._nodes[blockUri];
+      block = this._getNext(block);
     }
 
     return headJson
   }
 
+  private _getHead = (): Block => {
+    return this._blocks[this._uri];
+  }
+  private _getNext = (block: Block): Block => {
+    let nextUri: string = block.get('next');
+    return this._blocks[nextUri];
+  }
+  private _getChild = (block: Block): Block => {
+    let childUri: string = block.get('child');
+    return this._blocks[childUri];
+  }
+
   public insertBlockAfter = (prevUri: string, thisUri: string) => {
     this._insertBlockPreparation(prevUri, thisUri);
-    const nextUri: string = this._nodes[prevUri].get('next');
-    this._nodes[prevUri].set({ next: thisUri });
-    this._nodes[thisUri].set({ next: nextUri });
+    let prev: Block = this._blocks[prevUri]
+    let curr: Block = this._blocks[thisUri]
+    let next: Block = this._getNext(prev)
+    prev.setNext(curr)
+    curr.setNext(next)
     return;
   }
 
   public insertBlockBelow = (parentUri: string, thisUri: string) => {
     this._insertBlockPreparation(parentUri, thisUri);
-    const childUri: string = this._nodes[parentUri].get('child');
-    this._nodes[parentUri].set({ child: thisUri });
-    this._nodes[thisUri].set({ next: childUri });
+    let parent: Block = this._blocks[parentUri]
+    let curr: Block = this._blocks[thisUri]
+    let child: Block = this._getChild(parent)
+    parent.setChild(curr)
+    curr.setNext(child)
     return;
   }
 
   private _insertBlockPreparation = (relativeUri: string, thisUri: string) => {
     if (!this._isReady) {
       throw new Error(`the graph ${this._uri} is not ready for insert block`);
-    } else if (this._nodes[thisUri] && !this._nodes[thisUri].isDeleted) {
+    } else if (this._blocks[thisUri] && !this._blocks[thisUri].isDeleted) {
       throw new Error('Trying to insert an existing block: ' + thisUri);
-    } else if (!this._nodes[relativeUri] || this._nodes[relativeUri].isDeleted) {
+    } else if (!this._blocks[relativeUri] || this._blocks[relativeUri].isDeleted) {
       throw new Error('The relative block does not exist: ' + relativeUri);
     } else if (thisUri === relativeUri) {
       throw new Error('To insert a block same as the relative: ' + relativeUri);
     }
     this._addPlaceHolder(thisUri);
-    this._nodes[thisUri].isDeleted = false;
+    this._blocks[thisUri].isDeleted = false;
   }
 
   public deleteBlock = (thisUri: string) => {
     const headUri: string = this._uri;
     if (!this._isReady) {
-      throw new Error(`the graph ${this._uri} is not ready for delete block`);
+      throw new Error(`the graph ${headUri} is not ready for delete block`);
     } else if (thisUri === headUri) {
       throw new Error('Trying to delete the head block: ' + thisUri);
-    } else if (!this._nodes[thisUri]) {
+    } else if (!this._blocks[thisUri]) {
       throw new Error('The block is already deleted: ' + thisUri);
     }
-    this._disconnect(thisUri);
-    this._traversePreOrder(thisUri, this._setDeleted, null);
+    let block: Block = this._blocks[thisUri];
+    this._traversePreOrder(this._getHead(), this._disconnect, block)
+    this._traversePreOrder(block, this._markAsDeleted, null);
   }
 
-  private _disconnect = (thisUri: string) => {
-    const headUri: string = this._uri;
-    const nextUri: string = this._nodes[thisUri].get('next');
-    let relative: Block = this._traversePreOrder(headUri, this._findRelative, thisUri)
-    if (relative && relative instanceof Block && relative.get('next') === thisUri) {
-      relative.set({ next: nextUri }); // the last block's next will be set as ''
-    } else if (relative && relative.get('child') === thisUri) {
-      relative.set({ child: nextUri }); // the last block's next will be set as ''
-    }
-  }
-
-  private _traversePreOrder = (headUri: string, doSomething: (block: Block, param?: any) => any, param: any): any => {
-    let head: Block = this._nodes[headUri];
+  private _traversePreOrder = (head: Block, doSomething: (block: Block, param?: any) => any, param: any): any => {
     let res = doSomething(head, param);
     if (res) return res
 
-    let blockUri = head.get('child');
-    let block: Block = this._nodes[blockUri];
+    let block: Block = this._getChild(head);
 
     while (block) {
-      let res = this._traversePreOrder(blockUri, doSomething, param);
+      let res = this._traversePreOrder(block, doSomething, param);
       if (res) return res
-      blockUri = block.get('next');
-      block = this._nodes[blockUri];
+      block = this._getNext(block)
     }
 
     return undefined
   }
 
-  private _findRelative = (block: Block, targetUri: string): Block | undefined => {
-    if (block.get('child') === targetUri) return block
-    if (block instanceof Block && block.get('next') === targetUri) return block
-    return undefined
+  private _disconnect = (block: Block, targetBlock: Block) => {
+    let nextBlock: Block = this._getNext(targetBlock)
+    if (this._getChild(block) === targetBlock) {
+      block.setChild(nextBlock)
+    } else if (this._getNext(block) === targetBlock) {
+      block.setNext(nextBlock)
+    }
   }
 
-  private _setDeleted = (block: Block): undefined => {
+  private _markAsDeleted = (block: Block) => {
     block.isDeleted = true
-    return undefined
   }
 
   public moveBlockAfter = (newPrevUri: string, thisUri: string) => {
@@ -131,20 +134,25 @@ class Page extends Graph {
   private _moveBlockPreparation = (relativeUri: string, thisUri: string) => {
     if (!this._isReady) {
       throw new Error(`the graph ${this._uri} is not ready for insert block`);
-    } else if (this._nodes[thisUri] && this._nodes[thisUri].isDeleted) {
+    } else if (this._blocks[thisUri] && this._blocks[thisUri].isDeleted) {
       throw new Error('Trying to move a deleted block: ' + thisUri);
-    } else if (!this._nodes[relativeUri] || this._nodes[relativeUri].isDeleted) {
+    } else if (!this._blocks[relativeUri] || this._blocks[relativeUri].isDeleted) {
       throw new Error('The relative block does not exist: ' + relativeUri);
     } else if (thisUri === relativeUri) {
       throw new Error('The moving block is the same as the relative: ' + relativeUri);
     }
 
-    let block: Block = this._traversePreOrder(thisUri, this._findRelative, relativeUri)
-    if (block && block.get('next') !== relativeUri) { // TODO: ugly exception! The traverse will mostly find a decendent, unless the two blocks are neighboring brothers
+    let block: Block = this._blocks[thisUri]
+    let relative: Block = this._blocks[relativeUri]
+    if (this._traversePreOrder(block, this._findDescendent, relative)) {
       throw new Error('Trying to append the block to its decendent')
     }
-    this._disconnect(thisUri);
-    this._nodes[thisUri].isDeleted = true; // to avoid throw during insertion, will soon be set back
+    this._traversePreOrder(this._getHead(), this._disconnect, block)
+    block.isDeleted = true; // to avoid throw during insertion, will soon be set back
+  }
+
+  private _findDescendent = (block: Block, targetBlock: Block): Block | undefined => {
+    if (this._getChild(block) === targetBlock) return block
   }
 
 }

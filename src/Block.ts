@@ -13,7 +13,7 @@ class Block extends Subject {
   }
 
   public toJson = (): any => {
-    let result:any = { id: this._uri.substr(this._uri.indexOf('#') + 1) };
+    let result: any = { id: this._uri.substr(this._uri.indexOf('#') + 1) };
     Object.keys(this._predicates).forEach(key => {
       result = {
         ...result,
@@ -24,6 +24,13 @@ class Block extends Subject {
     delete result.next
     delete result.child
     return result;
+  }
+
+  public setNext = (block: Block) => {
+    this.set({ next: block ? block._uri : '' })
+  }
+  public setChild = (block: Block) => {
+    this.set({ child: block ? block._uri : '' })
   }
 
   public getSparqlForUpdate = (graph: string): string => {
@@ -39,15 +46,14 @@ class Block extends Subject {
   }
 }
 
-class PageHead extends Subject {
+class PageHead extends Block {
   // TODO: add parent property
   constructor(uri) {
     super(uri);
     this._predicates.title = new TextProperty('http://purl.org/dc/terms/title', 'title');
-    this._predicates.child = new NamedNodeProperty('http://www.solidoc.net/ontologies#firstChild', 'child');
   }
   public toJson = (): any => {
-    let result:any = { id: this._uri.substr(this._uri.indexOf('#') + 1) };
+    let result: any = { id: this._uri.substr(this._uri.indexOf('#') + 1) };
     Object.keys(this._predicates).forEach(key => {
       result = {
         ...result,
@@ -55,9 +61,14 @@ class PageHead extends Subject {
       };
     });
     if (result.child) result.children = []
-    delete result.child
+    delete result.child // TODO: MMP
+    delete result.next
+    delete result.content
+    delete result.type
+
     return result;
   }
+
   public getSparqlForUpdate = (graph: string): string => {
     let sparql = '';
     Object.keys(this._predicates).forEach(key => {
@@ -67,4 +78,4 @@ class PageHead extends Subject {
   }
 }
 
-export {Block, PageHead}
+export { Block, PageHead }

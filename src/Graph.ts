@@ -6,7 +6,7 @@ const parser = new n3.Parser();
 // a graph could be a page or a database
 abstract class Graph {
   protected _uri: string
-  protected _nodes: { [uri: string]: Subject } = {}
+  protected _nodes: { [uri: string]: Subject }
   protected _isReady: boolean
 
   constructor(uri: string) {

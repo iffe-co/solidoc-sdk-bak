@@ -24,8 +24,6 @@ abstract class Subject {
     }
   }
 
-  public abstract toJson(): any
-
   public get = (key: string): string => {
     return this._predicates[key].get();
   }
