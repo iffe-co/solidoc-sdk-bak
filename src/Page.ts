@@ -89,36 +89,40 @@ class Page extends Graph {
       throw new Error('The block is already deleted: ' + thisUri);
     }
     let block: Block = this._blocks[thisUri];
-    this._traversePreOrder(this._getHead(), this._disconnect, block)
-    this._traversePreOrder(block, this._markAsDeleted, null);
+    this._traversePreOrder(this._getHead(), this._trimIfMatch, block)
+    this._traversePreOrder(block, this._markAsDeleted);
   }
 
-  private _traversePreOrder = (head: Block, doSomething: (block: Block, param?: any) => any, param: any): any => {
-    let res = doSomething(head, param);
+  private _traversePreOrder = (head: Block, doSomething: (block: Block, target?: any) => boolean, target?: any): boolean => {
+    let res = doSomething(head, target);
     if (res) return res
 
     let block: Block = this._getChild(head);
 
     while (block) {
-      let res = this._traversePreOrder(block, doSomething, param);
+      let res = this._traversePreOrder(block, doSomething, target);
       if (res) return res
       block = this._getNext(block)
     }
 
-    return undefined
+    return res
   }
 
-  private _disconnect = (block: Block, targetBlock: Block) => {
-    let nextBlock: Block = this._getNext(targetBlock)
-    if (this._getChild(block) === targetBlock) {
-      block.setChild(nextBlock)
-    } else if (this._getNext(block) === targetBlock) {
-      block.setNext(nextBlock)
+  private _trimIfMatch = (block: Block, target: Block): boolean => {
+    let next: Block = this._getNext(target)
+    if (this._getChild(block) === target) {
+      block.setChild(next)
+      return true
+    } else if (this._getNext(block) === target) {
+      block.setNext(next)
+      return true
     }
+    return false
   }
 
-  private _markAsDeleted = (block: Block) => {
+  private _markAsDeleted = (block: Block): boolean => {
     block.isDeleted = true
+    return false
   }
 
   public moveBlockAfter = (newPrevUri: string, thisUri: string) => {
@@ -147,12 +151,12 @@ class Page extends Graph {
     if (this._traversePreOrder(block, this._findDescendent, relative)) {
       throw new Error('Trying to append the block to its decendent')
     }
-    this._traversePreOrder(this._getHead(), this._disconnect, block)
+    this._traversePreOrder(this._getHead(), this._trimIfMatch, block)
     block.isDeleted = true; // to avoid throw during insertion, will soon be set back
   }
 
-  private _findDescendent = (block: Block, targetBlock: Block): Block | undefined => {
-    if (this._getChild(block) === targetBlock) return block
+  private _findDescendent = (block: Block, target: Block): boolean => {
+    return (this._getChild(block) === target)
   }
 
 }
