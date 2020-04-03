@@ -52,73 +52,73 @@ describe('Page', () => {
     });
   });
   it('inserts a sub paragraph', () => {
-    page.insertNodeBelow(blockUri1, blockUri4);
+    page.insertBlockBelow(blockUri1, blockUri4);
     page.set(blockUri4, { type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Inserted paragraph' });
     assert.deepStrictEqual(extractChildrenId(page.toJson()), [id1, id3])
     assert.deepStrictEqual(extractChildrenId(page.toJson().children[0]), [id4, id2])
   });
   it('inserts a sibling paragraph', () => {
-    page.insertNodeAfter(blockUri1, blockUri4);
+    page.insertBlockAfter(blockUri1, blockUri4);
     page.set(blockUri4, { type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Inserted paragraph' });
     // page.commit();
     assert.deepStrictEqual(extractChildrenId(page.toJson()), [id1, id4, id3])
     assert.deepStrictEqual(extractChildrenId(page.toJson().children[0]), [id2])
   });
   it('inserts a paragraph to the end', () => {
-    page.insertNodeAfter(blockUri2, blockUri4);
+    page.insertBlockAfter(blockUri2, blockUri4);
     page.set(blockUri2, { type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Inserted paragraph' });
     // page.commit();
     assert.deepStrictEqual(extractChildrenId(page.toJson()), [id1, id3])
     assert.deepStrictEqual(extractChildrenId(page.toJson().children[0]), [id2, id4])
   });
   it('deletes a parent paragraph', () => {
-    page.deleteNode(blockUri1);
+    page.deleteBlock(blockUri1);
     // page.commit();
     assert.deepStrictEqual(extractChildrenId(page.toJson()), [id3])
   });
   it('deletes a paragraph in the end', () => {
-    page.deleteNode(blockUri3);
+    page.deleteBlock(blockUri3);
     // page.commit();
     assert.deepStrictEqual(extractChildrenId(page.toJson()), [id1])
     assert.deepStrictEqual(extractChildrenId(page.toJson().children[0]), [id2])
   });
   it('deletes after insertion', () => {
-    page.insertNodeBelow(pageUri, blockUri4);
+    page.insertBlockBelow(pageUri, blockUri4);
     page.set(blockUri4, { type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Inserted paragraph' });
-    page.deleteNode(blockUri1);
+    page.deleteBlock(blockUri1);
     // page.commit();
     assert.deepStrictEqual(extractChildrenId(page.toJson()), [id4, id3])
   });
-  it('removes the deleted node from memory after commit', () => {
-    page.deleteNode(blockUri2);
+  it('removes the deleted block from memory after commit', () => {
+    page.deleteBlock(blockUri2);
     page.commit();
     let errMsg = ''
     try {
-      page.deleteNode(blockUri2);
+      page.deleteBlock(blockUri2);
     } catch (e) {
       errMsg = e.message
     }
-    assert(errMsg.startsWith('The node is already deleted'))
+    assert(errMsg.startsWith('The block is already deleted'))
   });
-  it('moves node 3 to the top', () => {
-    page.moveNodeBelow(pageUri, blockUri3);
+  it('moves block 3 to the top', () => {
+    page.moveBlockBelow(pageUri, blockUri3);
     // page.commit();
     assert.deepStrictEqual(extractChildrenId(page.toJson()), [id3, id1])
     assert.deepStrictEqual(extractChildrenId(page.toJson().children[1]), [id2])
   });
-  it('moves node 1 to the end', () => {
-    page.moveNodeAfter(blockUri3, blockUri1);
+  it('moves block 1 to the end', () => {
+    page.moveBlockAfter(blockUri3, blockUri1);
     // page.commit();
     assert.deepStrictEqual(extractChildrenId(page.toJson()), [id3, id1])
     assert.deepStrictEqual(extractChildrenId(page.toJson().children[1]), [id2])
   });
-  it('moves node 2 to the middle', () => {
-    page.moveNodeAfter(blockUri1, blockUri2);
+  it('moves block 2 to the middle', () => {
+    page.moveBlockAfter(blockUri1, blockUri2);
     // page.commit();
     assert.deepStrictEqual(extractChildrenId(page.toJson()), [id1, id2, id3])
   });
-  it('moves node 3 to the middle', () => {
-    page.moveNodeAfter(blockUri2, blockUri3);
+  it('moves block 3 to the middle', () => {
+    page.moveBlockAfter(blockUri2, blockUri3);
     // page.commit();
     assert.deepStrictEqual(extractChildrenId(page.toJson()), [id1])
     assert.deepStrictEqual(extractChildrenId(page.toJson().children[0]), [id2, id3])
@@ -126,10 +126,10 @@ describe('Page', () => {
   it('disallows moving below a child', () => {
     let errMsg = ''
     try {
-      page.moveNodeBelow(blockUri2, blockUri1);
+      page.moveBlockBelow(blockUri2, blockUri1);
     } catch (e) {
       errMsg = e.message
     }
-    assert(errMsg.startsWith('Trying to append the node to its decendent'))
+    assert(errMsg.startsWith('Trying to append the block to its decendent'))
   });
 });
