@@ -1,5 +1,4 @@
-import Block from '../src/Block';
-import { PageHead } from '../src/Page';
+import { Block, PageHead } from '../src/Block';
 import * as n3 from 'n3';
 import * as assert from 'power-assert';
 
@@ -21,8 +20,8 @@ describe('Paragraph', () => {
       id: 'tag1',
       type: 'http://www.solidoc.net/ontologies#Paragraph',
       content: 'This is a paragraph',
-      next: 'http://example.org/alice#tag2',
-      child: ''
+      // next: 'http://example.org/alice#tag2',
+      // child: ''
     });
     assert(para.get('next'), 'http://example.org/alice#tag2');
   });
@@ -46,8 +45,8 @@ describe('Paragraph', () => {
       id: 'tag1',
       type: 'http://www.solidoc.net/ontologies#Paragraph',
       content: 'This is a paragraph',
-      next: 'http://example.org/alice#tag2',
-      child: ''
+      // next: 'http://example.org/alice#tag2',
+      // child: ''
     });
     assert(para.get('next') === 'http://example.org/alice#tag2');
   });
@@ -67,7 +66,8 @@ describe('PageHead', () => {
     assert.deepStrictEqual(head.toJson(), {
       id: 'http://example.org/alice',
       title: "Alice's Profile",
-      child: 'http://example.org/alice#tag1',
+      // child: 'http://example.org/alice#tag1',
+      children: [],
     });
     assert(head.get('child') === 'http://example.org/alice#tag1');
   });

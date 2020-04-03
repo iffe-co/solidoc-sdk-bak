@@ -1,5 +1,5 @@
 // import Graph from '../../../../app/data_model/ldp/Graph';
-import Page from '../src/Page';
+import { Page } from '../src/Page';
 import * as assert from 'power-assert';
 
 const pageUri = 'http://example.org/alice/a';

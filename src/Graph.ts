@@ -1,11 +1,11 @@
-import Subject from './Subject';
-import Block from './Block'
+import { Subject } from './Subject';
+import { Block } from './Block'
 import * as n3 from 'n3';
 
 const parser = new n3.Parser();
 
 // a graph could be a page or a database
-export default abstract class Graph {
+abstract class Graph {
   protected _uri: string
   protected _nodes: { [uri: string]: Subject } = {}
   private _isReady: boolean
@@ -34,24 +34,36 @@ export default abstract class Graph {
   }
 
   private _getCascaded = (headUri: string): any => {
-    const headJson = this._nodes[headUri].toJson();
-    if (!headJson.child) { delete headJson.child; return headJson}
-    headJson.children = []
+    let head: Subject = this._nodes[headUri];
+    const headJson = head.toJson();
 
-    let nodeUri = headJson.child;
+    let nodeUri = head.get('child');
     let node: Subject = this._nodes[nodeUri];
 
     while (node) {
-      const json = this._getCascaded(nodeUri);
+      let nodeJson = this._getCascaded(nodeUri)
+      headJson.children.push(nodeJson)
 
-      nodeUri = json.next;
-      delete json.next;
-      headJson.children.push(json);
+      nodeUri = node.get('next');
       node = this._nodes[nodeUri];
     }
-    delete headJson.child
+
     return headJson
   }
+
+  // private _doSomething = (node: Subject, parentJson: any): any => {
+  //   const nodeJson = node.toJson();
+  //   if (!node.get('child')) {
+  //     delete nodeJson.children
+  //   }
+  //   if (parentJson.children) {
+  //     // TODO: assert(parentJson.children)
+  //     parentJson.children.push(nodeJson)
+  //   } else {
+  //     parentJson = nodeJson
+  //   }
+  //   return nodeJson
+  // }
 
   public set = (nodeUri: string, options) => {
     if (!this._isReady) {
@@ -149,9 +161,6 @@ export default abstract class Graph {
     while (node) {
       let res = this._traversePreOrder(nodeUri, doSomething, param);
       if (res) return res
-
-
-      
       nodeUri = node.get('next');
       node = this._nodes[nodeUri];
     }
@@ -192,7 +201,7 @@ export default abstract class Graph {
     }
 
     let node: Subject = this._traversePreOrder(thisUri, this._findRelative, relativeUri)
-    if (node && node.get('next')!==relativeUri) { // TODO: ugly exception! The traverse will mostly find a decendent, unless the two nodes are neighboring brothers
+    if (node && node.get('next') !== relativeUri) { // TODO: ugly exception! The traverse will mostly find a decendent, unless the two nodes are neighboring brothers
       throw new Error('Trying to append the node to its decendent')
     }
     this._disconnect(thisUri);
@@ -203,3 +212,5 @@ export default abstract class Graph {
     return this._isReady;
   }
 }
+
+export { Graph }

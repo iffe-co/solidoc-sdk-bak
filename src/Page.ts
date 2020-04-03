@@ -1,25 +1,7 @@
-import { NamedNodeProperty, TextProperty } from './Property';
-import Block from './Block';
-import Graph from './Graph';
-import Subject from './Subject';
+import { Block, PageHead } from './Block';
+import { Graph } from './Graph';
 
-export class PageHead extends Subject {
-  // TODO: add parent property
-  constructor(uri) {
-    super(uri);
-    this._predicates.title = new TextProperty('http://purl.org/dc/terms/title', 'title');
-    this._predicates.child = new NamedNodeProperty('http://www.solidoc.net/ontologies#firstChild', 'child');
-  }
-  public getSparqlForUpdate = (graph: string): string => {
-    let sparql = '';
-    Object.keys(this._predicates).forEach(key => {
-      sparql += this._predicates[key].getSparqlForUpdate(graph, this._uri);
-    });
-    return sparql;
-  }
-}
-
-export default class Page extends Graph {
+class Page extends Graph {
   constructor(uri: string) {
     super(uri);
     this._nodes[uri] = new PageHead(uri);
@@ -28,3 +10,5 @@ export default class Page extends Graph {
     this._nodes[uri] || (this._nodes[uri] = new Block(uri));
   }
 }
+
+export { Page }

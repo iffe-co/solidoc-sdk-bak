@@ -1,7 +1,7 @@
-import Property from './Property';
+import { Property } from './Property';
 
 // a subject could be a head or a block
-export default abstract class Subject {
+abstract class Subject {
   protected _uri: string
   protected _predicates: { [key: string]: Property } = {}
   public isDeleted: boolean
@@ -24,16 +24,7 @@ export default abstract class Subject {
     }
   }
 
-  public toJson = (): any => {
-    let result = { id: this._uri.substr(this._uri.indexOf('#') + 1) };
-    Object.keys(this._predicates).forEach(key => {
-      result = {
-        ...result,
-        ...this._predicates[key].toJson(),
-      };
-    });
-    return result;
-  }
+  public abstract toJson(): any
 
   public get = (key: string): string => {
     return this._predicates[key].get();
@@ -45,7 +36,7 @@ export default abstract class Subject {
     });
   }
 
-  public abstract getSparqlForUpdate (graph: string): string
+  public abstract getSparqlForUpdate(graph: string): string
 
   public commit = () => {
     Object.keys(this._predicates).forEach(key => {
@@ -53,3 +44,5 @@ export default abstract class Subject {
     });
   }
 }
+
+export { Subject }

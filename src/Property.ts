@@ -1,4 +1,4 @@
-export default abstract class Property {
+abstract class Property {
   id: string
   name: string
   value = ''
@@ -33,7 +33,7 @@ export default abstract class Property {
   // TODO: undo
 }
 
-export class NamedNodeProperty extends Property {
+class NamedNodeProperty extends Property {
   public fromQuad = (quad: any) => {
     this.value = quad.object.id;
     this.uncommitted = this.value;
@@ -53,7 +53,7 @@ export class NamedNodeProperty extends Property {
   }
 }
 
-export class TextProperty extends Property {
+class TextProperty extends Property {
   public fromQuad = (quad: any) => {
     const text: string = quad.object.id;
     this.value = text.substring(1, text.lastIndexOf('"'));
@@ -72,3 +72,5 @@ export class TextProperty extends Property {
     return sparql;
   }
 }
+
+export { Property, NamedNodeProperty, TextProperty }
