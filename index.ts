@@ -1,3 +1,3 @@
-import Page from './src/Page'
+import { Page } from './src/Page'
 
 export { Page }
