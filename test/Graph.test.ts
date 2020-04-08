@@ -3,15 +3,27 @@ import { Page } from '../src/Page';
 import * as assert from 'power-assert';
 
 const pageUri = 'http://example.org/alice/a';
-const blockUri1 = pageUri + '#tag1'
-const blockUri2 = pageUri + '#tag2'
-const blockUri3 = 'http://example.org/alice/b';
-const blockUri4 = pageUri + '#tag4'
+// const pageJson = { id: pageUri, title: "Alice's Profile", children: [] };
 
-const id1 = 'tag1'
-const id2 = 'tag2'
-const id3 = blockUri3
-const id4 = 'tag4'
+const pid1 = 'tag1'
+const paraUri1 = pageUri + '#' + pid1
+
+const tid1 = 'text1'
+const textUri1 = pageUri + '#' + tid1
+const textJson1 = { id: 'text1', type: 'http://www.solidoc.net/ontologies#Leaf', text: 'Paragraph 1' }
+
+const pid2 = 'tag2'
+const paraUri2 = pageUri + '#' + pid2
+
+const tid2 = 'text2'
+const textUri2 = pageUri + '#' + tid2
+const textJson2 = { id: 'text2', type: 'http://www.solidoc.net/ontologies#Leaf', text: 'Paragraph 2' }
+
+const pid3 = 'tag3'
+// const paraUri3 = pageUri + '#' + pid3
+const tid3 = 'text3'
+// const textUri3 = pageUri + '#' + tid3
+const textJson3 = { id: 'text3', type: 'http://www.solidoc.net/ontologies#Leaf', text: 'Paragraph 3' }
 
 let extractChildrenId = (array: any) => {
   return array.children.map(ele => ele.id)
@@ -20,14 +32,20 @@ let extractChildrenId = (array: any) => {
 describe('Page', () => {
   let page: Page;
   let turtle = `<${pageUri}> <http://purl.org/dc/terms/title> "Alice\'s Profile";`;
-  turtle += ` <http://www.solidoc.net/ontologies#firstChild> <${blockUri1}>.`;
-  turtle += `<${blockUri1}> a <http://www.solidoc.net/ontologies#Paragraph>;`;
-  turtle += ` <http://www.solidoc.net/ontologies#firstChild> <${blockUri2}>;`;
-  turtle += ` <http://www.solidoc.net/ontologies#nextBlock> <${blockUri3}>;`;
-  turtle += ` <http://www.solidoc.net/ontologies#content> "Paragraph 1".`;
-  turtle += `<${blockUri2}> a <http://www.solidoc.net/ontologies#Paragraph>;`;
-  turtle += ` <http://www.solidoc.net/ontologies#content> "Sub paragraph".`;
-  turtle += `<${blockUri3}> a <http://www.solidoc.net/ontologies#SolidPage>.`;
+  turtle += ` <http://www.solidoc.net/ontologies#firstChild> <${paraUri1}>.`;
+
+  turtle += `<${paraUri1}> a <http://www.solidoc.net/ontologies#Paragraph>;`;
+  turtle += ` <http://www.solidoc.net/ontologies#firstChild> <${textUri1}>;`;
+  turtle += ` <http://www.solidoc.net/ontologies#nextBlock> <${paraUri2}>.`;
+
+  turtle += `<${textUri1}> a <http://www.solidoc.net/ontologies#Leaf>;`;
+  turtle += ` <http://www.solidoc.net/ontologies#text> "Paragraph 1".`;
+
+  turtle += `<${paraUri2}> a <http://www.solidoc.net/ontologies#Paragraph>;`;
+  turtle += ` <http://www.solidoc.net/ontologies#firstChild> <${textUri2}>.`;
+
+  turtle += `<${textUri2}> a <http://www.solidoc.net/ontologies#Leaf>;`;
+  turtle += ` <http://www.solidoc.net/ontologies#text> "Paragraph 2".`;
 
   beforeEach(() => {
     page = new Page(pageUri);
@@ -38,89 +56,119 @@ describe('Page', () => {
       id: pageUri,
       title: "Alice's Profile",
       children: [
-        {
-          id: 'tag1', type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Paragraph 1', children: [
-            {
-              id: 'tag2', type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Sub paragraph'
-            }
-          ]
-        },
-        {
-          id: blockUri3, type: 'http://www.solidoc.net/ontologies#SolidPage', content: ''
-        }
+        { id: 'tag1', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson1] },
+        { id: 'tag2', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson2] },
       ],
     });
   });
-  it('inserts a sub paragraph', () => {
-    page.insertBlock(blockUri4, 'below', blockUri1);
-    page.set(blockUri4, { type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Inserted paragraph' });
-    assert.deepStrictEqual(extractChildrenId(page.toJson()), [id1, id3])
-    assert.deepStrictEqual(extractChildrenId(page.toJson().children[0]), [id4, id2])
+  it('inserts a text node at paragraph beginning', () => {
+    page.insertNode(textJson3, 'after', textUri1);
+    let pageJson = page.toJson()
+    assert.deepStrictEqual(extractChildrenId(pageJson), [pid1, pid2])
+    assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [tid1, tid3])
+    assert.deepStrictEqual(extractChildrenId(pageJson.children[1]), [tid2])
+    assert.deepStrictEqual(pageJson.children[0].children[1], textJson3)
   });
-  it('inserts a sibling paragraph', () => {
-    page.insertBlock(blockUri4, 'after', blockUri1);
-    page.set(blockUri4, { type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Inserted paragraph' });
-    assert.deepStrictEqual(extractChildrenId(page.toJson()), [id1, id4, id3])
-    assert.deepStrictEqual(extractChildrenId(page.toJson().children[0]), [id2])
+  it('inserts a text node at paragraph end', () => {
+    page.insertNode(textJson3, 'below', paraUri1);
+    let pageJson = page.toJson()
+    assert.deepStrictEqual(extractChildrenId(pageJson), [pid1, pid2])
+    assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [tid3, tid1])
+    assert.deepStrictEqual(extractChildrenId(pageJson.children[1]), [tid2])
+    assert.deepStrictEqual(pageJson.children[0].children[0], textJson3)
   });
-  it('inserts a paragraph to the end', () => {
-    page.insertBlock(blockUri4, 'after', blockUri2);
-    page.set(blockUri2, { type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Inserted paragraph' });
-    assert.deepStrictEqual(extractChildrenId(page.toJson()), [id1, id3])
-    assert.deepStrictEqual(extractChildrenId(page.toJson().children[0]), [id2, id4])
+  it('inserts a paragraph in the middle', () => {
+    let paraJson3 = { id: 'tag3', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson3] }
+    page.insertNode(paraJson3, 'after', paraUri1);
+    let pageJson = page.toJson()
+    assert.deepStrictEqual(extractChildrenId(pageJson), [pid1, pid3, pid2])
+    assert.deepStrictEqual(pageJson.children[1].children[0], textJson3)
   });
-  it('deletes a parent paragraph', () => {
-    page.deleteBlock(blockUri1);
-    assert.deepStrictEqual(extractChildrenId(page.toJson()), [id3])
+  it('inserts a paragraph at the beginning', () => {
+    let paraJson3 = { id: 'tag3', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson3] }
+    page.insertNode(paraJson3, 'below', pageUri);
+    let pageJson = page.toJson()
+    assert.deepStrictEqual(extractChildrenId(pageJson), [pid3, pid1, pid2])
+    assert.deepStrictEqual(pageJson.children[0].children[0], textJson3)
+  });
+  it('inserts a paragraph at the end', () => {
+    let paraJson3 = { id: 'tag3', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson3] }
+    page.insertNode(paraJson3, 'after', paraUri2);
+    let pageJson = page.toJson()
+    assert.deepStrictEqual(extractChildrenId(pageJson), [pid1, pid2, pid3])
+    assert.deepStrictEqual(pageJson.children[2].children[0], textJson3)
+  });
+  it('deletes a paragraph at the beginning', () => {
+    page.deleteNode(paraUri1);
+    assert.deepStrictEqual(extractChildrenId(page.toJson()), [pid2])
   });
   it('deletes a paragraph in the end', () => {
-    page.deleteBlock(blockUri3);
-    assert.deepStrictEqual(extractChildrenId(page.toJson()), [id1])
-    assert.deepStrictEqual(extractChildrenId(page.toJson().children[0]), [id2])
+    page.deleteNode(paraUri2);
+    assert.deepStrictEqual(extractChildrenId(page.toJson()), [pid1])
   });
-  it('deletes after insertion', () => {
-    page.insertBlock(blockUri4, 'below', pageUri);
-    page.set(blockUri4, { type: 'http://www.solidoc.net/ontologies#Paragraph', content: 'Inserted paragraph' });
-    page.deleteBlock(blockUri1);
-    assert.deepStrictEqual(extractChildrenId(page.toJson()), [id4, id3])
+  it('deletes text after insertion', () => {
+    page.insertNode(textJson3, 'below', paraUri1);
+    page.deleteNode(textUri1);
+    let pageJson = page.toJson()
+    assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [tid3])
+    assert.deepStrictEqual(pageJson.children[0].children[0], textJson3)
+  });
+  it('deletes paragraph after insertion', () => {
+    let paraJson3 = { id: 'tag3', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson3] }
+    page.insertNode(paraJson3, 'after', paraUri1);
+    page.deleteNode(paraUri1)
+    let pageJson = page.toJson()
+    assert.deepStrictEqual(extractChildrenId(pageJson), [pid3, pid2])
+    assert.deepStrictEqual(pageJson.children[0].children[0], textJson3)
   });
   it('removes the deleted block from memory after commit', () => {
-    page.deleteBlock(blockUri2);
+    page.deleteNode(paraUri2);
     page.commit();
     let errMsg = ''
     try {
-      page.deleteBlock(blockUri2);
+      page.deleteNode(paraUri2);
     } catch (e) {
       errMsg = e.message
     }
-    assert(errMsg.startsWith('The block is already deleted'))
+    assert(errMsg.startsWith('The node is already deleted'))
   });
-  it('moves block 3 to the top', () => {
-    page.moveBlock(blockUri3, 'below', pageUri);
-    assert.deepStrictEqual(extractChildrenId(page.toJson()), [id3, id1])
-    assert.deepStrictEqual(extractChildrenId(page.toJson().children[1]), [id2])
+  it('removes the child text from memory after commit', () => {
+    page.deleteNode(paraUri2);
+    page.commit();
+    let errMsg = ''
+    try {
+      page.deleteNode(textUri2);
+    } catch (e) {
+      errMsg = e.message
+    }
+    assert(errMsg.startsWith('The node is already deleted'))
   });
-  it('moves block 1 to the end', () => {
-    page.moveBlock(blockUri1, 'after', blockUri3);
-    assert.deepStrictEqual(extractChildrenId(page.toJson()), [id3, id1])
-    assert.deepStrictEqual(extractChildrenId(page.toJson().children[1]), [id2])
+  it('moves paragraph 2 to the beginning', () => {
+    page.moveNode(paraUri2, 'below', pageUri);
+    let pageJson = page.toJson()
+    assert.deepStrictEqual(extractChildrenId(pageJson), [pid2, pid1])
+    assert.deepStrictEqual(pageJson.children[0].children[0], textJson2)
   });
-  it('moves block 2 to the middle', () => {
-    page.moveBlock(blockUri2, 'after', blockUri1);
-    assert.deepStrictEqual(extractChildrenId(page.toJson()), [id1, id2, id3])
+  it('moves paragraph 1 to the end', () => {
+    page.moveNode(paraUri1, 'after', paraUri2);
+    let pageJson = page.toJson()
+    assert.deepStrictEqual(extractChildrenId(pageJson), [pid2, pid1])
+    assert.deepStrictEqual(pageJson.children[1].children[0], textJson1)
   });
-  it('moves block 3 to the middle', () => {
-    page.moveBlock(blockUri3, 'after', blockUri2);
-    assert.deepStrictEqual(extractChildrenId(page.toJson()), [id1])
-    assert.deepStrictEqual(extractChildrenId(page.toJson().children[0]), [id2, id3])
+  it('inserts and moves text', () => {
+    page.insertNode(textJson3, 'below', paraUri1);
+    page.moveNode(textUri1, 'after', textUri2);
+    let pageJson = page.toJson()
+    assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [tid3])
+    assert.deepStrictEqual(extractChildrenId(pageJson.children[1]), [tid2, tid1])
   });
   it('disallows moving below a child', () => {
     let errMsg = ''
     try {
-      page.moveBlock(blockUri1, 'below', blockUri2);
+      page.moveNode(paraUri1, 'below', textUri1);
     } catch (e) {
       errMsg = e.message
     }
-    assert(errMsg.startsWith('Trying to append the block to its decendent'))
+    assert(errMsg.startsWith('Trying to append the node to its decendent'))
   });
 });

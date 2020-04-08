@@ -24,14 +24,24 @@ abstract class Subject {
     }
   }
 
+  public abstract toJson(): any
+
   public get = (key: string): string => {
-    return this._predicates[key].get();
+    return this._predicates[key] ? this._predicates[key].get() : '';
   }
 
   public set = (options: any) => {
     Object.keys(options).forEach(key => {
-      this._predicates[key].set(options[key]);
+      key==='id' || key==='children' || this._predicates[key].set(options[key]);
     });
+  }
+
+  public setNext = (block: Subject) => {
+    this.set({ next: block ? block._uri : '' })
+  }
+
+  public setChild = (block: Subject) => {
+    this.set({ child: block ? block._uri : '' })
   }
 
   public abstract getSparqlForUpdate(graph: string): string

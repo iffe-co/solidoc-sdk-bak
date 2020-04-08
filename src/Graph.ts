@@ -6,7 +6,7 @@ const parser = new n3.Parser();
 // a graph could be a page or a database
 abstract class Graph {
   protected _uri: string
-  protected _nodes: { [uri: string]: Subject }
+  protected _nodes: { [uri: string]: Subject } = {}
   protected _isReady: boolean
 
   constructor(uri: string) {
@@ -16,14 +16,26 @@ abstract class Graph {
 
   public fromTurtle = (turtle: string) => {
     const quads: any[] = parser.parse(turtle);
-    quads.forEach(quad => {
-      this._nodes[quad.subject.id] || this._addPlaceHolder(quad.subject.id);
-      this._nodes[quad.subject.id].fromQuad(quad);
-    });
+    this._addSubjects(quads);
+    this._assignProperties(quads);
     this._isReady = true;
   }
 
-  protected abstract _addPlaceHolder(uri: string): void
+  private _addSubjects = (quads: any) => {
+    quads.forEach(quad=> {
+      if (quad.predicate.id==='http://www.w3.org/1999/02/22-rdf-syntax-ns#type') {
+        this._nodes[quad.subject.id] || this._addPlaceHolder(quad.subject.id, quad.object.id);
+      }
+    })
+  }
+
+  private _assignProperties = (quads: any) => {
+    quads.forEach(quad=> {
+      this._nodes[quad.subject.id].fromQuad(quad);
+    })
+  }
+
+  protected abstract _addPlaceHolder(uri: string, type: string): void
 
   public set = (nodeUri: string, options) => {
     if (!this._isReady) {

@@ -1,43 +1,44 @@
-import { Block, PageHead } from './Block';
+import { Block, PageHead, Leaf } from './Block';
+import { Subject } from './Subject';
 import { Graph } from './Graph';
 
 class Page extends Graph {
-  protected _blocks: { [uri: string]: Block } = {}
+  // protected _nodes: { [uri: string]: Subject } = {}
   constructor(uri: string) {
     super(uri);
-    this._blocks[uri] = new PageHead(uri);
-    this._nodes = this._blocks
+    this._nodes[uri] = new PageHead(uri);
+    // this._nodes = this._nodes
   }
 
-  protected _addPlaceHolder = (uri: string) => {
-    this._blocks[uri] || (this._blocks[uri] = new Block(uri));
+  protected _addPlaceHolder = (uri: string, type: string) => {
+    this._nodes[uri] || (this._nodes[uri] = (type === 'http://www.solidoc.net/ontologies#Leaf') ? new Leaf(uri) : new Block(uri));
   }
-  private _getHead = (): Block => {
-    return this._blocks[this._uri];
+  private _getRoot = (): Subject => {
+    return this._nodes[this._uri];
   }
-  private _getNext = (curr: Block): Block => {
+  private _getNext = (curr: Subject): Subject => {
     let nextUri: string = curr.get('next');
-    return this._blocks[nextUri];
+    return this._nodes[nextUri];
   }
-  private _getChild = (curr: Block): Block => {
+  private _getChild = (curr: Subject): Subject => {
     let childUri: string = curr.get('child');
-    return this._blocks[childUri];
+    return this._nodes[childUri];
   }
 
   public toJson = (): any => {
     if (!this._isReady) {
       throw new Error(`the graph ${this._uri} is not ready for read`);
     }
-    return this._getCascaded(this._getHead())
+    return this._getCascaded(this._getRoot())
   }
 
-  private _getCascaded = (head: Block): any => {
+  private _getCascaded = (head: Subject): any => {
     const headJson = head.toJson();
-    let curr: Block = this._getChild(head);
+    let curr: Subject = this._getChild(head);
 
     while (curr) {
-      let blockJson = this._getCascaded(curr)
-      headJson.children.push(blockJson)
+      let nodeJson = this._getCascaded(curr)
+      headJson.children.push(nodeJson)
 
       curr = this._getNext(curr);
     }
@@ -45,66 +46,75 @@ class Page extends Graph {
     return headJson
   }
 
-  public insertBlock = (thisUri: string, preposition: string, relativeUri: string) => {
-    let relative: Block = this._blocks[relativeUri];
-    let curr: Block = this._blocks[thisUri];
+  public insertNode = (node: any, preposition: string, relativeUri: string) => {
+    let relative: Subject = this._nodes[relativeUri];
+    let currUri: string = this._uri + '#' + node.id
+    let curr: Subject = this._nodes[currUri];
 
     if (!this._isReady) {
-      throw new Error(`the graph ${this._uri} is not ready for insert block`);
+      throw new Error(`the graph ${this._uri} is not ready for insert node`);
     } else if (!relative || relative.isDeleted) {
-      throw new Error('The relative block does not exist: ' + relativeUri);
-    } else if (thisUri === relativeUri) {
-      throw new Error('To insert a block same as the relative: ' + relativeUri);
+      throw new Error('The relative node does not exist: ' + relativeUri);
+    } else if (currUri === relativeUri) {
+      throw new Error('To insert a node same as the relative: ' + relativeUri);
     } else if (curr && !curr.isDeleted) {
-      throw new Error('Trying to insert an existing block: ' + thisUri);
+      throw new Error('Trying to insert an existing node: ' + currUri);
     } else if (curr) {
-      this._blocks[thisUri].isDeleted = false;
+      this._nodes[currUri].isDeleted = false;
     } else {
-      this._addPlaceHolder(thisUri);
-      curr = this._blocks[thisUri];
+      this._addPlaceHolder(currUri, node.type);
+      curr = this._nodes[currUri];
     }
 
     if (preposition === 'after') {
-      this._insertBlockAfter(relative, curr)
+      this._insertNodeAfter(relative, curr)
     } else if (preposition === 'below') {
-      this._insertBlockBelow(relative, curr)
+      this._insertNodeBelow(relative, curr)
+    }
+    this.set(currUri, node)
+
+    if (!node.children || node.children.length===0) return
+
+    this.insertNode(node.children[0], 'below', currUri)
+    for (let i=1; i<node.children.length; i++) {
+      this.insertNode(node.children[i], 'after', node.children[i-1].id)
     }
   }
 
-  private _insertBlockAfter = (prev: Block, curr: Block) => {
-    let next: Block = this._getNext(prev)
+  private _insertNodeAfter = (prev: Subject, curr: Subject) => {
+    let next: Subject = this._getNext(prev)
     prev.setNext(curr)
     curr.setNext(next)
     return;
   }
 
-  private _insertBlockBelow = (parent: Block, curr: Block) => {
-    let child: Block = this._getChild(parent)
+  private _insertNodeBelow = (parent: Subject, curr: Subject) => {
+    let child: Subject = this._getChild(parent)
     parent.setChild(curr)
     curr.setNext(child)
     return;
   }
 
-  public deleteBlock = (thisUri: string) => {
-    let curr: Block = this._blocks[thisUri];
+  public deleteNode = (thisUri: string) => {
+    let curr: Subject = this._nodes[thisUri];
 
     if (!this._isReady) {
-      throw new Error(`the graph ${this._uri} is not ready for delete block`);
+      throw new Error(`the graph ${this._uri} is not ready for delete node`);
     } else if (thisUri === this._uri) {
-      throw new Error('Trying to delete the head block: ' + thisUri);
-    } else if (!this._blocks[thisUri]) {
-      throw new Error('The block is already deleted: ' + thisUri);
+      throw new Error('Trying to delete the head node: ' + thisUri);
+    } else if (!this._nodes[thisUri]) {
+      throw new Error('The node is already deleted: ' + thisUri);
     }
 
-    this._traversePreOrder(this._getHead(), this._trimIfMatch, curr)
+    this._traversePreOrder(this._getRoot(), this._trimIfMatch, curr)
     this._traversePreOrder(curr, this._markAsDeleted);
   }
 
-  private _traversePreOrder = (head: Block, doSomething: (curr: Block, target?: any) => boolean, target?: any): boolean => {
+  private _traversePreOrder = (head: Subject, doSomething: (curr: Subject, target?: any) => boolean, target?: any): boolean => {
     let res = doSomething(head, target);
     if (res) return res
 
-    let curr: Block = this._getChild(head);
+    let curr: Subject = this._getChild(head);
 
     while (curr) {
       let res = this._traversePreOrder(curr, doSomething, target);
@@ -115,48 +125,48 @@ class Page extends Graph {
     return res
   }
 
-  private _trimIfMatch = (curr: Block, target: Block): boolean => {
-    let nextBlock: Block = this._getNext(target)
+  private _trimIfMatch = (curr: Subject, target: Subject): boolean => {
+    let nextNode: Subject = this._getNext(target)
     if (this._getChild(curr) === target) {
-      curr.setChild(nextBlock)
+      curr.setChild(nextNode)
       return true
     } else if (this._getNext(curr) === target) {
-      curr.setNext(nextBlock)
+      curr.setNext(nextNode)
       return true
     }
     return false
   }
 
-  private _markAsDeleted = (curr: Block): boolean => {
+  private _markAsDeleted = (curr: Subject): boolean => {
     curr.isDeleted = true
     return false
   }
 
-  public moveBlock = (thisUri: string, preposition: string, relativeUri: string) => {
-    let curr: Block = this._blocks[thisUri]
-    let relative: Block = this._blocks[relativeUri]
+  public moveNode = (thisUri: string, preposition: string, relativeUri: string) => {
+    let curr: Subject = this._nodes[thisUri]
+    let relative: Subject = this._nodes[relativeUri]
 
     if (!this._isReady) {
-      throw new Error(`the graph ${this._uri} is not ready for insert block`);
+      throw new Error(`the graph ${this._uri} is not ready for insert node`);
     } else if (curr && curr.isDeleted) {
-      throw new Error('Trying to move a deleted block: ' + thisUri);
+      throw new Error('Trying to move a deleted node: ' + thisUri);
     } else if (!relative || relative.isDeleted) {
-      throw new Error('The relative block does not exist: ' + relativeUri);
+      throw new Error('The relative node does not exist: ' + relativeUri);
     } else if (thisUri === relativeUri) {
-      throw new Error('The moving block is the same as the relative: ' + relativeUri);
+      throw new Error('The moving node is the same as the relative: ' + relativeUri);
     } else if (this._traversePreOrder(curr, this._findDescendent, relative)) {
-      throw new Error('Trying to append the block to its decendent')
+      throw new Error('Trying to append the node to its decendent')
     }
 
-    this._traversePreOrder(this._getHead(), this._trimIfMatch, curr)
+    this._traversePreOrder(this._getRoot(), this._trimIfMatch, curr)
     if (preposition === 'after') {
-      this._insertBlockAfter(relative, curr)
+      this._insertNodeAfter(relative, curr)
     } else if (preposition === 'below') {
-      this._insertBlockBelow(relative, curr)
+      this._insertNodeBelow(relative, curr)
     }
   }
 
-  private _findDescendent = (curr: Block, target: Block): boolean => {
+  private _findDescendent = (curr: Subject, target: Subject): boolean => {
     return (this._getChild(curr) === target)
   }
 
