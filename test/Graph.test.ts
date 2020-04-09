@@ -88,6 +88,14 @@ describe('Insert Node', () => {
     assert.deepStrictEqual(extractChildrenId(pageJson.children[1]), [tid2])
     assert.deepStrictEqual(pageJson.children[0].children[1], textJson3)
   });
+  it('inserts a text node at offset > length', () => {
+    page.insertNode({parentUri: paraUri1, offset: 2}, textJson3);
+    let pageJson = page.toJson()
+    assert.deepStrictEqual(extractChildrenId(pageJson), [pid1, pid2])
+    assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [tid1, tid3])
+    assert.deepStrictEqual(extractChildrenId(pageJson.children[1]), [tid2])
+    assert.deepStrictEqual(pageJson.children[0].children[1], textJson3)
+  });
   it('inserts a paragraph at the beginning', () => {
     let paraJson3 = { id: 'tag3', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson3] }
     page.insertNode({parentUri: pageUri, offset: 0}, paraJson3);

@@ -19,11 +19,14 @@ abstract class Graph {
     let nextUri: string = curr.get('next');
     return this._nodes[nextUri];
   }
+  // In case of no child, the function returns undefined
+  // otherwise it return the offset-th child, or the last node if offset > length
   private _getChild = (curr: Subject, offset: number): Subject => {
     let childUri: string = curr.get('child');
     let child: Subject = this._nodes[childUri];
-    while (offset > 0) {
-      child = this._getNext(child);
+    while (offset > 0 && child) {
+      let next: Subject = this._getNext(child)
+      child = next ? next : child;
       offset--
     }
     return child;
