@@ -23,6 +23,13 @@ abstract class Graph {
     let childUri: string = curr.get('child');
     return this._nodes[childUri];
   }
+  protected _getExisting = (uri: string): Subject => {
+    let node = this._nodes[uri];
+    if (!node || node.isDeleted) {
+      throw new Error('The node does not exist: ' + uri);
+    }
+    return node;
+  }
 
   public fromTurtle = (turtle: string) => {
     const quads: any[] = parser.parse(turtle);
@@ -88,13 +95,24 @@ abstract class Graph {
     });
   }
 
+  protected _insertNode = (parent: Subject, offset: number, curr: Subject) => {
+    if (offset ===0) {
+      this._insertNodeBelow(parent, curr)
+    } else {
+      let prev: Subject = this._getChild(parent)
+      while (offset>1) { // TODO: offset > length
+        prev = this._getNext(prev)
+        offset--
+      }
+      this._insertNodeAfter(prev, curr)
+    }
+  }
   protected _insertNodeAfter = (prev: Subject, curr: Subject) => {
     let next: Subject = this._getNext(prev)
     prev.setNext(curr)
     curr.setNext(next)
     return;
   }
-
   protected _insertNodeBelow = (parent: Subject, curr: Subject) => {
     let child: Subject = this._getChild(parent)
     parent.setChild(curr)

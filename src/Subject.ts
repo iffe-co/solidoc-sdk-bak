@@ -46,7 +46,17 @@ abstract class Subject {
     this.set({ child: node ? node._uri : '' })
   }
 
-  public abstract getSparqlForUpdate(graph: string): string
+  public getSparqlForUpdate = (graph: string): string => {
+    let sparql = '';
+    if (this.isDeleted) {
+      sparql += `WITH <${graph}> DELETE { <${this._uri}> ?p ?o } WHERE { <${this._uri}> ?p ?o };\n`;
+    } else {
+      Object.keys(this._predicates).forEach(key => {
+        sparql += this._predicates[key].getSparqlForUpdate(graph, this._uri);
+      });
+    }
+    return sparql;
+  }
 
   public commit = () => {
     Object.keys(this._predicates).forEach(key => {

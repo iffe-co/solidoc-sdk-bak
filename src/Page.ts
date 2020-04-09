@@ -2,6 +2,11 @@ import { Branch, Root, Leaf } from './Block';
 import { Subject } from './Subject';
 import { Graph } from './Graph';
 
+interface Path {
+  parentUri: string,
+  offset: number
+}
+
 class Page extends Graph {
   constructor(uri: string) {
     super(uri);
@@ -12,15 +17,13 @@ class Page extends Graph {
     this._nodes[uri] || (this._nodes[uri] = (type === 'http://www.solidoc.net/ontologies#Leaf') ? new Leaf(uri) : new Branch(uri));
   }
 
-  public insertNode = (node: any, preposition: string, relativeUri: string) => {
-    let relative: Subject = this._nodes[relativeUri];
+  public insertNode = (path: Path, node: any) => {
+    let parent: Subject = this._getExisting(path.parentUri);
     let currUri: string = this._uri + '#' + node.id
     let curr: Subject = this._nodes[currUri];
 
-    if (!relative || relative.isDeleted) {
-      throw new Error('The relative node does not exist: ' + relativeUri);
-    } else if (currUri === relativeUri) {
-      throw new Error('To insert a node same as the relative: ' + relativeUri);
+    if (currUri === path.parentUri) {
+      throw new Error('To insert a node same as the relative: ' + path.parentUri);
     } else if (curr && !curr.isDeleted) {
       throw new Error('Trying to insert an existing node: ' + currUri);
     } else if (curr) {
@@ -30,42 +33,30 @@ class Page extends Graph {
       curr = this._nodes[currUri];
     }
 
-    if (preposition === 'after') {
-      this._insertNodeAfter(relative, curr)
-    } else if (preposition === 'below') {
-      this._insertNodeBelow(relative, curr)
-    }
+    this._insertNode(parent, path.offset, curr);
     this.set(currUri, node)
 
-    if (!node.children || node.children.length === 0) return
-
-    this.insertNode(node.children[0], 'below', currUri)
-    for (let i = 1; i < node.children.length; i++) {
-      this.insertNode(node.children[i], 'after', this._uri + '#' + node.children[i - 1].id)
+    for (let i = 0; node.children && i < node.children.length; i++) {
+      path = {parentUri: currUri, offset: i};
+      this.insertNode(path, node.children[i])
     }
   }
 
   public deleteNode = (thisUri: string) => {
-    let curr: Subject = this._nodes[thisUri];
+    let curr: Subject = this._getExisting(thisUri);
 
     if (thisUri === this._uri) {
       throw new Error('Trying to delete the root node: ' + thisUri);
-    } else if (!this._nodes[thisUri]) {
-      throw new Error('The node is already deleted: ' + thisUri);
     }
 
     this._deleteNode(curr)
   }
 
   public moveNode = (thisUri: string, preposition: string, relativeUri: string) => {
-    let curr: Subject = this._nodes[thisUri]
-    let relative: Subject = this._nodes[relativeUri]
+    let curr: Subject = this._getExisting(thisUri)
+    let relative: Subject = this._getExisting(relativeUri)
 
-    if (curr && curr.isDeleted) {
-      throw new Error('Trying to move a deleted node: ' + thisUri);
-    } else if (!relative || relative.isDeleted) {
-      throw new Error('The relative node does not exist: ' + relativeUri);
-    } else if (thisUri === relativeUri) {
+    if (thisUri === relativeUri) {
       throw new Error('The moving node is the same as the relative: ' + relativeUri);
     }
 
@@ -86,11 +77,9 @@ const fromJson = (json: any): Page => {
   page.set(pageUri, { title: json.title });
   page.set(pageUri, { type: json.type });
 
-  if (!json.children || json.children.length === 0) return page
-
-  page.insertNode(json.children[0], 'below', pageUri)
-  for (let i = 1; i < json.children.length; i++) {
-    page.insertNode(json.children[i], 'after', pageUri + '#' + json.children[i - 1].id)
+  for (let i = 0; json.children && i < json.children.length; i++) {
+    let path: Path = {parentUri: pageUri, offset: i}
+    page.insertNode(path, json.children[i])
   }
 
   return page

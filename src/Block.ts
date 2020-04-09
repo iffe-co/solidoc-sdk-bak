@@ -20,17 +20,6 @@ class Branch extends Subject {
     return result;
   }
 
-  public getSparqlForUpdate = (graph: string): string => {
-    let sparql = '';
-    if (this.isDeleted) {
-      sparql += `WITH <${graph}> DELETE { <${this._uri}> ?p ?o } WHERE { <${this._uri}> ?p ?o };\n`;
-    } else {
-      Object.keys(this._predicates).forEach(key => {
-        sparql += this._predicates[key].getSparqlForUpdate(graph, this._uri);
-      });
-    }
-    return sparql;
-  }
 }
 
 class Root extends Branch {
@@ -48,14 +37,6 @@ class Root extends Branch {
       children: []
     };
     return result;
-  }
-
-  public getSparqlForUpdate = (graph: string): string => {
-    let sparql = '';
-    Object.keys(this._predicates).forEach(key => {
-      sparql += this._predicates[key].getSparqlForUpdate(graph, this._uri);
-    });
-    return sparql;
   }
 }
 
@@ -76,18 +57,6 @@ class Leaf extends Subject {
       text: this._predicates['text'].get(),
     };
     return result;
-  }
-
-  public getSparqlForUpdate = (graph: string): string => {
-    let sparql = '';
-    if (this.isDeleted) {
-      sparql += `WITH <${graph}> DELETE { <${this._uri}> ?p ?o } WHERE { <${this._uri}> ?p ?o };\n`;
-    } else {
-      Object.keys(this._predicates).forEach(key => {
-        sparql += this._predicates[key].getSparqlForUpdate(graph, this._uri);
-      });
-    }
-    return sparql;
   }
 }
 
