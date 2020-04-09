@@ -20,6 +20,9 @@ class Branch extends Subject {
     return result;
   }
 
+  public setChild = (node: Subject) => {
+    this.set({ child: node ? node.get('id') : '' })
+  }
 }
 
 class Root extends Branch {

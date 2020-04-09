@@ -26,6 +26,7 @@ abstract class Subject {
   public abstract toJson(): any
 
   public get = (key: string): string => {
+    if (key === 'id') return this._uri;
     return this._predicates[key] ? this._predicates[key].get() : '';
   }
 
@@ -34,16 +35,12 @@ abstract class Subject {
       throw new Error('Trying to update a deleted subject: ' + this._uri);
     }
     Object.keys(options).forEach(key => {
-      key==='id' || key==='children' || this._predicates[key].set(options[key]);
+      key === 'id' || key === 'children' || this._predicates[key].set(options[key]);
     });
   }
 
   public setNext = (node: Subject) => {
     this.set({ next: node ? node._uri : '' })
-  }
-
-  public setChild = (node: Subject) => {
-    this.set({ child: node ? node._uri : '' })
   }
 
   public getSparqlForUpdate = (graph: string): string => {
