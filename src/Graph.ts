@@ -16,18 +16,26 @@ abstract class Graph {
     return this._nodes[this._uri];
   }
   private _getNext = (curr: Subject): Subject => {
+    // TODO: prevent throwing
     let nextUri: string = curr.get('next');
     return this._nodes[nextUri];
   }
   // In case of no child, the function returns undefined
-  // otherwise it return the offset-th child, or the last node if offset > length
+  // otherwise it return the offset-th child, or undefined if offset > length
   private _getChild = (curr: Subject, offset: number): Subject => {
     let childUri: string = curr.get('child');
     let child: Subject = this._nodes[childUri];
     while (offset > 0 && child) {
-      let next: Subject = this._getNext(child)
-      child = next ? next : child;
+      child = this._getNext(child)
       offset--
+    }
+    return child;
+  }
+  private _getLastChild = (curr: Subject): Subject => {
+    let childUri: string = curr.get('child');
+    let child: Subject = this._nodes[childUri];
+    while (this._getNext(child)) {
+      child = this._getNext(child)
     }
     return child;
   }
@@ -107,7 +115,7 @@ abstract class Graph {
     if (offset === 0) {
       this._insertNodeBelow(parent, curr);
     } else {
-      let prev: Subject = this._getChild(parent, offset - 1);
+      let prev: Subject = this._getChild(parent, offset - 1) || this._getLastChild(parent);
       this._insertNodeAfter(prev, curr)
     }
   }
@@ -125,43 +133,39 @@ abstract class Graph {
   }
 
   protected _deleteNode = (parent: Subject, offset: number) => {
-    let curr: Subject;
-    if (offset===0) {
-      curr = this._getChild(parent, 0);
-      let next: Subject = this._getNext(curr);
-      parent.setChild(next);
-    } else {
-      let prev: Subject = this._getChild(parent, offset-1);
-      curr = this._getNext(prev);
-      let next: Subject = curr ? this._getNext(curr) : curr;
-      prev.setNext(next)
-    }
-    // TODO: remove (curr &&) ?
-    curr && this._traversePreOrder(curr, this._markAsDeleted);
-  }
-  private _trimIfMatch = (curr: Subject, target: Subject): boolean => {
-    let nextNode: Subject = this._getNext(target)
-    if (this._getChild(curr, 0) === target) {
-      curr.setChild(nextNode)
-      return true
-    } else if (this._getNext(curr) === target) {
-      curr.setNext(nextNode)
-      return true
-    }
-    return false
+    let curr: Subject = this._getChild(parent, offset);
+    if (!curr) return
+
+    this._detach(curr, parent, offset);
+
+    this._traversePreOrder(curr, this._markAsDeleted);
   }
 
-  protected _moveNode = (curr: Subject, preposition: string, relative: Subject) => {
-    if (this._traversePreOrder(curr, this._findDescendent, relative)) {
-      throw new Error('Trying to append the node to its decendent')
+  protected _moveNode = (oldParent: Subject, oldOffset: number, newParent: Subject, newOffset: number) => {
+    let curr: Subject = this._getChild(oldParent, oldOffset);
+    if (!curr) return;
+
+    if (curr === newParent || this._traversePreOrder(curr, this._findDescendent, newParent)) {
+      throw new Error('Trying to append the node to itself or its descendent')
     }
-    this._traversePreOrder(this._getRoot(), this._trimIfMatch, curr)
-    if (preposition === 'after') {
-      this._insertNodeAfter(relative, curr)
-    } else if (preposition === 'below') {
-      this._insertNodeBelow(relative, curr)
+
+    this._detach(curr, oldParent, oldOffset);
+
+    if (oldParent === newParent && oldOffset < newOffset) {
+      newOffset = newOffset - 1;
     }
+    this._insertNode(newParent, newOffset, curr);
   }
+
+  private _detach = (curr: Subject, parent: Subject, offset: number) => {
+    let next: Subject = this._getNext(curr);
+    if (offset === 0) {
+      parent.setChild(next);
+    } else {
+      let prev: Subject = this._getChild(parent, offset - 1);
+      prev.setNext(next)
+    }
+  } 
 
   private _traversePreOrder = (head: Subject, doSomething: (curr: Subject, target?: any) => boolean, target?: any): boolean => {
     let res = doSomething(head, target);

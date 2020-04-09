@@ -45,19 +45,14 @@ class Page extends Graph {
   public deleteNode = (path: Path) => {
     let parent: Subject = this._getExisting(path.parentUri);
 
-
     this._deleteNode(parent, path.offset)
   }
 
-  public moveNode = (thisUri: string, preposition: string, relativeUri: string) => {
-    let curr: Subject = this._getExisting(thisUri)
-    let relative: Subject = this._getExisting(relativeUri)
+  public moveNode = (oldPath: Path, newPath: Path) => {
+    let oldParent: Subject = this._getExisting(oldPath.parentUri);
+    let newParent: Subject = this._getExisting(newPath.parentUri);
 
-    if (thisUri === relativeUri) {
-      throw new Error('The moving node is the same as the relative: ' + relativeUri);
-    }
-
-    this._moveNode(curr, preposition, relative);
+    this._moveNode(oldParent, oldPath.offset, newParent, newPath.offset);
   }
 }
 

@@ -181,19 +181,19 @@ describe('Move Node', () => {
   });
 
   it('moves paragraph 2 to the beginning', () => {
-    page.moveNode(paraUri2, 'below', pageUri);
+    page.moveNode({parentUri: pageUri, offset: 1}, {parentUri: pageUri, offset: 0});
     let pageJson = page.toJson()
     assert.deepStrictEqual(extractChildrenId(pageJson), [pid2, pid1])
     assert.deepStrictEqual(pageJson.children[0].children[0], textJson2)
   });
   it('moves paragraph 1 to the end', () => {
-    page.moveNode(paraUri1, 'after', paraUri2);
+    page.moveNode({parentUri: pageUri, offset: 0}, {parentUri: pageUri, offset: 2});
     let pageJson = page.toJson()
     assert.deepStrictEqual(extractChildrenId(pageJson), [pid2, pid1])
     assert.deepStrictEqual(pageJson.children[1].children[0], textJson1)
   });
   it('moves text', () => {
-    page.moveNode(textUri1, 'after', textUri2);
+    page.moveNode({parentUri: paraUri1, offset: 0}, {parentUri: paraUri2, offset: 1});
     let pageJson = page.toJson()
     assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [])
     assert.deepStrictEqual(extractChildrenId(pageJson.children[1]), [tid2, tid1])
@@ -201,10 +201,10 @@ describe('Move Node', () => {
   it('disallows moving below a child', () => {
     let errMsg = ''
     try {
-      page.moveNode(paraUri1, 'below', textUri1);
+      page.moveNode({parentUri: pageUri, offset: 0}, {parentUri: paraUri1, offset: 0});
     } catch (e) {
       errMsg = e.message
     }
-    assert(errMsg.startsWith('Trying to append the node to its decendent'))
+    assert(errMsg.startsWith('Trying to append the node to itself or its descendent'))
   });
 });
