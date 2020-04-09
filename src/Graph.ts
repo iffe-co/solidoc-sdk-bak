@@ -19,9 +19,14 @@ abstract class Graph {
     let nextUri: string = curr.get('next');
     return this._nodes[nextUri];
   }
-  private _getChild = (curr: Subject): Subject => {
+  private _getChild = (curr: Subject, offset: number): Subject => {
     let childUri: string = curr.get('child');
-    return this._nodes[childUri];
+    let child: Subject = this._nodes[childUri];
+    while (offset > 0) {
+      child = this._getNext(child);
+      offset--
+    }
+    return child;
   }
   protected _getExisting = (uri: string): Subject => {
     let node = this._nodes[uri];
@@ -54,9 +59,9 @@ abstract class Graph {
   protected abstract _addPlaceHolder(uri: string, type: string): void
 
   public toJson = (head?: Subject): any => {
-    if(!head) head = this._getRoot();
+    if (!head) head = this._getRoot();
     const headJson = head.toJson();
-    let curr: Subject = this._getChild(head);
+    let curr: Subject = this._getChild(head, 0);
 
     while (curr) {
       let nodeJson = this.toJson(curr)
@@ -96,14 +101,10 @@ abstract class Graph {
   }
 
   protected _insertNode = (parent: Subject, offset: number, curr: Subject) => {
-    if (offset ===0) {
-      this._insertNodeBelow(parent, curr)
+    if (offset === 0) {
+      this._insertNodeBelow(parent, curr);
     } else {
-      let prev: Subject = this._getChild(parent)
-      while (offset>1) { // TODO: offset > length
-        prev = this._getNext(prev)
-        offset--
-      }
+      let prev: Subject = this._getChild(parent, offset - 1);
       this._insertNodeAfter(prev, curr)
     }
   }
@@ -114,7 +115,7 @@ abstract class Graph {
     return;
   }
   protected _insertNodeBelow = (parent: Subject, curr: Subject) => {
-    let child: Subject = this._getChild(parent)
+    let child: Subject = this._getChild(parent, 0)
     parent.setChild(curr)
     curr.setNext(child)
     return;
@@ -141,7 +142,7 @@ abstract class Graph {
     let res = doSomething(head, target);
     if (res) return res
 
-    let curr: Subject = this._getChild(head);
+    let curr: Subject = this._getChild(head, 0);
 
     while (curr) {
       let res = this._traversePreOrder(curr, doSomething, target);
@@ -154,7 +155,7 @@ abstract class Graph {
 
   private _trimIfMatch = (curr: Subject, target: Subject): boolean => {
     let nextNode: Subject = this._getNext(target)
-    if (this._getChild(curr) === target) {
+    if (this._getChild(curr, 0) === target) {
       curr.setChild(nextNode)
       return true
     } else if (this._getNext(curr) === target) {
@@ -170,7 +171,7 @@ abstract class Graph {
   }
 
   private _findDescendent = (curr: Subject, target: Subject): boolean => {
-    return (this._getChild(curr) === target)
+    return (this._getChild(curr, 0) === target)
   }
 }
 
