@@ -17,9 +17,7 @@ class Page extends Graph {
     let currUri: string = this._uri + '#' + node.id
     let curr: Subject = this._nodes[currUri];
 
-    if (!this._isReady) {
-      throw new Error(`the graph ${this._uri} is not ready for insert node`);
-    } else if (!relative || relative.isDeleted) {
+    if (!relative || relative.isDeleted) {
       throw new Error('The relative node does not exist: ' + relativeUri);
     } else if (currUri === relativeUri) {
       throw new Error('To insert a node same as the relative: ' + relativeUri);
@@ -50,9 +48,7 @@ class Page extends Graph {
   public deleteNode = (thisUri: string) => {
     let curr: Subject = this._nodes[thisUri];
 
-    if (!this._isReady) {
-      throw new Error(`the graph ${this._uri} is not ready for delete node`);
-    } else if (thisUri === this._uri) {
+    if (thisUri === this._uri) {
       throw new Error('Trying to delete the root node: ' + thisUri);
     } else if (!this._nodes[thisUri]) {
       throw new Error('The node is already deleted: ' + thisUri);
@@ -65,9 +61,7 @@ class Page extends Graph {
     let curr: Subject = this._nodes[thisUri]
     let relative: Subject = this._nodes[relativeUri]
 
-    if (!this._isReady) {
-      throw new Error(`the graph ${this._uri} is not ready for insert node`);
-    } else if (curr && curr.isDeleted) {
+    if (curr && curr.isDeleted) {
       throw new Error('Trying to move a deleted node: ' + thisUri);
     } else if (!relative || relative.isDeleted) {
       throw new Error('The relative node does not exist: ' + relativeUri);
