@@ -42,14 +42,11 @@ class Page extends Graph {
     }
   }
 
-  public deleteNode = (thisUri: string) => {
-    let curr: Subject = this._getExisting(thisUri);
+  public deleteNode = (path: Path) => {
+    let parent: Subject = this._getExisting(path.parentUri);
 
-    if (thisUri === this._uri) {
-      throw new Error('Trying to delete the root node: ' + thisUri);
-    }
 
-    this._deleteNode(curr)
+    this._deleteNode(parent, path.offset)
   }
 
   public moveNode = (thisUri: string, preposition: string, relativeUri: string) => {

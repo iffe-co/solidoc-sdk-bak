@@ -124,9 +124,31 @@ abstract class Graph {
     return;
   }
 
-  protected _deleteNode = (curr: Subject) => {
-    this._traversePreOrder(this._getRoot(), this._trimIfMatch, curr)
-    this._traversePreOrder(curr, this._markAsDeleted);
+  protected _deleteNode = (parent: Subject, offset: number) => {
+    let curr: Subject;
+    if (offset===0) {
+      curr = this._getChild(parent, 0);
+      let next: Subject = this._getNext(curr);
+      parent.setChild(next);
+    } else {
+      let prev: Subject = this._getChild(parent, offset-1);
+      curr = this._getNext(prev);
+      let next: Subject = curr ? this._getNext(curr) : curr;
+      prev.setNext(next)
+    }
+    // TODO: remove (curr &&) ?
+    curr && this._traversePreOrder(curr, this._markAsDeleted);
+  }
+  private _trimIfMatch = (curr: Subject, target: Subject): boolean => {
+    let nextNode: Subject = this._getNext(target)
+    if (this._getChild(curr, 0) === target) {
+      curr.setChild(nextNode)
+      return true
+    } else if (this._getNext(curr) === target) {
+      curr.setNext(nextNode)
+      return true
+    }
+    return false
   }
 
   protected _moveNode = (curr: Subject, preposition: string, relative: Subject) => {
@@ -154,18 +176,6 @@ abstract class Graph {
     }
 
     return res
-  }
-
-  private _trimIfMatch = (curr: Subject, target: Subject): boolean => {
-    let nextNode: Subject = this._getNext(target)
-    if (this._getChild(curr, 0) === target) {
-      curr.setChild(nextNode)
-      return true
-    } else if (this._getNext(curr) === target) {
-      curr.setNext(nextNode)
-      return true
-    }
-    return false
   }
 
   private _markAsDeleted = (curr: Subject): boolean => {
