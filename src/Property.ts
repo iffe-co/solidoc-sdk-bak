@@ -9,7 +9,7 @@ abstract class Property {
     this.name = name;
   }
 
-  public abstract fromQuad (quad: any): void
+  public abstract fromQuad(quad: any): void
 
   public set = (value: string) => {
     this.uncommitted = value;
@@ -24,13 +24,15 @@ abstract class Property {
     return json;
   }
 
-  public abstract getSparqlForUpdate (graph: string, subject: string): string
+  public abstract getSparqlForUpdate(graph: string, subject: string): string
 
   public commit = () => {
     this.value = this.uncommitted;
   }
 
-  // TODO: undo
+  public undo = () => {
+    this.uncommitted = this.value;
+  }
 }
 
 class NamedNodeProperty extends Property {

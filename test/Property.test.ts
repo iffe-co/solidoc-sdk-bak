@@ -51,6 +51,14 @@ describe('Named Node Property', () => {
     assert(prop.get() === 'http://xmlns.com/foaf/0.1/homepage');
     assert.deepStrictEqual(prop.toJson(), { type: 'http://xmlns.com/foaf/0.1/homepage' });
   });
+  it('undoes correctly', () => {
+    prop.fromQuad(quads[0]);
+    prop.set('http://xmlns.com/foaf/0.1/homepage');
+    prop.undo();
+    assert(prop.get() === 'http://xmlns.com/foaf/0.1/Person');
+    assert.deepStrictEqual(prop.toJson(), { type: 'http://xmlns.com/foaf/0.1/Person' });
+
+  });
 });
 
 describe('Text Property', () => {

@@ -27,7 +27,6 @@ describe('Paragraph', () => {
     quads.forEach(para.fromQuad);
     para.set({ next: 'http://example.org/alice#tag3' });
     assert(para.get('next') === 'http://example.org/alice#tag3');
-    // assert(para.toJson().next === 'http://example.org/alice#tag2');
   });
   it('generates sparql after deletion', () => {
     quads.forEach(para.fromQuad);
@@ -35,16 +34,11 @@ describe('Paragraph', () => {
     const sparql = para.getSparqlForUpdate('http://example.org/test');
     assert(sparql === 'WITH <http://example.org/test> DELETE { <http://example.org/alice#tag1> ?p ?o } WHERE { <http://example.org/alice#tag1> ?p ?o };\n');
   });
-  it('returns the old value before a deletion is committed', () => {
+  it('undoes deletion', () => {
     quads.forEach(para.fromQuad);
     para.isDeleted = true;
-
-    assert.deepStrictEqual(para.toJson(), {
-      id: 'tag1',
-      type: 'http://www.solidoc.net/ontologies#Paragraph',
-      children: [],
-    });
-    assert(para.get('next') === 'http://example.org/alice#tag2');
+    para.undo();
+    assert(!para.isDeleted);
   });
 });
 

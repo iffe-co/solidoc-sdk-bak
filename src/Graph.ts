@@ -31,31 +31,28 @@ abstract class Graph {
   }
 
   private _addSubjects = (quads: any) => {
-    quads.forEach(quad=> {
-      if (quad.predicate.id==='http://www.w3.org/1999/02/22-rdf-syntax-ns#type') {
+    quads.forEach(quad => {
+      if (quad.predicate.id === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type') {
         this._nodes[quad.subject.id] || this._addPlaceHolder(quad.subject.id, quad.object.id);
       }
     })
   }
 
   private _assignProperties = (quads: any) => {
-    quads.forEach(quad=> {
+    quads.forEach(quad => {
       this._nodes[quad.subject.id].fromQuad(quad);
     })
   }
 
   protected abstract _addPlaceHolder(uri: string, type: string): void
 
-  public toJson = (): any => {
-    return this._getCascaded(this._getRoot())
-  }
-
-  private _getCascaded = (head: Subject): any => {
+  public toJson = (head?: Subject): any => {
+    if(!head) head = this._getRoot();
     const headJson = head.toJson();
     let curr: Subject = this._getChild(head);
 
     while (curr) {
-      let nodeJson = this._getCascaded(curr)
+      let nodeJson = this.toJson(curr)
       headJson.children.push(nodeJson)
 
       curr = this._getNext(curr);
@@ -85,6 +82,11 @@ abstract class Graph {
       }
     });
   }
+  public undo = () => {
+    Object.keys(this._nodes).forEach(uri => {
+      this._nodes[uri].undo();
+    });
+  }
 
   protected _insertNodeAfter = (prev: Subject, curr: Subject) => {
     let next: Subject = this._getNext(prev)
@@ -108,7 +110,8 @@ abstract class Graph {
   protected _moveNode = (curr: Subject, preposition: string, relative: Subject) => {
     if (this._traversePreOrder(curr, this._findDescendent, relative)) {
       throw new Error('Trying to append the node to its decendent')
-    }    this._traversePreOrder(this._getRoot(), this._trimIfMatch, curr)
+    }
+    this._traversePreOrder(this._getRoot(), this._trimIfMatch, curr)
     if (preposition === 'after') {
       this._insertNodeAfter(relative, curr)
     } else if (preposition === 'below') {

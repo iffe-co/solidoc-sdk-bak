@@ -30,6 +30,9 @@ abstract class Subject {
   }
 
   public set = (options: any) => {
+    if (this.isDeleted) {
+      throw new Error('Trying to update a deleted subject: ' + this._uri);
+    }
     Object.keys(options).forEach(key => {
       key==='id' || key==='children' || this._predicates[key].set(options[key]);
     });
@@ -48,6 +51,13 @@ abstract class Subject {
   public commit = () => {
     Object.keys(this._predicates).forEach(key => {
       this._predicates[key].commit();
+    });
+  }
+
+  public undo = () => {
+    this.isDeleted = false
+    Object.keys(this._predicates).forEach(key => {
+      this._predicates[key].undo();
     });
   }
 }
