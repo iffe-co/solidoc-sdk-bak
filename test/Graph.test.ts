@@ -1,5 +1,5 @@
 // import Graph from '../../../../app/data_model/ldp/Graph';
-import { Page } from '../src/Page';
+import { Page, fromTurtle, fromJson } from '../src/Page';
 import * as assert from 'power-assert';
 
 const pageUri = 'http://example.org/alice/a';
@@ -29,38 +29,51 @@ let extractChildrenId = (array: any) => {
   return array.children.map(ele => ele.id)
 }
 
-describe('Page', () => {
-  let page: Page;
-  let turtle = `<${pageUri}> <http://purl.org/dc/terms/title> "Alice\'s Profile";`;
-  turtle += ` <http://www.solidoc.net/ontologies#firstChild> <${paraUri1}>.`;
+let turtle = `<${pageUri}> a <http://www.solidoc.net/ontologies#Root>;`;
+turtle += ` <http://purl.org/dc/terms/title> "Alice\'s Profile";`;
+turtle += ` <http://www.solidoc.net/ontologies#firstChild> <${paraUri1}>.`;
 
-  turtle += `<${paraUri1}> a <http://www.solidoc.net/ontologies#Paragraph>;`;
-  turtle += ` <http://www.solidoc.net/ontologies#firstChild> <${textUri1}>;`;
-  turtle += ` <http://www.solidoc.net/ontologies#nextBlock> <${paraUri2}>.`;
+turtle += `<${paraUri1}> a <http://www.solidoc.net/ontologies#Paragraph>;`;
+turtle += ` <http://www.solidoc.net/ontologies#firstChild> <${textUri1}>;`;
+turtle += ` <http://www.solidoc.net/ontologies#nextNode> <${paraUri2}>.`;
 
-  turtle += `<${textUri1}> a <http://www.solidoc.net/ontologies#Leaf>;`;
-  turtle += ` <http://www.solidoc.net/ontologies#text> "Paragraph 1".`;
+turtle += `<${textUri1}> a <http://www.solidoc.net/ontologies#Leaf>;`;
+turtle += ` <http://www.solidoc.net/ontologies#text> "Paragraph 1".`;
 
-  turtle += `<${paraUri2}> a <http://www.solidoc.net/ontologies#Paragraph>;`;
-  turtle += ` <http://www.solidoc.net/ontologies#firstChild> <${textUri2}>.`;
+turtle += `<${paraUri2}> a <http://www.solidoc.net/ontologies#Paragraph>;`;
+turtle += ` <http://www.solidoc.net/ontologies#firstChild> <${textUri2}>.`;
 
-  turtle += `<${textUri2}> a <http://www.solidoc.net/ontologies#Leaf>;`;
-  turtle += ` <http://www.solidoc.net/ontologies#text> "Paragraph 2".`;
+turtle += `<${textUri2}> a <http://www.solidoc.net/ontologies#Leaf>;`;
+turtle += ` <http://www.solidoc.net/ontologies#text> "Paragraph 2".`;
 
-  beforeEach(() => {
-    page = new Page(pageUri);
-    page.fromTurtle(turtle);
-  });
+let json: any = {
+  id: pageUri,
+  type: 'http://www.solidoc.net/ontologies#Root',
+  title: "Alice's Profile",
+  children: [
+    { id: 'tag1', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson1] },
+    { id: 'tag2', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson2] },
+  ],
+}
+
+let page: Page;
+
+describe('Create Page', () => {
   it('parses from quads', () => {
-    assert.deepStrictEqual(page.toJson(), {
-      id: pageUri,
-      title: "Alice's Profile",
-      children: [
-        { id: 'tag1', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson1] },
-        { id: 'tag2', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson2] },
-      ],
-    });
+    page = fromTurtle(pageUri, turtle);
+    assert.deepStrictEqual(page.toJson(), json);
   });
+  it('parses from json', () => {
+    page = fromJson(json);
+    assert.deepStrictEqual(page.toJson(), json);
+  });
+});
+
+describe('Insert Node', () => {
+  beforeEach(() => {
+    page = fromTurtle(pageUri, turtle);
+  });
+
   it('inserts a text node at paragraph beginning', () => {
     page.insertNode(textJson3, 'after', textUri1);
     let pageJson = page.toJson()
@@ -98,6 +111,13 @@ describe('Page', () => {
     assert.deepStrictEqual(extractChildrenId(pageJson), [pid1, pid2, pid3])
     assert.deepStrictEqual(pageJson.children[2].children[0], textJson3)
   });
+})
+
+describe('Delete Node', () => {
+  beforeEach(() => {
+    page = fromTurtle(pageUri, turtle);
+  });
+
   it('deletes a paragraph at the beginning', () => {
     page.deleteNode(paraUri1);
     assert.deepStrictEqual(extractChildrenId(page.toJson()), [pid2])
@@ -106,12 +126,10 @@ describe('Page', () => {
     page.deleteNode(paraUri2);
     assert.deepStrictEqual(extractChildrenId(page.toJson()), [pid1])
   });
-  it('deletes text after insertion', () => {
-    page.insertNode(textJson3, 'below', paraUri1);
+  it('deletes text', () => {
     page.deleteNode(textUri1);
     let pageJson = page.toJson()
-    assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [tid3])
-    assert.deepStrictEqual(pageJson.children[0].children[0], textJson3)
+    assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [])
   });
   it('deletes paragraph after insertion', () => {
     let paraJson3 = { id: 'tag3', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson3] }
@@ -121,7 +139,7 @@ describe('Page', () => {
     assert.deepStrictEqual(extractChildrenId(pageJson), [pid3, pid2])
     assert.deepStrictEqual(pageJson.children[0].children[0], textJson3)
   });
-  it('removes the deleted block from memory after commit', () => {
+  it('removes the deleted paragraph from memory after commit', () => {
     page.deleteNode(paraUri2);
     page.commit();
     let errMsg = ''
@@ -143,6 +161,13 @@ describe('Page', () => {
     }
     assert(errMsg.startsWith('The node is already deleted'))
   });
+});
+
+describe('Move Node', () => {
+  beforeEach(() => {
+    page = fromTurtle(pageUri, turtle);
+  });
+
   it('moves paragraph 2 to the beginning', () => {
     page.moveNode(paraUri2, 'below', pageUri);
     let pageJson = page.toJson()
@@ -155,11 +180,10 @@ describe('Page', () => {
     assert.deepStrictEqual(extractChildrenId(pageJson), [pid2, pid1])
     assert.deepStrictEqual(pageJson.children[1].children[0], textJson1)
   });
-  it('inserts and moves text', () => {
-    page.insertNode(textJson3, 'below', paraUri1);
+  it('moves text', () => {
     page.moveNode(textUri1, 'after', textUri2);
     let pageJson = page.toJson()
-    assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [tid3])
+    assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [])
     assert.deepStrictEqual(extractChildrenId(pageJson.children[1]), [tid2, tid1])
   });
   it('disallows moving below a child', () => {

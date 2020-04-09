@@ -1,12 +1,12 @@
 import { NamedNodeProperty, TextProperty } from './Property';
 import { Subject } from './Subject';
 
-class Block extends Subject {
+class Branch extends Subject {
   constructor(uri: string) {
     super(uri);
     // TODO: type/next can be extract to Subject super()
     this._predicates.type = new NamedNodeProperty('http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'type');
-    this._predicates.next = new NamedNodeProperty('http://www.solidoc.net/ontologies#nextBlock', 'next');
+    this._predicates.next = new NamedNodeProperty('http://www.solidoc.net/ontologies#nextNode', 'next');
     this._predicates.child = new NamedNodeProperty('http://www.solidoc.net/ontologies#firstChild', 'child');
     this.isDeleted = false
   }
@@ -33,7 +33,7 @@ class Block extends Subject {
   }
 }
 
-class PageHead extends Block {
+class Root extends Branch {
   // TODO: add parent property
   constructor(uri) {
     super(uri);
@@ -43,6 +43,7 @@ class PageHead extends Block {
   public toJson = (): any => {
     let result: any = {
       id: this._uri.substr(this._uri.indexOf('#') + 1),
+      type: this._predicates['type'].get(),
       title: this._predicates['title'].get(),
       children: []
     };
@@ -63,7 +64,7 @@ class Leaf extends Subject {
     // TODO: remove uri property
     super(uri);
     this._predicates.type = new NamedNodeProperty('http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'type');
-    this._predicates.next = new NamedNodeProperty('http://www.solidoc.net/ontologies#nextBlock', 'next');
+    this._predicates.next = new NamedNodeProperty('http://www.solidoc.net/ontologies#nextNode', 'next');
     this._predicates.text = new TextProperty('http://www.solidoc.net/ontologies#text', 'text');
     this.isDeleted = false
   }
@@ -90,4 +91,4 @@ class Leaf extends Subject {
   }
 }
 
-export { Block, PageHead, Leaf }
+export { Branch, Root, Leaf }

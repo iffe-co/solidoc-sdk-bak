@@ -1,6 +1,5 @@
 import { Property } from './Property';
 
-// a subject could be a head or a block
 abstract class Subject {
   protected _uri: string
   protected _predicates: { [key: string]: Property } = {}
@@ -36,12 +35,12 @@ abstract class Subject {
     });
   }
 
-  public setNext = (block: Subject) => {
-    this.set({ next: block ? block._uri : '' })
+  public setNext = (node: Subject) => {
+    this.set({ next: node ? node._uri : '' })
   }
 
-  public setChild = (block: Subject) => {
-    this.set({ child: block ? block._uri : '' })
+  public setChild = (node: Subject) => {
+    this.set({ child: node ? node._uri : '' })
   }
 
   public abstract getSparqlForUpdate(graph: string): string
