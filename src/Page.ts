@@ -84,7 +84,7 @@ class Page extends Graph {
     this._fillNode(curr, node);
   }
 
-  public removeNode = (path: Path) => {
+  private _removeNode = (path: Path) => {
     let parent: Branch = this._getExistingBranch(path.parentUri);
     let curr: Subject = this._getChild(parent, path.offset);
     if (!curr) return
@@ -182,7 +182,7 @@ class Page extends Graph {
       }
 
       case 'remove_node': {
-
+        this._removeNode(op.path)
         break
       }
 

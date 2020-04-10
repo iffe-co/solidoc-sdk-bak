@@ -39,7 +39,7 @@ export type MoveNodeOperation = {
 export type RemoveNodeOperation = {
   type: 'remove_node'
   path: Path
-  node: Node
+  // node: Node
   [key: string]: any
 }
 
