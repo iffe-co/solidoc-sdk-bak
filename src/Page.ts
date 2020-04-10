@@ -136,7 +136,7 @@ class Page extends Graph {
     return false
   }
 
-  public moveNode = (oldPath: Path, newPath: Path) => {
+  private _moveNode = (oldPath: Path, newPath: Path) => {
     let oldParent: Branch = this._getExistingBranch(oldPath.parentUri);
     let newParent: Branch = this._getExistingBranch(newPath.parentUri);
 
@@ -177,7 +177,7 @@ class Page extends Graph {
       }
 
       case 'move_node': {
-
+        this._moveNode(op.path, op.newPath)
         break
       }
 

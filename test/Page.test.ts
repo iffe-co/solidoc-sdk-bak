@@ -197,27 +197,31 @@ describe('Move Node', () => {
   });
 
   it('moves paragraph 2 to the beginning', () => {
-    page.moveNode({ parentUri: pageUri, offset: 1 }, { parentUri: pageUri, offset: 0 });
+    let op: Operation = { type: 'move_node', path: { parentUri: pageUri, offset: 1 }, newPath: { parentUri: pageUri, offset: 0 } }
+    page.apply(op)
     let pageJson = page.toJson()
     assert.deepStrictEqual(extractChildrenId(pageJson), [pid2, pid1])
     assert.deepStrictEqual(pageJson.children[0].children[0], textJson2)
   });
   it('moves paragraph 1 to the end', () => {
-    page.moveNode({ parentUri: pageUri, offset: 0 }, { parentUri: pageUri, offset: 2 });
+    let op: Operation = { type: 'move_node', path: { parentUri: pageUri, offset: 0 }, newPath: { parentUri: pageUri, offset: 2 } }
+    page.apply(op)
     let pageJson = page.toJson()
     assert.deepStrictEqual(extractChildrenId(pageJson), [pid2, pid1])
     assert.deepStrictEqual(pageJson.children[1].children[0], textJson1)
   });
   it('moves text', () => {
-    page.moveNode({ parentUri: paraUri1, offset: 0 }, { parentUri: paraUri2, offset: 1 });
+    let op: Operation = { type: 'move_node', path: { parentUri: paraUri1, offset: 0 }, newPath: { parentUri: paraUri2, offset: 1 } }
+    page.apply(op)
     let pageJson = page.toJson()
     assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [])
     assert.deepStrictEqual(extractChildrenId(pageJson.children[1]), [tid2, tid1])
   });
   it('disallows moving below a child', () => {
+    let op: Operation = { type: 'move_node', path: { parentUri: pageUri, offset: 0 }, newPath: { parentUri: paraUri1, offset: 0 } }
     let errMsg = ''
     try {
-      page.moveNode({ parentUri: pageUri, offset: 0 }, { parentUri: paraUri1, offset: 0 });
+      page.apply(op)
     } catch (e) {
       errMsg = e.message
     }
