@@ -10,16 +10,22 @@ interface Path {
 class Page extends Graph {
   constructor(json: any) {
     super(json.id);
-    let head: Subject = this._nodes[json.id] = new Root(json.id);
+    let head: Subject = this._addPlaceHolder(json.id);
     this._fillNode(head, json)
   }
 
-  protected _addPlaceHolder = (uri: string, type: string): Subject => {
+  protected _addPlaceHolder = (uri: string, type?: string): Subject => {
     if (this._nodes[uri] && !this._nodes[uri].isDeleted) {
       throw new Error('Trying to add an existing node: ' + uri);
     }
     // even if a marked-deleted node exists, it should be recreated
-    this._nodes[uri] = (type === 'http://www.solidoc.net/ontologies#Leaf') ? new Leaf(uri) : new Branch(uri);
+    if (uri === this._uri) {
+      this._nodes[uri] = new Root(uri)
+    } else if (type === 'http://www.solidoc.net/ontologies#Leaf') {
+      this._nodes[uri] =  new Leaf(uri)
+    } else {
+      this._nodes[uri] =  new Branch(uri)
+    }
     return this._nodes[uri];
   }
   private _fillNode = (node: Subject, json: any) => {
@@ -158,16 +164,4 @@ class Page extends Graph {
   }
 }
 
-const fromTurtle = (uri: string, turtle: string): Page => {
-  const page: Page = new Page({id: uri});
-  page.fromTurtle(turtle);
-  return page
-}
-
-const fromJson = (json: any): Page => {
-  const page: Page = new Page(json)
-
-  return page
-}
-
-export { Page, fromTurtle, fromJson }
+export { Page }

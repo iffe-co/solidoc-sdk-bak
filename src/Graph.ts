@@ -21,9 +21,16 @@ abstract class Graph {
     return this._nodes[nextUri];
   }
   public fromTurtle = (turtle: string) => {
+    this._flush();
     const quads: any[] = parser.parse(turtle);
     this._addSubjects(quads);
     this._assignProperties(quads);
+  }
+
+  private _flush = () => {
+    Object.keys(this._nodes).forEach(uri => {
+      delete this._nodes[uri];
+    });
   }
 
   private _addSubjects = (quads: any) => {

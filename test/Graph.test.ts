@@ -1,5 +1,5 @@
 // import Graph from '../../../../app/data_model/ldp/Graph';
-import { Page, fromTurtle, fromJson } from '../src/Page';
+import { Page } from '../src/Page';
 import * as assert from 'power-assert';
 
 const pageUri = 'http://example.org/alice/a';
@@ -58,18 +58,19 @@ let page: Page;
 
 describe('Create Page', () => {
   it('parses from quads', () => {
-    page = fromTurtle(pageUri, turtle);
+    page = new Page({id: pageUri});
+    page.fromTurtle(turtle);
     assert.deepStrictEqual(page.toJson(), json);
   });
   it('parses from json', () => {
-    page = fromJson(json);
+    page = new Page(json);
     assert.deepStrictEqual(page.toJson(), json);
   });
 });
 
 describe('Insert Node', () => {
   beforeEach(() => {
-    page = fromTurtle(pageUri, turtle);
+    page = new Page(json);
   });
 
   it('inserts a text node at paragraph beginning', () => {
@@ -121,7 +122,7 @@ describe('Insert Node', () => {
 
 describe('Delete Node', () => {
   beforeEach(() => {
-    page = fromTurtle(pageUri, turtle);
+    page = new Page(json);
   });
 
   it('deletes a paragraph at the beginning', () => {
@@ -177,7 +178,7 @@ describe('Delete Node', () => {
 
 describe('Move Node', () => {
   beforeEach(() => {
-    page = fromTurtle(pageUri, turtle);
+    page = new Page(json);
   });
 
   it('moves paragraph 2 to the beginning', () => {
