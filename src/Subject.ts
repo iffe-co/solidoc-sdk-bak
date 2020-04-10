@@ -1,7 +1,6 @@
-import Property from './Property';
+import { Property } from './Property';
 
-// a subject could be a head or a block
-export default abstract class Subject {
+abstract class Subject {
   protected _uri: string
   protected _predicates: { [key: string]: Property } = {}
   public isDeleted: boolean
@@ -24,32 +23,50 @@ export default abstract class Subject {
     }
   }
 
-  public toJson = (): any => {
-    let result = { id: this._uri.substr(this._uri.indexOf('#') + 1) };
-    Object.keys(this._predicates).forEach(key => {
-      result = {
-        ...result,
-        ...this._predicates[key].toJson(),
-      };
-    });
-    return result;
-  }
+  public abstract toJson(): any
 
   public get = (key: string): string => {
-    return this._predicates[key].get();
+    if (key === 'id') return this._uri;
+    return this._predicates[key] ? this._predicates[key].get() : '';
   }
 
   public set = (options: any) => {
+    if (this.isDeleted) {
+      throw new Error('Trying to update a deleted subject: ' + this._uri);
+    }
     Object.keys(options).forEach(key => {
-      this._predicates[key].set(options[key]);
+      key === 'id' || key === 'children' || this._predicates[key].set(options[key]);
     });
   }
 
-  public abstract getSparqlForUpdate (graph: string): string
+  public setNext = (node: Subject) => {
+    this.set({ next: node ? node._uri : '' })
+  }
+
+  public getSparqlForUpdate = (graph: string): string => {
+    let sparql = '';
+    if (this.isDeleted) {
+      sparql += `WITH <${graph}> DELETE { <${this._uri}> ?p ?o } WHERE { <${this._uri}> ?p ?o };\n`;
+    } else {
+      Object.keys(this._predicates).forEach(key => {
+        sparql += this._predicates[key].getSparqlForUpdate(graph, this._uri);
+      });
+    }
+    return sparql;
+  }
 
   public commit = () => {
     Object.keys(this._predicates).forEach(key => {
       this._predicates[key].commit();
     });
   }
+
+  public undo = () => {
+    this.isDeleted = false
+    Object.keys(this._predicates).forEach(key => {
+      this._predicates[key].undo();
+    });
+  }
 }
+
+export { Subject }

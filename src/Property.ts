@@ -1,4 +1,4 @@
-export default abstract class Property {
+abstract class Property {
   id: string
   name: string
   value = ''
@@ -9,7 +9,7 @@ export default abstract class Property {
     this.name = name;
   }
 
-  public abstract fromQuad (quad: any): void
+  public abstract fromQuad(quad: any): void
 
   public set = (value: string) => {
     this.uncommitted = value;
@@ -20,20 +20,22 @@ export default abstract class Property {
 
   public toJson = (): any => {
     const json: any = {};
-    json[this.name] = this.value;
+    json[this.name] = this.uncommitted;
     return json;
   }
 
-  public abstract getSparqlForUpdate (graph: string, subject: string): string
+  public abstract getSparqlForUpdate(graph: string, subject: string): string
 
   public commit = () => {
     this.value = this.uncommitted;
   }
 
-  // TODO: undo
+  public undo = () => {
+    this.uncommitted = this.value;
+  }
 }
 
-export class NamedNodeProperty extends Property {
+class NamedNodeProperty extends Property {
   public fromQuad = (quad: any) => {
     this.value = quad.object.id;
     this.uncommitted = this.value;
@@ -53,7 +55,7 @@ export class NamedNodeProperty extends Property {
   }
 }
 
-export class TextProperty extends Property {
+class TextProperty extends Property {
   public fromQuad = (quad: any) => {
     const text: string = quad.object.id;
     this.value = text.substring(1, text.lastIndexOf('"'));
@@ -72,3 +74,5 @@ export class TextProperty extends Property {
     return sparql;
   }
 }
+
+export { Property, NamedNodeProperty, TextProperty }
