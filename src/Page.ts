@@ -49,12 +49,22 @@ class Page extends Graph {
     }
     return child;
   }
-  protected _getExistingBranch = (uri: string): Branch => {
+  protected _getBranchInstance = (uri: string): Branch => {
     let node = this._nodes[uri];
     if (!node || node.isDeleted) {
       throw new Error('The node does not exist: ' + uri);
     } else if (!(node instanceof Branch)) {
       throw new Error('The request node is not a branch: ' + uri)
+    }
+    return node;
+  }
+  protected _getLeafInstance = (path: Path): Leaf => {
+    let parent: Branch = this._getBranchInstance(path.parentUri);
+    let node = this._getChild(parent, path.offset)
+    if (!node || node.isDeleted) {
+      throw new Error('The node does not exist: ' + path.parentUri + ' offset = ' + path.offset);
+    } else if (!(node instanceof Leaf)) {
+      throw new Error('The request node is not a branch: ' +  path.parentUri + ' offset = ' + path.offset)
     }
     return node;
   }
@@ -75,7 +85,7 @@ class Page extends Graph {
   }
 
   private _insertNode = (path: Path, node: Node) => {
-    let parent: Branch = this._getExistingBranch(path.parentUri);
+    let parent: Branch = this._getBranchInstance(path.parentUri);
     let currUri: string = this._uri + '#' + node.id
     let curr: Subject = this._addPlaceHolder(currUri, node.type);
 
@@ -85,7 +95,7 @@ class Page extends Graph {
   }
 
   private _removeNode = (path: Path) => {
-    let parent: Branch = this._getExistingBranch(path.parentUri);
+    let parent: Branch = this._getBranchInstance(path.parentUri);
     let curr: Subject = this._getChild(parent, path.offset);
     if (!curr) return
 
@@ -137,8 +147,8 @@ class Page extends Graph {
   }
 
   private _moveNode = (oldPath: Path, newPath: Path) => {
-    let oldParent: Branch = this._getExistingBranch(oldPath.parentUri);
-    let newParent: Branch = this._getExistingBranch(newPath.parentUri);
+    let oldParent: Branch = this._getBranchInstance(oldPath.parentUri);
+    let newParent: Branch = this._getBranchInstance(newPath.parentUri);
 
     let curr: Subject = this._getChild(oldParent, oldPath.offset);
     if (!curr) return;
@@ -167,7 +177,8 @@ class Page extends Graph {
       }
 
       case 'insert_text': {
-
+        const leaf = this._getLeafInstance(op.path);
+        leaf.insertText(op.offset, op.text)
         break
       }
 
@@ -187,7 +198,8 @@ class Page extends Graph {
       }
 
       case 'remove_text': {
-
+        const leaf = this._getLeafInstance(op.path);
+        leaf.removeText(op.offset, op.text.length);
         break
       }
 

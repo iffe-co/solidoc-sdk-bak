@@ -57,6 +57,18 @@ class Leaf extends Subject {
       text: this._predicates['text'].get(),
     };
   }
+
+  public insertText = (offset: number, text: string) => {
+    const before = this.get('text').slice(0, offset);
+    const after = this.get('text').slice(offset);
+    this.set({ text: before + text + after });
+  }
+
+  public removeText = (offset: number, length: number) => {
+    const before = this.get('text').slice(0, offset);
+    const after = this.get('text').slice(offset + length);
+    this.set({ text: before + after });
+  }
 }
 
 interface Text {

@@ -73,14 +73,38 @@ describe('Leaf', () => {
 
   beforeEach(() => {
     leaf = new Leaf('http://example.org/alice#tag1');
+    quads.forEach(leaf.fromQuad);
   });
   it('parses from quads', () => {
-    quads.forEach(leaf.fromQuad);
     assert.deepStrictEqual(leaf.toJson(), {
       id: 'tag1',
       type: 'http://www.solidoc.net/ontologies#Leaf',
       text: "Hello world!",
     });
     assert(leaf.get('next') === 'http://example.org/alice#tag2');
+  });
+  it('inserts text at offset 0', () => {
+    leaf.insertText(0, 'Alice says: ');
+    assert.deepStrictEqual(leaf.toJson(), {
+      id: 'tag1',
+      type: 'http://www.solidoc.net/ontologies#Leaf',
+      text: "Alice says: Hello world!",
+    });
+  });
+  it('inserts text at offset > length', () => {
+    leaf.insertText(100, '!');
+    assert.deepStrictEqual(leaf.toJson(), {
+      id: 'tag1',
+      type: 'http://www.solidoc.net/ontologies#Leaf',
+      text: "Hello world!!",
+    });
+  });
+  it('removes text', () => {
+    leaf.removeText(0, 6);
+    assert.deepStrictEqual(leaf.toJson(), {
+      id: 'tag1',
+      type: 'http://www.solidoc.net/ontologies#Leaf',
+      text: "world!",
+    });
   });
 });

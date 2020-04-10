@@ -177,18 +177,19 @@ describe('Delete Node', () => {
     let pageJson = page.toJson()
     assert.deepStrictEqual(extractChildrenId(pageJson), [pid1, pid2])
   });
-  // // TODO: use delete text
-  // it('removes the child text from memory after commit', () => {
-  //   page.removeNode({parentUri: pageUri, offset: 1});
-  //   page.commit();
-  //   let errMsg = ''
-  //   try {
-  //     page.removeNode({parentUri: paraUri2, offset: 0});
-  //   } catch (e) {
-  //     errMsg = e.message
-  //   }
-  //   assert(errMsg.startsWith('The node does not exist'))
-  // });
+  it('removes the child text from memory after commit', () => {
+    let op: Operation = { type: 'remove_node', path: {parentUri: pageUri, offset: 1} }
+    page.apply(op)
+    page.commit();
+    let errMsg = ''
+    try {
+    let op: Operation = { type: 'remove_node', path: {parentUri: paraUri2, offset: 0} }
+    page.apply(op)
+    } catch (e) {
+      errMsg = e.message
+    }
+    assert(errMsg.startsWith('The node does not exist'))
+  });
 });
 
 describe('Move Node', () => {
