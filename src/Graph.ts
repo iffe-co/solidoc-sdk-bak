@@ -40,11 +40,11 @@ abstract class Graph {
     })
   }
 
-  protected abstract _addPlaceHolder(uri: string, type: string): void
+  protected abstract _addPlaceHolder(uri: string, type: string): Subject
 
-  public set = (nodeUri: string, options) => {
-    this._nodes[nodeUri].set(options);
-  }
+  // public set = (node: Subject, options: any) => {
+  //   node.set(options);
+  // }
 
   public getSparqlForUpdate = (): string => {
     let sparql = '';

@@ -26,7 +26,6 @@ class Branch extends Subject {
 }
 
 class Root extends Branch {
-  // TODO: add parent property
   constructor(uri) {
     super(uri);
     this._predicates.title = new TextProperty('http://purl.org/dc/terms/title', 'title');

@@ -8,16 +8,28 @@ interface Path {
 }
 
 class Page extends Graph {
-  constructor(uri: string) {
-    super(uri);
-    this._nodes[uri] = new Root(uri);
+  constructor(json: any) {
+    super(json.id);
+    let head: Subject = this._nodes[json.id] = new Root(json.id);
+    this._fillNode(head, json)
   }
 
-  protected _addPlaceHolder = (uri: string, type: string) => {
-    this._nodes[uri] || (this._nodes[uri] = (type === 'http://www.solidoc.net/ontologies#Leaf') ? new Leaf(uri) : new Branch(uri));
+  protected _addPlaceHolder = (uri: string, type: string): Subject => {
+    if (this._nodes[uri] && !this._nodes[uri].isDeleted) {
+      throw new Error('Trying to add an existing node: ' + uri);
+    }
+    // even if a marked-deleted node exists, it should be recreated
+    this._nodes[uri] = (type === 'http://www.solidoc.net/ontologies#Leaf') ? new Leaf(uri) : new Branch(uri);
+    return this._nodes[uri];
   }
-  // In case of no child, the function returns undefined
-  // otherwise it return the offset-th child, or undefined if offset > length
+  private _fillNode = (node: Subject, json: any) => {
+    node.set(json);
+    for (let i = 0; json.children && i < json.children.length; i++) {
+      let path: Path = { parentUri: node.get('id'), offset: i }
+      this.insertNode(path, json.children[i])
+    }
+  }
+
   private _getChild = (curr: Branch, offset: number): Subject => {
     let childUri: string = curr.get('child');
     let child: Subject = this._nodes[childUri];
@@ -39,13 +51,13 @@ class Page extends Graph {
     let node = this._nodes[uri];
     if (!node || node.isDeleted) {
       throw new Error('The node does not exist: ' + uri);
-    } else if (!(node instanceof Branch) ) {
+    } else if (!(node instanceof Branch)) {
       throw new Error('The request node is not a branch: ' + uri)
     }
     return node;
   }
 
-  public toJson = (head?: Subject ): any => {
+  public toJson = (head?: Subject): any => {
     if (!head) head = this._getRoot();
     const headJson = head.toJson();
     let curr = (head instanceof Branch) ? this._getChild(head, 0) : undefined;
@@ -63,29 +75,14 @@ class Page extends Graph {
   public insertNode = (path: Path, node: any) => {
     let parent: Branch = this._getExistingBranch(path.parentUri);
     let currUri: string = this._uri + '#' + node.id
-    let curr: Subject = this._nodes[currUri];
+    let curr: Subject = this._addPlaceHolder(currUri, node.type);
 
-    if (currUri === path.parentUri) {
-      throw new Error('To insert a node same as the relative: ' + path.parentUri);
-    } else if (curr && !curr.isDeleted) {
-      throw new Error('Trying to insert an existing node: ' + currUri);
-    } else if (curr) {
-      this._nodes[currUri].isDeleted = false;
-    } else {
-      this._addPlaceHolder(currUri, node.type);
-      curr = this._nodes[currUri];
-    }
-
-    this._insertNode(parent, path.offset, curr);
-    this.set(currUri, node)
-
-    for (let i = 0; node.children && i < node.children.length; i++) {
-      path = {parentUri: currUri, offset: i};
-      this.insertNode(path, node.children[i])
-    }
+    this._insertSingleNode(parent, path.offset, curr);
+    
+    this._fillNode(curr, node);
   }
 
-  private _insertNode = (parent: Branch, offset: number, curr: Subject) => {
+  private _insertSingleNode = (parent: Branch, offset: number, curr: Subject) => {
     if (offset === 0) {
       let child: Subject = this._getChild(parent, 0)
       parent.setChild(curr)
@@ -100,15 +97,10 @@ class Page extends Graph {
 
   public deleteNode = (path: Path) => {
     let parent: Branch = this._getExistingBranch(path.parentUri);
-
-    this._deleteNode(parent, path.offset)
-  }
-
-  private _deleteNode = (parent: Branch, offset: number) => {
-    let curr: Subject = this._getChild(parent, offset);
+    let curr: Subject = this._getChild(parent, path.offset);
     if (!curr) return
 
-    this._detach(curr, parent, offset);
+    this._detach(curr, parent, path.offset);
     this._traversePreOrder(curr, this._markAsDeleted);
   }
 
@@ -146,23 +138,19 @@ class Page extends Graph {
     let oldParent: Branch = this._getExistingBranch(oldPath.parentUri);
     let newParent: Branch = this._getExistingBranch(newPath.parentUri);
 
-    this._moveNode(oldParent, oldPath.offset, newParent, newPath.offset);
-  }
-
-  private _moveNode = (oldParent: Branch, oldOffset: number, newParent: Branch, newOffset: number) => {
-    let curr: Subject = this._getChild(oldParent, oldOffset);
+    let curr: Subject = this._getChild(oldParent, oldPath.offset);
     if (!curr) return;
 
     if (curr === newParent || this._traversePreOrder(curr, this._findDescendent, newParent)) {
       throw new Error('Trying to append the node to itself or its descendent')
     }
 
-    this._detach(curr, oldParent, oldOffset);
+    this._detach(curr, oldParent, oldPath.offset);
 
-    if (oldParent === newParent && oldOffset < newOffset) {
-      newOffset = newOffset - 1;
+    if (oldParent === newParent && oldPath.offset < newPath.offset) {
+      newPath.offset--;
     }
-    this._insertNode(newParent, newOffset, curr);
+    this._insertSingleNode(newParent, newPath.offset, curr);
   }
 
   private _findDescendent = (curr: Subject, target: Subject): boolean => {
@@ -171,22 +159,13 @@ class Page extends Graph {
 }
 
 const fromTurtle = (uri: string, turtle: string): Page => {
-  const page: Page = new Page(uri);
+  const page: Page = new Page({id: uri});
   page.fromTurtle(turtle);
   return page
 }
 
 const fromJson = (json: any): Page => {
-  let pageUri: string = json.id
-  const page: Page = new Page(pageUri)
-  page.fromTurtle('')
-  page.set(pageUri, { title: json.title });
-  page.set(pageUri, { type: json.type });
-
-  for (let i = 0; json.children && i < json.children.length; i++) {
-    let path: Path = {parentUri: pageUri, offset: i}
-    page.insertNode(path, json.children[i])
-  }
+  const page: Page = new Page(json)
 
   return page
 }
