@@ -1,3 +1,4 @@
-import { Page } from './src/Page'
+import { Page, Path, Operation } from './src/Page'
+import { Node, Element, Text } from './src/Node';
 
-export { Page }
+export { Page, Path, Operation, Node, Element, Text }

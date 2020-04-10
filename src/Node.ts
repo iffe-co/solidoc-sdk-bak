@@ -11,13 +11,12 @@ class Branch extends Subject {
     this.isDeleted = false
   }
 
-  public toJson = (): any => {
-    let result: any = {
+  public toJson = (): Element => {
+    return {
       id: this._uri.substr(this._uri.indexOf('#') + 1),
       type: this._predicates['type'].get(),
       children: []
     };
-    return result;
   }
 
   public setChild = (node: Subject) => {
@@ -31,14 +30,13 @@ class Root extends Branch {
     this._predicates.title = new TextProperty('http://purl.org/dc/terms/title', 'title');
   }
 
-  public toJson = (): any => {
-    let result: any = {
+  public toJson = (): Element => {
+    return {
       id: this._uri.substr(this._uri.indexOf('#') + 1),
       type: this._predicates['type'].get(),
       title: this._predicates['title'].get(),
       children: []
     };
-    return result;
   }
 }
 
@@ -52,14 +50,23 @@ class Leaf extends Subject {
     this.isDeleted = false
   }
 
-  public toJson = (): any => {
-    let result: any = {
+  public toJson = (): Text => {
+    return {
       id: this._uri.substr(this._uri.indexOf('#') + 1),
       type: this._predicates['type'].get(),
       text: this._predicates['text'].get(),
     };
-    return result;
   }
 }
 
-export { Branch, Root, Leaf }
+interface Text {
+  text: string
+  [key: string]: any
+}
+interface Element {
+  children: Node[]
+  [key: string]: any
+}
+type Node = Text | Element
+
+export { Branch, Root, Leaf, Text, Element, Node }

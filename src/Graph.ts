@@ -75,7 +75,6 @@ abstract class Graph {
       this._nodes[uri].undo();
     });
   }
-
 }
 
 export { Graph }
