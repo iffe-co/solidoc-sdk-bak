@@ -1,4 +1,4 @@
-import { Branch, Root, Leaf } from './Block';
+import { Branch, Root, Leaf } from './Node';
 import { Subject } from './Subject';
 import { Graph } from './Graph';
 

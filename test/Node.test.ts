@@ -1,4 +1,4 @@
-import { Branch, Root, Leaf } from '../src/Block';
+import { Branch, Root, Leaf } from '../src/Node';
 import * as n3 from 'n3';
 import * as assert from 'power-assert';
 
