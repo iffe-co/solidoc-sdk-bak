@@ -208,15 +208,15 @@ class Page extends Graph {
         break
       }
 
-      case 'set_selection': {
-
-        break
-      }
-
       case 'split_node': {
 
         break
       }
+
+      default: {
+        break
+      }
+
     }
   }
 }
