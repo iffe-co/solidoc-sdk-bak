@@ -1,17 +1,7 @@
 import { Branch, Root, Leaf, Node, Element } from './Node';
 import { Subject } from './Subject';
 import { Graph } from './Graph';
-
-interface Path {
-  parentUri: string,
-  offset: number
-}
-interface Operation {
-  type: string,
-  path: Path,
-  node?: Node,
-  newPath?: Path
-}
+import { Path, Operation} from './operation'
 
 class Page extends Graph {
   constructor(json: Element) {
@@ -38,7 +28,7 @@ class Page extends Graph {
     node.set(json);
     for (let i = 0; json.children && i < json.children.length; i++) {
       let path: Path = { parentUri: node.get('id'), offset: i }
-      this.insertNode(path, json.children[i])
+      this._insertNode(path, json.children[i])
     }
   }
 
@@ -84,17 +74,26 @@ class Page extends Graph {
     return headJson
   }
 
-  public insertNode = (path: Path, node: Node) => {
+  private _insertNode = (path: Path, node: Node) => {
     let parent: Branch = this._getExistingBranch(path.parentUri);
     let currUri: string = this._uri + '#' + node.id
     let curr: Subject = this._addPlaceHolder(currUri, node.type);
 
-    this._insertSingleNode(parent, path.offset, curr);
+    this._attach(curr, parent, path.offset);
 
     this._fillNode(curr, node);
   }
 
-  private _insertSingleNode = (parent: Branch, offset: number, curr: Subject) => {
+  public removeNode = (path: Path) => {
+    let parent: Branch = this._getExistingBranch(path.parentUri);
+    let curr: Subject = this._getChild(parent, path.offset);
+    if (!curr) return
+
+    this._detach(curr, parent, path.offset);
+    this._traversePreOrder(curr, this._markAsRemoved);
+  }
+
+  private _attach = (curr: Subject, parent: Branch, offset: number) => {
     if (offset === 0) {
       let child: Subject = this._getChild(parent, 0)
       parent.setChild(curr)
@@ -105,15 +104,6 @@ class Page extends Graph {
       prev.setNext(curr)
       curr.setNext(next)
     }
-  }
-
-  public removeNode = (path: Path) => {
-    let parent: Branch = this._getExistingBranch(path.parentUri);
-    let curr: Subject = this._getChild(parent, path.offset);
-    if (!curr) return
-
-    this._detach(curr, parent, path.offset);
-    this._traversePreOrder(curr, this._markAsRemoved);
   }
 
   private _detach = (curr: Subject, parent: Branch, offset: number) => {
@@ -162,7 +152,7 @@ class Page extends Graph {
     if (oldParent === newParent && oldPath.offset < newPath.offset) {
       newPath.offset--;
     }
-    this._insertSingleNode(newParent, newPath.offset, curr);
+    this._attach(curr, newParent, newPath.offset);
   }
 
   private _findDescendent = (curr: Subject, target: Subject): boolean => {
@@ -172,7 +162,7 @@ class Page extends Graph {
   public apply(op: Operation) {
     switch (op.type) {
       case 'insert_node': {
-
+        this._insertNode(op.path, op.node)
         break
       }
 

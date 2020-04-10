@@ -1,5 +1,6 @@
 // import Graph from '../../../../app/data_model/ldp/Graph';
 import { Page } from '../src/Page';
+import { Operation } from '../src/operation'
 import * as assert from 'power-assert';
 
 const pageUri = 'http://example.org/alice/a';
@@ -58,7 +59,7 @@ let page: Page;
 
 describe('Create Page', () => {
   it('parses from quads', () => {
-    page = new Page({id: pageUri, children: []});
+    page = new Page({ id: pageUri, type: 'http://www.solidoc.net/ontologies#Root', children: [] });
     page.fromTurtle(turtle);
     assert.deepStrictEqual(page.toJson(), json);
   });
@@ -74,7 +75,8 @@ describe('Insert Node', () => {
   });
 
   it('inserts a text node at paragraph beginning', () => {
-    page.insertNode({parentUri: paraUri1, offset: 0}, textJson3);
+    let op: Operation = {type: 'insert_node', path: { parentUri: paraUri1, offset: 0 }, node: textJson3}
+    page.apply(op)
     let pageJson = page.toJson()
     assert.deepStrictEqual(extractChildrenId(pageJson), [pid1, pid2])
     assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [tid3, tid1])
@@ -82,7 +84,8 @@ describe('Insert Node', () => {
     assert.deepStrictEqual(pageJson.children[0].children[0], textJson3)
   });
   it('inserts a text node at paragraph end', () => {
-    page.insertNode({parentUri: paraUri1, offset: 1}, textJson3);
+    let op: Operation = {type: 'insert_node', path: { parentUri: paraUri1, offset: 1 }, node: textJson3}
+    page.apply(op)
     let pageJson = page.toJson()
     assert.deepStrictEqual(extractChildrenId(pageJson), [pid1, pid2])
     assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [tid1, tid3])
@@ -90,7 +93,8 @@ describe('Insert Node', () => {
     assert.deepStrictEqual(pageJson.children[0].children[1], textJson3)
   });
   it('inserts a text node at offset > length', () => {
-    page.insertNode({parentUri: paraUri1, offset: 2}, textJson3);
+    let op: Operation = {type: 'insert_node', path: { parentUri: paraUri1, offset: 2 }, node: textJson3}
+    page.apply(op)
     let pageJson = page.toJson()
     assert.deepStrictEqual(extractChildrenId(pageJson), [pid1, pid2])
     assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [tid1, tid3])
@@ -99,21 +103,24 @@ describe('Insert Node', () => {
   });
   it('inserts a paragraph at the beginning', () => {
     let paraJson3 = { id: 'tag3', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson3] }
-    page.insertNode({parentUri: pageUri, offset: 0}, paraJson3);
+    let op: Operation = {type: 'insert_node', path: { parentUri: pageUri, offset: 0 }, node: paraJson3}
+    page.apply(op)
     let pageJson = page.toJson()
     assert.deepStrictEqual(extractChildrenId(pageJson), [pid3, pid1, pid2])
     assert.deepStrictEqual(pageJson.children[0].children[0], textJson3)
   });
   it('inserts a paragraph in the middle', () => {
     let paraJson3 = { id: 'tag3', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson3] }
-    page.insertNode({parentUri: pageUri, offset: 1}, paraJson3);
+    let op: Operation = {type: 'insert_node', path: { parentUri: pageUri, offset: 1 }, node: paraJson3}
+    page.apply(op)
     let pageJson = page.toJson()
     assert.deepStrictEqual(extractChildrenId(pageJson), [pid1, pid3, pid2])
     assert.deepStrictEqual(pageJson.children[1].children[0], textJson3)
   });
   it('inserts a paragraph at the end', () => {
     let paraJson3 = { id: 'tag3', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson3] }
-    page.insertNode({parentUri: pageUri, offset: 2}, paraJson3);
+    let op: Operation = {type: 'insert_node', path: { parentUri: pageUri, offset: 2 }, node: paraJson3}
+    page.apply(op)
     let pageJson = page.toJson()
     assert.deepStrictEqual(extractChildrenId(pageJson), [pid1, pid2, pid3])
     assert.deepStrictEqual(pageJson.children[2].children[0], textJson3)
@@ -126,39 +133,40 @@ describe('Delete Node', () => {
   });
 
   it('deletes a paragraph at the beginning', () => {
-    page.removeNode({parentUri: pageUri, offset: 0});
+    page.removeNode({ parentUri: pageUri, offset: 0 });
     assert.deepStrictEqual(extractChildrenId(page.toJson()), [pid2])
   });
   it('deletes a paragraph in the end', () => {
-    page.removeNode({parentUri: pageUri, offset: 1});
+    page.removeNode({ parentUri: pageUri, offset: 1 });
     assert.deepStrictEqual(extractChildrenId(page.toJson()), [pid1])
   });
   it('deletes text', () => {
-    page.removeNode({parentUri: paraUri1, offset: 0});
+    page.removeNode({ parentUri: paraUri1, offset: 0 });
     let pageJson = page.toJson()
     assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [])
   });
   it('deletes paragraph after insertion', () => {
     let paraJson3 = { id: 'tag3', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson3] }
-    page.insertNode({parentUri: pageUri, offset: 1}, paraJson3);
-    page.removeNode({parentUri: pageUri, offset: 0})
+    let op: Operation = {type: 'insert_node', path: { parentUri: pageUri, offset: 1 }, node: paraJson3}
+    page.apply(op)
+    page.removeNode({ parentUri: pageUri, offset: 0 })
     let pageJson = page.toJson()
     assert.deepStrictEqual(extractChildrenId(pageJson), [pid3, pid2])
     assert.deepStrictEqual(pageJson.children[0].children[0], textJson3)
   });
   it('removes the deleted paragraph from memory after commit', () => {
-    page.removeNode({parentUri: pageUri, offset: 1});
+    page.removeNode({ parentUri: pageUri, offset: 1 });
     page.commit();
     let errMsg = ''
     try {
-      page.removeNode({parentUri: paraUri2, offset: 0});
+      page.removeNode({ parentUri: paraUri2, offset: 0 });
     } catch (e) {
       errMsg = e.message
     }
     assert(errMsg.startsWith('The node does not exist'))
   });
   it('does not delete at offset > length', () => {
-    page.removeNode({parentUri: pageUri, offset: 2});
+    page.removeNode({ parentUri: pageUri, offset: 2 });
     let pageJson = page.toJson()
     assert.deepStrictEqual(extractChildrenId(pageJson), [pid1, pid2])
   });
@@ -182,19 +190,19 @@ describe('Move Node', () => {
   });
 
   it('moves paragraph 2 to the beginning', () => {
-    page.moveNode({parentUri: pageUri, offset: 1}, {parentUri: pageUri, offset: 0});
+    page.moveNode({ parentUri: pageUri, offset: 1 }, { parentUri: pageUri, offset: 0 });
     let pageJson = page.toJson()
     assert.deepStrictEqual(extractChildrenId(pageJson), [pid2, pid1])
     assert.deepStrictEqual(pageJson.children[0].children[0], textJson2)
   });
   it('moves paragraph 1 to the end', () => {
-    page.moveNode({parentUri: pageUri, offset: 0}, {parentUri: pageUri, offset: 2});
+    page.moveNode({ parentUri: pageUri, offset: 0 }, { parentUri: pageUri, offset: 2 });
     let pageJson = page.toJson()
     assert.deepStrictEqual(extractChildrenId(pageJson), [pid2, pid1])
     assert.deepStrictEqual(pageJson.children[1].children[0], textJson1)
   });
   it('moves text', () => {
-    page.moveNode({parentUri: paraUri1, offset: 0}, {parentUri: paraUri2, offset: 1});
+    page.moveNode({ parentUri: paraUri1, offset: 0 }, { parentUri: paraUri2, offset: 1 });
     let pageJson = page.toJson()
     assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [])
     assert.deepStrictEqual(extractChildrenId(pageJson.children[1]), [tid2, tid1])
@@ -202,7 +210,7 @@ describe('Move Node', () => {
   it('disallows moving below a child', () => {
     let errMsg = ''
     try {
-      page.moveNode({parentUri: pageUri, offset: 0}, {parentUri: paraUri1, offset: 0});
+      page.moveNode({ parentUri: pageUri, offset: 0 }, { parentUri: paraUri1, offset: 0 });
     } catch (e) {
       errMsg = e.message
     }

@@ -49,10 +49,6 @@ abstract class Graph {
 
   protected abstract _addPlaceHolder(uri: string, type: string): Subject
 
-  // public set = (node: Subject, options: any) => {
-  //   node.set(options);
-  // }
-
   public getSparqlForUpdate = (): string => {
     let sparql = '';
     Object.keys(this._nodes).forEach(uri => {
