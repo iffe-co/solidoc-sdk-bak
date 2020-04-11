@@ -101,12 +101,31 @@ describe('Leaf', () => {
       text: "Hello world!!",
     });
   });
-  it('removes text', () => {
-    leaf.removeText(0, 6);
+  it('removes text head', () => {
+    let removed: string = leaf.removeText(0, 6);
     assert.deepStrictEqual(leaf.toJson(), {
       id: 'tag1',
       type: 'http://www.solidoc.net/ontologies#Leaf',
-      text: "world!",
+      text: 'world!',
     });
+    assert(removed === 'Hello ')
+  });
+  it('removes text tail', () => {
+    let removed: string = leaf.removeText(1, Infinity);
+    assert.deepStrictEqual(leaf.toJson(), {
+      id: 'tag1',
+      type: 'http://www.solidoc.net/ontologies#Leaf',
+      text: 'H',
+    });
+    assert(removed === 'ello world!')
+  });
+  it('leaves it unchanged if there is no overlap', () => {
+    let removed: string = leaf.removeText(Infinity, 10);
+    assert.deepStrictEqual(leaf.toJson(), {
+      id: 'tag1',
+      type: 'http://www.solidoc.net/ontologies#Leaf',
+      text: 'Hello world!',
+    });
+    assert(removed === '')
   });
 });

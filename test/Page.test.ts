@@ -240,7 +240,7 @@ describe('Merge Text Node', () => {
         { id: 'tag1', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson1, textJson3] },
         { id: 'tag2', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson2] },
       ],
-    };    
+    };
     page = new Page(newJson);
   });
   it('merges text nodes', () => {
@@ -301,5 +301,33 @@ describe('Merge Element Node', () => {
       errMsg = e.message
     }
     assert(errMsg.startsWith('Cannot merge'))
+  });
+});
+
+describe('Split Text Node', () => {
+  beforeEach(() => {
+    page = new Page(json);
+  });
+  it('splits text 1', () => {
+    let op: Operation = { type: 'split_node', path: { parentUri: paraUri1, offset: 0 }, position: 1, properties: { id: tid3, type: 'http://www.solidoc.net/ontologies#Leaf' } }
+    page.apply(op)
+    let pageJson = page.toJson()
+    assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [tid1, tid3])
+    assert(pageJson.children[0].children[0].text === 'P')
+    assert(pageJson.children[0].children[1].text === 'aragraph 1')
+  });
+});
+
+describe('Split Branch Node', () => {
+  beforeEach(() => {
+    page = new Page(json);
+  });
+  it('splits paragraph 1', () => {
+    let op: Operation = { type: 'split_node', path: { parentUri: pageUri, offset: 0 }, position: 0, properties: { id: pid3, type: 'http://www.solidoc.net/ontologies#Paragraph' } }
+    page.apply(op)
+    let pageJson = page.toJson()
+    assert.deepStrictEqual(extractChildrenId(pageJson), [pid1, pid3, pid2])
+    assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [])
+    assert.deepStrictEqual(extractChildrenId(pageJson.children[1]), [tid1])
   });
 });

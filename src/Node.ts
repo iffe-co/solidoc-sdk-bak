@@ -89,8 +89,10 @@ class Leaf extends Subject {
 
   public removeText = (offset: number, length: number) => {
     const before = this.get('text').slice(0, offset);
+    const removed = this.get('text').slice(offset, length);
     const after = this.get('text').slice(offset + length);
     this.set({ text: before + after });
+    return removed
   }
 }
 

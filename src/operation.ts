@@ -83,7 +83,7 @@ export type SplitNodeOperation = {
   type: 'split_node'
   path: Path
   position: number
-  target: number | null
+  // target: number | null
   properties: Partial<Node>
   [key: string]: any
 }

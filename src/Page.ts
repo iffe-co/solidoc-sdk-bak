@@ -113,6 +113,7 @@ class Page extends Graph {
         if (prev instanceof Leaf && curr instanceof Leaf) {
           prev.insertText(Infinity, curr.get('text'));
         } else if (prev instanceof Branch && curr instanceof Branch) {
+          // TODO: use move_node
           let child: Subject = Process.detach(curr, 0);
           Process.attach(child, prev, Infinity)
         } else {
@@ -123,7 +124,27 @@ class Page extends Graph {
       }
 
       case 'split_node': {
-
+        const parent: Branch = this._getBranchInstance(op.path.parentUri);
+        const curr: Subject = parent.getChild(op.path.offset);
+        if (curr instanceof Leaf) {
+          let clipped: string = curr.removeText(op.position, Infinity);
+          let json = {
+            ...this.toJson(curr),
+            ...op.properties,
+            text: clipped
+          }
+          this._insertRecursive(json, parent, op.path.offset + 1)
+        } else {
+          // TODO: use move_node
+          let child: Subject = Process.detach(<Branch>curr, op.position);
+          let json = {
+            ...this.toJson(curr),
+            ...op.properties,
+            children: []
+          }
+          this._insertRecursive(json, parent, op.path.offset + 1)
+          Process.attach(child, <Branch>curr.getNext(), 0)
+        }
         break
       }
 
