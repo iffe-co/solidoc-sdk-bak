@@ -72,44 +72,6 @@ class Page extends Graph {
     return headJson
   }
 
-  private _traversePreOrder = (head: Subject, doSomething: (curr: Subject, target?: any) => boolean, target?: any): boolean => {
-    let res = doSomething(head, target);
-    if (res) return res
-
-    let curr = (head instanceof Branch) ? head.getChild(0) : undefined;
-
-    while (curr) {
-      let res = this._traversePreOrder(curr, doSomething, target);
-      if (res) return res
-      curr = curr.getNext()
-    }
-
-    return res
-  }
-
-  private _moveNode = (oldPath: Path, newPath: Path) => {
-    let oldParent: Branch = this._getBranchInstance(oldPath.parentUri);
-    let newParent: Branch = this._getBranchInstance(newPath.parentUri);
-
-    let curr: Subject = oldParent.getChild(oldPath.offset);
-    if (!curr) return;
-
-    if (curr === newParent || this._traversePreOrder(curr, this._findDescendent, newParent)) {
-      throw new Error('Trying to append the node to itself or its descendent')
-    }
-
-    curr = Process.detach(oldParent, oldPath.offset);
-
-    if (oldParent === newParent && oldPath.offset < newPath.offset) {
-      newPath.offset--;
-    }
-    Process.attach(curr, newParent, newPath.offset);
-  }
-
-  private _findDescendent = (curr: Subject, target: Subject): boolean => {
-    return (curr instanceof Branch) ? (curr.getChild(0) === target) : false
-  }
-
   public apply(op: Operation) {
     switch (op.type) {
       case 'insert_node': {
@@ -125,9 +87,21 @@ class Page extends Graph {
         break
       }
 
-      case 'insert_text': {
-        const leaf = this._getLeafInstance(op.path);
-        leaf.insertText(op.offset, op.text)
+      case 'move_node': {
+        let parent: Branch = this._getBranchInstance(op.path.parentUri);
+        let newParent: Branch = this._getBranchInstance(op.newPath.parentUri);
+
+        let curr: Subject = Process.detach(parent, op.path.offset);
+
+        if (Process.isAncestor(curr, newParent)) {
+          Process.attach(curr, parent, op.path.offset);
+          throw new Error('Trying to append the node to itself or its descendent')
+        }
+
+        if (parent === newParent && op.path.offset < op.newPath.offset) {
+          op.newPath.offset--;
+        }
+        Process.attach(curr, newParent, op.newPath.offset);
         break
       }
 
@@ -136,14 +110,8 @@ class Page extends Graph {
         break
       }
 
-      case 'move_node': {
-        this._moveNode(op.path, op.newPath)
-        break
-      }
+      case 'split_node': {
 
-      case 'remove_text': {
-        const leaf = this._getLeafInstance(op.path);
-        leaf.removeText(op.offset, op.text.length);
         break
       }
 
@@ -152,8 +120,15 @@ class Page extends Graph {
         break
       }
 
-      case 'split_node': {
+      case 'insert_text': {
+        const leaf = this._getLeafInstance(op.path);
+        leaf.insertText(op.offset, op.text)
+        break
+      }
 
+      case 'remove_text': {
+        const leaf = this._getLeafInstance(op.path);
+        leaf.removeText(op.offset, op.text.length);
         break
       }
 

@@ -133,7 +133,18 @@ const Process = {
       Process.removeRecursive(curr);
       curr = curr.getNext()
     }
-  }
+  },
+
+  isAncestor: (from: Subject, to: Subject): boolean => {
+    if (from === to) return true
+    
+    let curr = (from instanceof Branch) ? from.getChild(0) : undefined;
+    while (curr) {
+      if (Process.isAncestor(curr, to)) return true
+      curr = curr.getNext();
+    }
+    return false
+  },
 }
 
 export { Branch, Root, Leaf, Text, Element, Node, Process }
