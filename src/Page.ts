@@ -32,14 +32,6 @@ class Page extends Graph {
     }
   }
 
-  private _getLastChild = (curr: Subject): Subject => {
-    let childUri: string = curr.get('child');
-    let child: Subject = this._nodes[childUri];
-    while (child.getNext()) {
-      child = child.getNext()
-    }
-    return child;
-  }
   protected _getBranchInstance = (uri: string): Branch => {
     let node = this._nodes[uri];
     if (!node || node.isDeleted) {
@@ -100,7 +92,7 @@ class Page extends Graph {
       parent.setChild(curr)
       curr.setNext(child)
     } else {
-      let prev: Subject = parent.getChild(offset - 1) || this._getLastChild(parent);
+      let prev: Subject = parent.getChild(offset - 1) || parent.getChild(Infinity);
       let next: Subject = prev.getNext()
       prev.setNext(curr)
       curr.setNext(next)

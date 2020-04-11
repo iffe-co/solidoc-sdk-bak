@@ -23,12 +23,19 @@ class Branch extends Subject {
   public setChild = (node: Subject) => {
     this.set({ child: node ? node.get('id') : '' })
   }
+
   public getChild = (offset: number): Subject => {
     let childUri: string = this.get('child');
     let child: Subject = this._graph.getSubject(childUri);
-    while (offset > 0 && child) {
-      child = child.getNext()
-      offset--
+    if (offset < Infinity) {
+      while (offset > 0 && child) {
+        child = child.getNext()
+        offset--
+      }
+    } else {
+      while (child.getNext()) {
+        child = child.getNext()
+      }
     }
     return child;
   }
