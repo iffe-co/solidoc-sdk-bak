@@ -98,4 +98,29 @@ interface Element {
 }
 type Node = Text | Element
 
-export { Branch, Root, Leaf, Text, Element, Node }
+const Process = {
+  attach: (curr: Subject, parent: Branch, offset: number) => {
+    if (offset === 0) {
+      let child: Subject = parent.getChild(0)
+      parent.setChild(curr)
+      curr.setNext(child)
+    } else {
+      let prev: Subject = parent.getChild(offset - 1) || parent.getChild(Infinity);
+      let next: Subject = prev.getNext()
+      prev.setNext(curr)
+      curr.setNext(next)
+    }
+  },
+
+  detach: (curr: Subject, parent: Branch, offset: number) => {
+    let next: Subject = curr.getNext();
+    if (offset === 0) {
+      parent.setChild(next);
+    } else {
+      let prev: Subject = parent.getChild(offset - 1);
+      prev.setNext(next)
+    }
+  },
+}
+
+export { Branch, Root, Leaf, Text, Element, Node, Process }

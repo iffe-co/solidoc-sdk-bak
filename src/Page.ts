@@ -1,4 +1,4 @@
-import { Branch, Root, Leaf, Node, Element } from './Node';
+import { Branch, Root, Leaf, Node, Element, Process } from './Node';
 import { Subject } from './Subject';
 import { Graph } from './Graph';
 import { Path, Operation} from './operation'
@@ -72,7 +72,7 @@ class Page extends Graph {
     let currUri: string = this._uri + '#' + node.id
     let curr: Subject = this._addPlaceHolder(currUri, node.type);
 
-    this._attach(curr, parent, path.offset);
+    Process.attach(curr, parent, path.offset);
 
     this._fillNode(curr, node);
   }
@@ -82,31 +82,8 @@ class Page extends Graph {
     let curr: Subject = parent.getChild(path.offset);
     if (!curr) return
 
-    this._detach(curr, parent, path.offset);
+    Process.detach(curr, parent, path.offset);
     this._traversePreOrder(curr, this._markAsRemoved);
-  }
-
-  private _attach = (curr: Subject, parent: Branch, offset: number) => {
-    if (offset === 0) {
-      let child: Subject = parent.getChild(0)
-      parent.setChild(curr)
-      curr.setNext(child)
-    } else {
-      let prev: Subject = parent.getChild(offset - 1) || parent.getChild(Infinity);
-      let next: Subject = prev.getNext()
-      prev.setNext(curr)
-      curr.setNext(next)
-    }
-  }
-
-  private _detach = (curr: Subject, parent: Branch, offset: number) => {
-    let next: Subject = curr.getNext();
-    if (offset === 0) {
-      parent.setChild(next);
-    } else {
-      let prev: Subject = parent.getChild(offset - 1);
-      prev.setNext(next)
-    }
   }
 
   private _traversePreOrder = (head: Subject, doSomething: (curr: Subject, target?: any) => boolean, target?: any): boolean => {
@@ -140,12 +117,12 @@ class Page extends Graph {
       throw new Error('Trying to append the node to itself or its descendent')
     }
 
-    this._detach(curr, oldParent, oldPath.offset);
+    Process.detach(curr, oldParent, oldPath.offset);
 
     if (oldParent === newParent && oldPath.offset < newPath.offset) {
       newPath.offset--;
     }
-    this._attach(curr, newParent, newPath.offset);
+    Process.attach(curr, newParent, newPath.offset);
   }
 
   private _findDescendent = (curr: Subject, target: Subject): boolean => {
