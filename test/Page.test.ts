@@ -178,13 +178,13 @@ describe('Delete Node', () => {
     assert.deepStrictEqual(extractChildrenId(pageJson), [pid1, pid2])
   });
   it('removes the child text from memory after commit', () => {
-    let op: Operation = { type: 'remove_node', path: {parentUri: pageUri, offset: 1} }
+    let op: Operation = { type: 'remove_node', path: { parentUri: pageUri, offset: 1 } }
     page.apply(op)
     page.commit();
     let errMsg = ''
     try {
-    let op: Operation = { type: 'remove_node', path: {parentUri: paraUri2, offset: 0} }
-    page.apply(op)
+      let op: Operation = { type: 'remove_node', path: { parentUri: paraUri2, offset: 0 } }
+      page.apply(op)
     } catch (e) {
       errMsg = e.message
     }
@@ -227,5 +227,79 @@ describe('Move Node', () => {
       errMsg = e.message
     }
     assert(errMsg.startsWith('Trying to append the node to itself or its descendent'))
+  });
+});
+
+describe('Merge Text Node', () => {
+  beforeEach(() => {
+    let newJson: any = {
+      id: pageUri,
+      type: 'http://www.solidoc.net/ontologies#Root',
+      title: "Alice's Profile",
+      children: [
+        { id: 'tag1', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson1, textJson3] },
+        { id: 'tag2', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson2] },
+      ],
+    };    
+    page = new Page(newJson);
+  });
+  it('merges text nodes', () => {
+    let op: Operation = { type: 'merge_node', path: { parentUri: paraUri1, offset: 1 } }
+    page.apply(op)
+    let pageJson = page.toJson()
+    assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [tid1])
+    assert(pageJson.children[0].children[0].text === textJson1.text + textJson3.text)
+  });
+  it('throws on merging text node 0', () => {
+    let op: Operation = { type: 'merge_node', path: { parentUri: paraUri1, offset: 0 } }
+    let errMsg = ''
+    try {
+      page.apply(op)
+    } catch (e) {
+      errMsg = e.message
+    }
+    assert(errMsg.startsWith('Trying to getChild(-1) of'))
+  });
+  it('throws on merging offset > length', () => {
+    let op: Operation = { type: 'merge_node', path: { parentUri: paraUri1, offset: 2 } }
+    let errMsg = ''
+    try {
+      page.apply(op)
+    } catch (e) {
+      errMsg = e.message
+    }
+    assert(errMsg.startsWith('Cannot merge'))
+  });
+});
+
+describe('Merge Element Node', () => {
+  beforeEach(() => {
+    page = new Page(json);
+  });
+  it('merges paragraph 2', () => {
+    let op: Operation = { type: 'merge_node', path: { parentUri: pageUri, offset: 1 } }
+    page.apply(op)
+    let pageJson = page.toJson()
+    assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [tid1, tid2])
+  });
+  it('throws on merging paragraph 1', () => {
+    let op: Operation = { type: 'merge_node', path: { parentUri: pageUri, offset: 0 } }
+    let errMsg = ''
+    try {
+      page.apply(op)
+    } catch (e) {
+      errMsg = e.message
+    }
+    assert(errMsg.startsWith('Trying to getChild(-1) of'))
+  });
+  it('throws on merging offset > length', () => {
+    let op: Operation = { type: 'merge_node', path: { parentUri: pageUri, offset: 2 } }
+    let errMsg = ''
+    try {
+      page.apply(op)
+    } catch (e) {
+      errMsg = e.message
+    }
+    assert(errMsg.startsWith('Cannot merge'))
   });
 });

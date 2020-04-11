@@ -75,23 +75,23 @@ class Page extends Graph {
   public apply(op: Operation) {
     switch (op.type) {
       case 'insert_node': {
-        let parent: Branch = this._getBranchInstance(op.path.parentUri);
+        const parent: Branch = this._getBranchInstance(op.path.parentUri);
         this._insertRecursive(op.node, parent, op.path.offset)
         break
       }
 
       case 'remove_node': {
-        let parent: Branch = this._getBranchInstance(op.path.parentUri);
-        let curr: Subject = Process.detach(parent, op.path.offset);
+        const parent: Branch = this._getBranchInstance(op.path.parentUri);
+        const curr: Subject = Process.detach(parent, op.path.offset);
         curr && Process.removeRecursive(curr);
         break
       }
 
       case 'move_node': {
-        let parent: Branch = this._getBranchInstance(op.path.parentUri);
-        let newParent: Branch = this._getBranchInstance(op.newPath.parentUri);
+        const parent: Branch = this._getBranchInstance(op.path.parentUri);
+        const newParent: Branch = this._getBranchInstance(op.newPath.parentUri);
 
-        let curr: Subject = Process.detach(parent, op.path.offset);
+        const curr: Subject = Process.detach(parent, op.path.offset);
 
         if (Process.isAncestor(curr, newParent)) {
           Process.attach(curr, parent, op.path.offset);
@@ -106,7 +106,19 @@ class Page extends Graph {
       }
 
       case 'merge_node': {
+        const parent: Branch = this._getBranchInstance(op.path.parentUri);
+        const prev: Subject = parent.getChild(op.path.offset - 1);
+        const curr: Subject = prev.getNext();
 
+        if (prev instanceof Leaf && curr instanceof Leaf) {
+          prev.insertText(Infinity, curr.get('text'));
+        } else if (prev instanceof Branch && curr instanceof Branch) {
+          let child: Subject = Process.detach(curr, 0);
+          Process.attach(child, prev, Infinity)
+        } else {
+          throw new Error(`Cannot merge.`);
+        }
+        Process.detach(parent, op.path.offset)
         break
       }
 

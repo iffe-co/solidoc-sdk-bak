@@ -24,9 +24,15 @@ class Branch extends Subject {
     this.set({ child: node ? node.get('id') : '' })
   }
 
+  // offset === Infinity => return the last child
   public getChild = (offset: number): Subject => {
+    if (offset < 0) {
+      throw new Error(`Trying to getChild(${offset}) of ${this._uri}`);
+    }
+
     let childUri: string = this.get('child');
     let child: Subject = this._graph.getSubject(childUri);
+
     if (offset < Infinity) {
       while (offset > 0 && child) {
         child = child.getNext()
@@ -137,7 +143,7 @@ const Process = {
 
   isAncestor: (from: Subject, to: Subject): boolean => {
     if (from === to) return true
-    
+
     let curr = (from instanceof Branch) ? from.getChild(0) : undefined;
     while (curr) {
       if (Process.isAncestor(curr, to)) return true

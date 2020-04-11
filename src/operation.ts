@@ -23,9 +23,9 @@ export type InsertTextOperation = {
 export type MergeNodeOperation = {
   type: 'merge_node'
   path: Path
-  position: number
-  target: number | null
-  properties: Partial<Node>
+  // position: number
+  // target: number | null
+  // properties: Partial<Node>
   [key: string]: any
 }
 
