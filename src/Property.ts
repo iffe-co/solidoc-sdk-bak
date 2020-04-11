@@ -18,12 +18,6 @@ abstract class Property {
     return this.uncommitted;
   }
 
-  public toJson = (): any => {
-    const json: any = {};
-    json[this.name] = this.uncommitted;
-    return json;
-  }
-
   public abstract getSparqlForUpdate(graph: string, subject: string): string
 
   public commit = () => {

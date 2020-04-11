@@ -18,7 +18,6 @@ describe('Named Node Property', () => {
   it('parses quad as a named node', () => {
     prop.fromQuad(quads[0]);
     assert(prop.get() === 'http://xmlns.com/foaf/0.1/Person');
-    assert.deepStrictEqual(prop.toJson(), { type: 'http://xmlns.com/foaf/0.1/Person' });
   });
   it('generates null sparql for a new property', () => {
     const sparql: string = prop.getSparqlForUpdate('http://example.org/test', 'http://example.org/alice');
@@ -49,14 +48,12 @@ describe('Named Node Property', () => {
     prop.set('http://xmlns.com/foaf/0.1/homepage');
     prop.commit();
     assert(prop.get() === 'http://xmlns.com/foaf/0.1/homepage');
-    assert.deepStrictEqual(prop.toJson(), { type: 'http://xmlns.com/foaf/0.1/homepage' });
   });
   it('undoes correctly', () => {
     prop.fromQuad(quads[0]);
     prop.set('http://xmlns.com/foaf/0.1/homepage');
     prop.undo();
     assert(prop.get() === 'http://xmlns.com/foaf/0.1/Person');
-    assert.deepStrictEqual(prop.toJson(), { type: 'http://xmlns.com/foaf/0.1/Person' });
 
   });
 });
@@ -76,7 +73,6 @@ describe('Text Property', () => {
     prop.fromQuad(quads[0]);
     assert(prop.value === 'Alie');
     assert(prop.get() === 'Alie');
-    assert.deepStrictEqual(prop.toJson(), { nick: 'Alie' });
   });
   it('generates sparql for update', () => {
     prop.fromQuad(quads[0]);

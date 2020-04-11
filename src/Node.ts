@@ -6,17 +6,18 @@ class Branch extends Subject {
   constructor(uri: string, graph: Graph) {
     super(uri, graph);
     // TODO: type/next can be extract to Subject super()
-    this._predicates.type = new NamedNodeProperty('http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'type');
     this._predicates.next = new NamedNodeProperty('http://www.solidoc.net/ontologies#nextNode', 'next');
     this._predicates.child = new NamedNodeProperty('http://www.solidoc.net/ontologies#firstChild', 'child');
     this.isDeleted = false
   }
 
   public toJson = (): Element => {
+    let option = JSON.parse(this.get('option') || '{}')
     return {
       id: this._uri.substr(this._uri.indexOf('#') + 1),
-      type: this._predicates['type'].get(),
-      children: []
+      type: this.get('type'),
+      children: [],
+      ...option
     };
   }
 
@@ -54,11 +55,13 @@ class Root extends Branch {
   }
 
   public toJson = (): Element => {
+    let option = JSON.parse(this.get('option') || '{}')
     return {
       id: this._uri.substr(this._uri.indexOf('#') + 1),
-      type: this._predicates['type'].get(),
-      title: this._predicates['title'].get(),
-      children: []
+      type: this.get('type'),
+      title: this.get('title'),
+      children: [],
+      ...option
     };
   }
 }
@@ -67,17 +70,18 @@ class Leaf extends Subject {
   constructor(uri: string, graph: Graph) {
     // TODO: remove uri property
     super(uri, graph);
-    this._predicates.type = new NamedNodeProperty('http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'type');
     this._predicates.next = new NamedNodeProperty('http://www.solidoc.net/ontologies#nextNode', 'next');
     this._predicates.text = new TextProperty('http://www.solidoc.net/ontologies#text', 'text');
     this.isDeleted = false
   }
 
   public toJson = (): Text => {
+    let option = JSON.parse(this.get('option') || '{}')
     return {
       id: this._uri.substr(this._uri.indexOf('#') + 1),
-      type: this._predicates['type'].get(),
-      text: this._predicates['text'].get(),
+      type: this.get('type'),
+      text: this.get('text'),
+      ...option
     };
   }
 

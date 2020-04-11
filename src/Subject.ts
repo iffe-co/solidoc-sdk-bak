@@ -1,4 +1,4 @@
-import { Property } from './Property';
+import { Property, NamedNodeProperty, TextProperty } from './Property';
 import { Graph } from './Graph'
 
 abstract class Subject {
@@ -7,13 +7,16 @@ abstract class Subject {
   protected _predicates: { [key: string]: Property } = {}
   public isDeleted: boolean
 
-  constructor(uri: string, graph :Graph) {
+  constructor(uri: string, graph: Graph) {
     this._uri = uri;
     this._graph = graph;
+    this._predicates.type = new NamedNodeProperty('http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'type');
+    this._predicates.option = new TextProperty('http://www.solidoc.net/ontologies#option', 'option');
   }
 
   public fromQuad = (quad: any) => {
     let found = false;
+    // TODO: O(n^2) complexity
     Object.keys(this._predicates).forEach(key => {
       if (this._predicates[key].id === quad.predicate.id) {
         this._predicates[key].fromQuad(quad);
@@ -33,13 +36,23 @@ abstract class Subject {
     return this._predicates[key] ? this._predicates[key].get() : '';
   }
 
-  public set = (options: any) => {
+  public set = (props: any) => {
     if (this.isDeleted) {
       throw new Error('Trying to update a deleted subject: ' + this._uri);
     }
-    Object.keys(options).forEach(key => {
-      key === 'id' || key === 'children' || this._predicates[key].set(options[key]);
+    let option: any = JSON.parse(this.get('option') || '{}')
+    Object.keys(props).forEach(key => {
+      if (key === 'id' || key === 'children') {
+        //
+      } else if (this._predicates[key]) {
+        this._predicates[key].set(props[key]);
+      } else if (props[key] === null) {
+        delete option[key];
+      } else {
+        option[key] = props[key]
+      }
     });
+    this._predicates['option'].set(JSON.stringify(option));
   }
 
   public setNext = (node: Subject) => {
