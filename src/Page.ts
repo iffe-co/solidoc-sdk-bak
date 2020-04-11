@@ -1,13 +1,25 @@
 import { Branch, Root, Leaf, Node, Element, Process } from './Node';
 import { Subject } from './Subject';
 import { Graph } from './Graph';
-import { Path, Operation} from './operation'
+import { Path, Operation } from './operation'
 
 class Page extends Graph {
   constructor(json: Element) {
     super(json.id);
-    let head: Subject = this._addPlaceHolder(json.id);
-    this._fillNode(head, json)
+    this._insertNodeCascaded(json);
+  }
+
+  private _insertNodeCascaded = (json: Node, parent?: Branch, offset?: number) => {
+    let currUri: string = (parent) ? this._uri + '#' + json.id : json.id
+    let curr: Subject = this._addPlaceHolder(currUri, json.type);
+    curr.set(json);
+
+    parent && Process.attach(curr, parent, <number>offset);
+
+    // TODO: this is O(n^2) complexity since attach() is O(n)
+    for (let i = 0; curr instanceof Branch && i < json.children.length; i++) {
+      this._insertNodeCascaded(json.children[i], curr, i)
+    }
   }
 
   protected _addPlaceHolder = (uri: string, type?: string): Subject => {
@@ -23,13 +35,6 @@ class Page extends Graph {
       this._nodes[uri] = new Branch(uri, this)
     }
     return this._nodes[uri];
-  }
-  private _fillNode = (node: Subject, json: Node) => {
-    node.set(json);
-    for (let i = 0; json.children && i < json.children.length; i++) {
-      let path: Path = { parentUri: node.get('id'), offset: i }
-      this._insertNode(path, json.children[i])
-    }
   }
 
   protected _getBranchInstance = (uri: string): Branch => {
@@ -47,7 +52,7 @@ class Page extends Graph {
     if (!node || node.isDeleted) {
       throw new Error('The node does not exist: ' + path.parentUri + ' offset = ' + path.offset);
     } else if (!(node instanceof Leaf)) {
-      throw new Error('The request node is not a branch: ' +  path.parentUri + ' offset = ' + path.offset)
+      throw new Error('The request node is not a branch: ' + path.parentUri + ' offset = ' + path.offset)
     }
     return node;
   }
@@ -65,16 +70,6 @@ class Page extends Graph {
     }
 
     return headJson
-  }
-
-  private _insertNode = (path: Path, node: Node) => {
-    let parent: Branch = this._getBranchInstance(path.parentUri);
-    let currUri: string = this._uri + '#' + node.id
-    let curr: Subject = this._addPlaceHolder(currUri, node.type);
-
-    Process.attach(curr, parent, path.offset);
-
-    this._fillNode(curr, node);
   }
 
   private _removeNode = (path: Path) => {
@@ -132,7 +127,8 @@ class Page extends Graph {
   public apply(op: Operation) {
     switch (op.type) {
       case 'insert_node': {
-        this._insertNode(op.path, op.node)
+        let parent: Branch = this._getBranchInstance(op.path.parentUri);
+        this._insertNodeCascaded(op.node, parent, op.path.offset)
         break
       }
 
