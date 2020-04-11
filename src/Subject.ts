@@ -1,12 +1,15 @@
 import { Property } from './Property';
+import { Graph } from './Graph'
 
 abstract class Subject {
   protected _uri: string
+  protected _graph: Graph
   protected _predicates: { [key: string]: Property } = {}
   public isDeleted: boolean
 
-  constructor(uri: string) {
+  constructor(uri: string, graph :Graph) {
     this._uri = uri;
+    this._graph = graph;
   }
 
   public fromQuad = (quad: any) => {
@@ -41,6 +44,10 @@ abstract class Subject {
 
   public setNext = (node: Subject) => {
     this.set({ next: node ? node._uri : '' })
+  }
+  public getNext = (): Subject => {
+    let nextUri: string = this.get('next');
+    return this._graph.getSubject(nextUri);
   }
 
   public getSparqlForUpdate = (graph: string): string => {

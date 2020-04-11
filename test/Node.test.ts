@@ -1,8 +1,10 @@
 import { Branch, Root, Leaf } from '../src/Node';
+import { Page } from '../src/Page'
 import * as n3 from 'n3';
 import * as assert from 'power-assert';
 
 const parser = new n3.Parser();
+const page = new Page({id: 'http://example.org/alice', children: []});
 
 describe('Paragraph', () => {
   let para: Branch;
@@ -12,7 +14,7 @@ describe('Paragraph', () => {
   const quads: any[] = parser.parse(turtle);
 
   beforeEach(() => {
-    para = new Branch('http://example.org/alice#tag1');
+    para = new Branch('http://example.org/alice#tag1', page);
   });
   it('parses quads and converts to readable Json', () => {
     quads.forEach(para.fromQuad);
@@ -50,7 +52,7 @@ describe('Root', () => {
   const quads: any[] = parser.parse(turtle);
 
   beforeEach(() => {
-    root = new Root('http://example.org/alice');
+    root = new Root('http://example.org/alice', page);
   });
   it('parses from quads', () => {
     quads.forEach(root.fromQuad);
@@ -72,7 +74,7 @@ describe('Leaf', () => {
   const quads: any[] = parser.parse(turtle);
 
   beforeEach(() => {
-    leaf = new Leaf('http://example.org/alice#tag1');
+    leaf = new Leaf('http://example.org/alice#tag1', page);
     quads.forEach(leaf.fromQuad);
   });
   it('parses from quads', () => {

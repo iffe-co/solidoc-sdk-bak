@@ -16,11 +16,11 @@ class Page extends Graph {
     }
     // even if a marked-removed node exists, it should be recreated
     if (uri === this._uri) {
-      this._nodes[uri] = new Root(uri)
+      this._nodes[uri] = new Root(uri, this)
     } else if (type === 'http://www.solidoc.net/ontologies#Leaf') {
-      this._nodes[uri] = new Leaf(uri)
+      this._nodes[uri] = new Leaf(uri, this)
     } else {
-      this._nodes[uri] = new Branch(uri)
+      this._nodes[uri] = new Branch(uri, this)
     }
     return this._nodes[uri];
   }
@@ -32,20 +32,11 @@ class Page extends Graph {
     }
   }
 
-  private _getChild = (curr: Branch, offset: number): Subject => {
-    let childUri: string = curr.get('child');
-    let child: Subject = this._nodes[childUri];
-    while (offset > 0 && child) {
-      child = this._getNext(child)
-      offset--
-    }
-    return child;
-  }
   private _getLastChild = (curr: Subject): Subject => {
     let childUri: string = curr.get('child');
     let child: Subject = this._nodes[childUri];
-    while (this._getNext(child)) {
-      child = this._getNext(child)
+    while (child.getNext()) {
+      child = child.getNext()
     }
     return child;
   }
@@ -60,7 +51,7 @@ class Page extends Graph {
   }
   protected _getLeafInstance = (path: Path): Leaf => {
     let parent: Branch = this._getBranchInstance(path.parentUri);
-    let node = this._getChild(parent, path.offset)
+    let node = parent.getChild(path.offset)
     if (!node || node.isDeleted) {
       throw new Error('The node does not exist: ' + path.parentUri + ' offset = ' + path.offset);
     } else if (!(node instanceof Leaf)) {
@@ -72,13 +63,13 @@ class Page extends Graph {
   public toJson = (head?: Subject): Node => {
     if (!head) head = this._getRoot();
     const headJson = head.toJson();
-    let curr = (head instanceof Branch) ? this._getChild(head, 0) : undefined;
+    let curr = (head instanceof Branch) ? head.getChild(0) : undefined;
 
     while (curr) {
       let nodeJson = this.toJson(curr)
       headJson.children.push(nodeJson)
 
-      curr = this._getNext(curr);
+      curr = curr.getNext()
     }
 
     return headJson
@@ -96,7 +87,7 @@ class Page extends Graph {
 
   private _removeNode = (path: Path) => {
     let parent: Branch = this._getBranchInstance(path.parentUri);
-    let curr: Subject = this._getChild(parent, path.offset);
+    let curr: Subject = parent.getChild(path.offset);
     if (!curr) return
 
     this._detach(curr, parent, path.offset);
@@ -105,23 +96,23 @@ class Page extends Graph {
 
   private _attach = (curr: Subject, parent: Branch, offset: number) => {
     if (offset === 0) {
-      let child: Subject = this._getChild(parent, 0)
+      let child: Subject = parent.getChild(0)
       parent.setChild(curr)
       curr.setNext(child)
     } else {
-      let prev: Subject = this._getChild(parent, offset - 1) || this._getLastChild(parent);
-      let next: Subject = this._getNext(prev)
+      let prev: Subject = parent.getChild(offset - 1) || this._getLastChild(parent);
+      let next: Subject = prev.getNext()
       prev.setNext(curr)
       curr.setNext(next)
     }
   }
 
   private _detach = (curr: Subject, parent: Branch, offset: number) => {
-    let next: Subject = this._getNext(curr);
+    let next: Subject = curr.getNext();
     if (offset === 0) {
       parent.setChild(next);
     } else {
-      let prev: Subject = this._getChild(parent, offset - 1);
+      let prev: Subject = parent.getChild(offset - 1);
       prev.setNext(next)
     }
   }
@@ -130,12 +121,12 @@ class Page extends Graph {
     let res = doSomething(head, target);
     if (res) return res
 
-    let curr = (head instanceof Branch) ? this._getChild(head, 0) : undefined;
+    let curr = (head instanceof Branch) ? head.getChild(0) : undefined;
 
     while (curr) {
       let res = this._traversePreOrder(curr, doSomething, target);
       if (res) return res
-      curr = this._getNext(curr)
+      curr = curr.getNext()
     }
 
     return res
@@ -150,7 +141,7 @@ class Page extends Graph {
     let oldParent: Branch = this._getBranchInstance(oldPath.parentUri);
     let newParent: Branch = this._getBranchInstance(newPath.parentUri);
 
-    let curr: Subject = this._getChild(oldParent, oldPath.offset);
+    let curr: Subject = oldParent.getChild(oldPath.offset);
     if (!curr) return;
 
     if (curr === newParent || this._traversePreOrder(curr, this._findDescendent, newParent)) {
@@ -166,7 +157,7 @@ class Page extends Graph {
   }
 
   private _findDescendent = (curr: Subject, target: Subject): boolean => {
-    return (curr instanceof Branch) ? (this._getChild(curr, 0) === target) : false
+    return (curr instanceof Branch) ? (curr.getChild(0) === target) : false
   }
 
   public apply(op: Operation) {

@@ -1,9 +1,10 @@
 import { NamedNodeProperty, TextProperty } from './Property';
 import { Subject } from './Subject';
+import { Graph } from './Graph'
 
 class Branch extends Subject {
-  constructor(uri: string) {
-    super(uri);
+  constructor(uri: string, graph: Graph) {
+    super(uri, graph);
     // TODO: type/next can be extract to Subject super()
     this._predicates.type = new NamedNodeProperty('http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'type');
     this._predicates.next = new NamedNodeProperty('http://www.solidoc.net/ontologies#nextNode', 'next');
@@ -22,11 +23,20 @@ class Branch extends Subject {
   public setChild = (node: Subject) => {
     this.set({ child: node ? node.get('id') : '' })
   }
+  public getChild = (offset: number): Subject => {
+    let childUri: string = this.get('child');
+    let child: Subject = this._graph.getSubject(childUri);
+    while (offset > 0 && child) {
+      child = child.getNext()
+      offset--
+    }
+    return child;
+  }
 }
 
 class Root extends Branch {
-  constructor(uri) {
-    super(uri);
+  constructor(uri: string, graph: Graph) {
+    super(uri, graph);
     this._predicates.title = new TextProperty('http://purl.org/dc/terms/title', 'title');
   }
 
@@ -41,9 +51,9 @@ class Root extends Branch {
 }
 
 class Leaf extends Subject {
-  constructor(uri: string) {
+  constructor(uri: string, graph: Graph) {
     // TODO: remove uri property
-    super(uri);
+    super(uri, graph);
     this._predicates.type = new NamedNodeProperty('http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'type');
     this._predicates.next = new NamedNodeProperty('http://www.solidoc.net/ontologies#nextNode', 'next');
     this._predicates.text = new TextProperty('http://www.solidoc.net/ontologies#text', 'text');
