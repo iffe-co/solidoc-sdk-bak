@@ -112,15 +112,28 @@ const Process = {
     }
   },
 
-  detach: (curr: Subject, parent: Branch, offset: number) => {
-    let next: Subject = curr.getNext();
+  detach: (parent: Branch, offset: number): Subject => {
+    let curr: Subject = parent.getChild(offset);
+    if (!curr) return curr
     if (offset === 0) {
-      parent.setChild(next);
+      parent.setChild(curr.getNext());
     } else {
+      // TODO: traversed twice
       let prev: Subject = parent.getChild(offset - 1);
-      prev.setNext(next)
+      prev.setNext(curr.getNext())
     }
+    return curr
   },
+
+  removeRecursive: (head: Subject) => {
+    head.isDeleted = true
+
+    let curr = (head instanceof Branch) ? head.getChild(0) : undefined;
+    while (curr) {
+      Process.removeRecursive(curr);
+      curr = curr.getNext()
+    }
+  }
 }
 
 export { Branch, Root, Leaf, Text, Element, Node, Process }

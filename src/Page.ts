@@ -6,10 +6,10 @@ import { Path, Operation } from './operation'
 class Page extends Graph {
   constructor(json: Element) {
     super(json.id);
-    this._insertNodeCascaded(json);
+    this._insertRecursive(json);
   }
 
-  private _insertNodeCascaded = (json: Node, parent?: Branch, offset?: number) => {
+  private _insertRecursive = (json: Node, parent?: Branch, offset?: number) => {
     let currUri: string = (parent) ? this._uri + '#' + json.id : json.id
     let curr: Subject = this._addPlaceHolder(currUri, json.type);
     curr.set(json);
@@ -18,7 +18,7 @@ class Page extends Graph {
 
     // TODO: this is O(n^2) complexity since attach() is O(n)
     for (let i = 0; curr instanceof Branch && i < json.children.length; i++) {
-      this._insertNodeCascaded(json.children[i], curr, i)
+      this._insertRecursive(json.children[i], curr, i)
     }
   }
 
@@ -72,15 +72,6 @@ class Page extends Graph {
     return headJson
   }
 
-  private _removeNode = (path: Path) => {
-    let parent: Branch = this._getBranchInstance(path.parentUri);
-    let curr: Subject = parent.getChild(path.offset);
-    if (!curr) return
-
-    Process.detach(curr, parent, path.offset);
-    this._traversePreOrder(curr, this._markAsRemoved);
-  }
-
   private _traversePreOrder = (head: Subject, doSomething: (curr: Subject, target?: any) => boolean, target?: any): boolean => {
     let res = doSomething(head, target);
     if (res) return res
@@ -96,11 +87,6 @@ class Page extends Graph {
     return res
   }
 
-  private _markAsRemoved = (curr: Subject): boolean => {
-    curr.isDeleted = true
-    return false
-  }
-
   private _moveNode = (oldPath: Path, newPath: Path) => {
     let oldParent: Branch = this._getBranchInstance(oldPath.parentUri);
     let newParent: Branch = this._getBranchInstance(newPath.parentUri);
@@ -112,7 +98,7 @@ class Page extends Graph {
       throw new Error('Trying to append the node to itself or its descendent')
     }
 
-    Process.detach(curr, oldParent, oldPath.offset);
+    curr = Process.detach(oldParent, oldPath.offset);
 
     if (oldParent === newParent && oldPath.offset < newPath.offset) {
       newPath.offset--;
@@ -128,7 +114,14 @@ class Page extends Graph {
     switch (op.type) {
       case 'insert_node': {
         let parent: Branch = this._getBranchInstance(op.path.parentUri);
-        this._insertNodeCascaded(op.node, parent, op.path.offset)
+        this._insertRecursive(op.node, parent, op.path.offset)
+        break
+      }
+
+      case 'remove_node': {
+        let parent: Branch = this._getBranchInstance(op.path.parentUri);
+        let curr: Subject = Process.detach(parent, op.path.offset);
+        curr && Process.removeRecursive(curr);
         break
       }
 
@@ -145,11 +138,6 @@ class Page extends Graph {
 
       case 'move_node': {
         this._moveNode(op.path, op.newPath)
-        break
-      }
-
-      case 'remove_node': {
-        this._removeNode(op.path)
         break
       }
 
