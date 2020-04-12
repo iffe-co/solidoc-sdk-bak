@@ -15,10 +15,8 @@ abstract class Graph {
   protected _getRoot = (): Subject => {
     return this._nodes[this._uri];
   }
-  protected _getNext = (curr: Subject): Subject => {
-    // TODO: prevent throwing
-    let nextUri: string = curr.get('next');
-    return this._nodes[nextUri];
+  public getSubject = (uri: string): Subject => {
+    return this._nodes[uri];
   }
   public fromTurtle = (turtle: string) => {
     this._flush();
@@ -48,10 +46,6 @@ abstract class Graph {
   }
 
   protected abstract _addPlaceHolder(uri: string, type: string): Subject
-
-  // public set = (node: Subject, options: any) => {
-  //   node.set(options);
-  // }
 
   public getSparqlForUpdate = (): string => {
     let sparql = '';

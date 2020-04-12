@@ -1,23 +1,25 @@
-import { Branch, Root, Leaf, Node, Element } from './Node';
+import { Branch, Root, Leaf, Node, Element, Process } from './Node';
 import { Subject } from './Subject';
 import { Graph } from './Graph';
-
-interface Path {
-  parentUri: string,
-  offset: number
-}
-interface Operation {
-  type: string,
-  path: Path,
-  node?: Node,
-  newPath?: Path
-}
+import { Path, Operation } from './operation'
 
 class Page extends Graph {
   constructor(json: Element) {
     super(json.id);
-    let head: Subject = this._addPlaceHolder(json.id);
-    this._fillNode(head, json)
+    this._insertRecursive(json);
+  }
+
+  private _insertRecursive = (json: Node, parent?: Branch, offset?: number) => {
+    let currUri: string = (parent) ? this._uri + '#' + json.id : json.id
+    let curr: Subject = this._addPlaceHolder(currUri, json.type);
+    curr.set(json);
+
+    parent && Process.attach(curr, parent, <number>offset);
+
+    // TODO: this is O(n^2) complexity since attach() is O(n)
+    for (let i = 0; curr instanceof Branch && i < json.children.length; i++) {
+      this._insertRecursive(json.children[i], curr, i)
+    }
   }
 
   protected _addPlaceHolder = (uri: string, type?: string): Subject => {
@@ -26,40 +28,16 @@ class Page extends Graph {
     }
     // even if a marked-removed node exists, it should be recreated
     if (uri === this._uri) {
-      this._nodes[uri] = new Root(uri)
+      this._nodes[uri] = new Root(uri, this)
     } else if (type === 'http://www.solidoc.net/ontologies#Leaf') {
-      this._nodes[uri] = new Leaf(uri)
+      this._nodes[uri] = new Leaf(uri, this)
     } else {
-      this._nodes[uri] = new Branch(uri)
+      this._nodes[uri] = new Branch(uri, this)
     }
     return this._nodes[uri];
   }
-  private _fillNode = (node: Subject, json: Node) => {
-    node.set(json);
-    for (let i = 0; json.children && i < json.children.length; i++) {
-      let path: Path = { parentUri: node.get('id'), offset: i }
-      this.insertNode(path, json.children[i])
-    }
-  }
 
-  private _getChild = (curr: Branch, offset: number): Subject => {
-    let childUri: string = curr.get('child');
-    let child: Subject = this._nodes[childUri];
-    while (offset > 0 && child) {
-      child = this._getNext(child)
-      offset--
-    }
-    return child;
-  }
-  private _getLastChild = (curr: Subject): Subject => {
-    let childUri: string = curr.get('child');
-    let child: Subject = this._nodes[childUri];
-    while (this._getNext(child)) {
-      child = this._getNext(child)
-    }
-    return child;
-  }
-  protected _getExistingBranch = (uri: string): Branch => {
+  protected _getBranchInstance = (uri: string): Branch => {
     let node = this._nodes[uri];
     if (!node || node.isDeleted) {
       throw new Error('The node does not exist: ' + uri);
@@ -68,153 +46,132 @@ class Page extends Graph {
     }
     return node;
   }
+  protected _getLeafInstance = (path: Path): Leaf => {
+    let parent: Branch = this._getBranchInstance(path.parentUri);
+    let node = parent.getChild(path.offset)
+    if (!node || node.isDeleted) {
+      throw new Error('The node does not exist: ' + path.parentUri + ' offset = ' + path.offset);
+    } else if (!(node instanceof Leaf)) {
+      throw new Error('The request node is not a branch: ' + path.parentUri + ' offset = ' + path.offset)
+    }
+    return node;
+  }
 
   public toJson = (head?: Subject): Node => {
     if (!head) head = this._getRoot();
     const headJson = head.toJson();
-    let curr = (head instanceof Branch) ? this._getChild(head, 0) : undefined;
+    let curr = (head instanceof Branch) ? head.getChild(0) : undefined;
 
     while (curr) {
       let nodeJson = this.toJson(curr)
       headJson.children.push(nodeJson)
 
-      curr = this._getNext(curr);
+      curr = curr.getNext()
     }
 
     return headJson
   }
 
-  public insertNode = (path: Path, node: Node) => {
-    let parent: Branch = this._getExistingBranch(path.parentUri);
-    let currUri: string = this._uri + '#' + node.id
-    let curr: Subject = this._addPlaceHolder(currUri, node.type);
-
-    this._insertSingleNode(parent, path.offset, curr);
-
-    this._fillNode(curr, node);
-  }
-
-  private _insertSingleNode = (parent: Branch, offset: number, curr: Subject) => {
-    if (offset === 0) {
-      let child: Subject = this._getChild(parent, 0)
-      parent.setChild(curr)
-      curr.setNext(child)
-    } else {
-      let prev: Subject = this._getChild(parent, offset - 1) || this._getLastChild(parent);
-      let next: Subject = this._getNext(prev)
-      prev.setNext(curr)
-      curr.setNext(next)
-    }
-  }
-
-  public removeNode = (path: Path) => {
-    let parent: Branch = this._getExistingBranch(path.parentUri);
-    let curr: Subject = this._getChild(parent, path.offset);
-    if (!curr) return
-
-    this._detach(curr, parent, path.offset);
-    this._traversePreOrder(curr, this._markAsRemoved);
-  }
-
-  private _detach = (curr: Subject, parent: Branch, offset: number) => {
-    let next: Subject = this._getNext(curr);
-    if (offset === 0) {
-      parent.setChild(next);
-    } else {
-      let prev: Subject = this._getChild(parent, offset - 1);
-      prev.setNext(next)
-    }
-  }
-
-  private _traversePreOrder = (head: Subject, doSomething: (curr: Subject, target?: any) => boolean, target?: any): boolean => {
-    let res = doSomething(head, target);
-    if (res) return res
-
-    let curr = (head instanceof Branch) ? this._getChild(head, 0) : undefined;
-
-    while (curr) {
-      let res = this._traversePreOrder(curr, doSomething, target);
-      if (res) return res
-      curr = this._getNext(curr)
-    }
-
-    return res
-  }
-
-  private _markAsRemoved = (curr: Subject): boolean => {
-    curr.isDeleted = true
-    return false
-  }
-
-  public moveNode = (oldPath: Path, newPath: Path) => {
-    let oldParent: Branch = this._getExistingBranch(oldPath.parentUri);
-    let newParent: Branch = this._getExistingBranch(newPath.parentUri);
-
-    let curr: Subject = this._getChild(oldParent, oldPath.offset);
-    if (!curr) return;
-
-    if (curr === newParent || this._traversePreOrder(curr, this._findDescendent, newParent)) {
-      throw new Error('Trying to append the node to itself or its descendent')
-    }
-
-    this._detach(curr, oldParent, oldPath.offset);
-
-    if (oldParent === newParent && oldPath.offset < newPath.offset) {
-      newPath.offset--;
-    }
-    this._insertSingleNode(newParent, newPath.offset, curr);
-  }
-
-  private _findDescendent = (curr: Subject, target: Subject): boolean => {
-    return (curr instanceof Branch) ? (this._getChild(curr, 0) === target) : false
-  }
-
   public apply(op: Operation) {
     switch (op.type) {
       case 'insert_node': {
-
-        break
-      }
-
-      case 'insert_text': {
-
-        break
-      }
-
-      case 'merge_node': {
-
-        break
-      }
-
-      case 'move_node': {
-
+        const parent: Branch = this._getBranchInstance(op.path.parentUri);
+        this._insertRecursive(op.node, parent, op.path.offset)
         break
       }
 
       case 'remove_node': {
-
+        const parent: Branch = this._getBranchInstance(op.path.parentUri);
+        const curr: Subject = Process.detach(parent, op.path.offset);
+        curr && Process.removeRecursive(curr);
         break
       }
 
-      case 'remove_text': {
+      case 'move_node': {
+        const parent: Branch = this._getBranchInstance(op.path.parentUri);
+        const newParent: Branch = this._getBranchInstance(op.newPath.parentUri);
 
+        const curr: Subject = Process.detach(parent, op.path.offset);
+
+        if (Process.isAncestor(curr, newParent)) {
+          Process.attach(curr, parent, op.path.offset);
+          throw new Error('Trying to append the node to itself or its descendent')
+        }
+
+        if (parent === newParent && op.path.offset < op.newPath.offset) {
+          op.newPath.offset--;
+        }
+        Process.attach(curr, newParent, op.newPath.offset);
         break
       }
 
-      case 'set_node': {
+      case 'merge_node': {
+        const parent: Branch = this._getBranchInstance(op.path.parentUri);
+        const prev: Subject = parent.getChild(op.path.offset - 1);
+        const curr: Subject = prev.getNext();
 
-        break
-      }
-
-      case 'set_selection': {
-
+        if (prev instanceof Leaf && curr instanceof Leaf) {
+          prev.insertText(Infinity, curr.get('text'));
+        } else if (prev instanceof Branch && curr instanceof Branch) {
+          // TODO: use move_node
+          let child: Subject = Process.detach(curr, 0);
+          Process.attach(child, prev, Infinity)
+        } else {
+          throw new Error(`Cannot merge.`);
+        }
+        Process.detach(parent, op.path.offset)
         break
       }
 
       case 'split_node': {
-
+        const parent: Branch = this._getBranchInstance(op.path.parentUri);
+        const curr: Subject = parent.getChild(op.path.offset);
+        if (curr instanceof Leaf) {
+          let clipped: string = curr.removeText(op.position, Infinity);
+          let json = {
+            ...this.toJson(curr),
+            ...op.properties,
+            text: clipped
+          }
+          this._insertRecursive(json, parent, op.path.offset + 1)
+        } else {
+          // TODO: use move_node
+          let child: Subject = Process.detach(<Branch>curr, op.position);
+          let json = {
+            ...this.toJson(curr),
+            ...op.properties,
+            children: []
+          }
+          this._insertRecursive(json, parent, op.path.offset + 1)
+          Process.attach(child, <Branch>curr.getNext(), 0)
+        }
         break
       }
+
+      case 'set_node': {
+        const parent: Branch = this._getBranchInstance(op.path.parentUri);
+        const curr: Subject = parent.getChild(op.path.offset);
+        // TODO: disallow setting id/text/children
+        curr.set(op.newProperties)
+        break
+      }
+
+      case 'insert_text': {
+        const leaf = this._getLeafInstance(op.path);
+        leaf.insertText(op.offset, op.text)
+        break
+      }
+
+      case 'remove_text': {
+        const leaf = this._getLeafInstance(op.path);
+        leaf.removeText(op.offset, op.text.length);
+        break
+      }
+
+      default: {
+        break
+      }
+
     }
   }
 }
