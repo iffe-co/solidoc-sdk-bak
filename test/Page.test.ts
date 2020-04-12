@@ -2,6 +2,8 @@
 import { Page } from '../src/Page';
 import { Operation } from '../src/operation'
 import * as assert from 'power-assert';
+// import { Branch } from '../src/Node';
+// import { Subject } from '../src/Subject';
 
 const pageUri = 'http://example.org/alice/a';
 // const pageJson = { id: pageUri, title: "Alice's Profile", children: [] };

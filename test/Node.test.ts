@@ -27,8 +27,8 @@ describe('Paragraph', () => {
     assert(para.get('next'), 'http://example.org/alice#tag2');
   });
   it('sets and gets the new value (uncommited)', () => {
-    para.set({ next: 'http://example.org/alice#tag3' });
-    assert(para.get('next') === 'http://example.org/alice#tag3');
+    para.set({ type: 'http://www.solidoc.net/ontologies#NumberedList' });
+    assert(para.get('type') === 'http://www.solidoc.net/ontologies#NumberedList');
   });
   it('generates sparql after deletion', () => {
     para.isDeleted = true;

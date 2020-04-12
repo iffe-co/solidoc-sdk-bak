@@ -1,4 +1,5 @@
 import { Subject } from './Subject';
+import { Branch } from './Node'
 import * as n3 from 'n3';
 
 const parser = new n3.Parser();
@@ -23,6 +24,7 @@ abstract class Graph {
     const quads: any[] = parser.parse(turtle);
     this._addSubjects(quads);
     this._assignProperties(quads);
+    this._makeChildren(this._getRoot());
   }
 
   private _flush = () => {
@@ -43,6 +45,21 @@ abstract class Graph {
     quads.forEach(quad => {
       this._nodes[quad.subject.id].fromQuad(quad);
     })
+  }
+
+  private _makeChildren = (head?: Subject) => {
+    if (!(head instanceof Branch)) return
+
+    let currUri = head.get('child');
+    let curr: Subject = this._nodes[currUri]
+    let offset = 0;
+
+    while (curr) {
+      head.children[offset] = curr
+      this._makeChildren(curr);
+      curr = this._nodes[curr.get('next')];
+      offset ++
+    }
   }
 
   protected abstract _addPlaceHolder(uri: string, type: string): Subject

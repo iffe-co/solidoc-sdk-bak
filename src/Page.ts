@@ -9,17 +9,17 @@ class Page extends Graph {
     this._insertRecursive(json);
   }
 
-  private _insertRecursive = (json: Node, parent?: Branch, offset?: number) => {
+  private _insertRecursive = (json: Node, parent?: Branch, offset?: number): Subject => {
     let currUri: string = (parent) ? this._uri + '#' + json.id : json.id
     let curr: Subject = this._addPlaceHolder(currUri, json.type);
     curr.set(json);
 
-    parent && Process.attach(curr, parent, <number>offset);
+    parent && parent.attach(curr, <number>offset);
 
-    // TODO: this is O(n^2) complexity since attach() is O(n)
     for (let i = 0; curr instanceof Branch && i < json.children.length; i++) {
       this._insertRecursive(json.children[i], curr, i)
     }
+    return curr
   }
 
   protected _addPlaceHolder = (uri: string, type?: string): Subject => {
@@ -60,13 +60,15 @@ class Page extends Graph {
   public toJson = (head?: Subject): Node => {
     if (!head) head = this._getRoot();
     const headJson = head.toJson();
-    let curr = (head instanceof Branch) ? head.getChild(0) : undefined;
 
-    while (curr) {
-      let nodeJson = this.toJson(curr)
-      headJson.children.push(nodeJson)
-
-      curr = curr.getNext()
+    // TODO: use map??
+    for (let i = 0; head instanceof Branch && i < head.children.length; i++) {
+      if (i == 0 && head.get('child') !== head.children[i].get('id')) {
+        throw new Error('first child error')
+      } else if (i < head.children.length - 1 && head.children[i].get('next') !== head.children[i+1].get('id')) {
+        throw new Error('next error')
+      }
+      headJson.children.push(this.toJson(head.children[i]))
     }
 
     return headJson
@@ -82,7 +84,7 @@ class Page extends Graph {
 
       case 'remove_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        const curr: Subject = Process.detach(parent, op.path.offset);
+        const curr: Subject = parent.detach(op.path.offset);
         curr && Process.removeRecursive(curr);
         break
       }
@@ -91,35 +93,35 @@ class Page extends Graph {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
         const newParent: Branch = this._getBranchInstance(op.newPath.parentUri);
 
-        const curr: Subject = Process.detach(parent, op.path.offset);
+        const curr: Subject = parent.detach(op.path.offset);
 
         if (Process.isAncestor(curr, newParent)) {
-          Process.attach(curr, parent, op.path.offset);
+          parent.attach(curr, op.path.offset);
           throw new Error('Trying to append the node to itself or its descendent')
         }
 
         if (parent === newParent && op.path.offset < op.newPath.offset) {
           op.newPath.offset--;
         }
-        Process.attach(curr, newParent, op.newPath.offset);
+        newParent.attach(curr, op.newPath.offset);
         break
       }
 
       case 'merge_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
         const prev: Subject = parent.getChild(op.path.offset - 1);
-        const curr: Subject = prev.getNext();
+        const curr: Subject = parent.getChild(op.path.offset);
 
         if (prev instanceof Leaf && curr instanceof Leaf) {
           prev.insertText(Infinity, curr.get('text'));
         } else if (prev instanceof Branch && curr instanceof Branch) {
           // TODO: use move_node
-          let child: Subject = Process.detach(curr, 0);
-          Process.attach(child, prev, Infinity)
+          let child: Subject = curr.detach(0);
+          prev.attach(child, Infinity)
         } else {
           throw new Error(`Cannot merge.`);
         }
-        Process.detach(parent, op.path.offset)
+        parent.detach(op.path.offset)
         break
       }
 
@@ -136,14 +138,14 @@ class Page extends Graph {
           this._insertRecursive(json, parent, op.path.offset + 1)
         } else {
           // TODO: use move_node
-          let child: Subject = Process.detach(<Branch>curr, op.position);
+          let child: Subject = (<Branch>curr).detach(op.position);
           let json = {
             ...this.toJson(curr),
             ...op.properties,
             children: []
           }
-          this._insertRecursive(json, parent, op.path.offset + 1)
-          Process.attach(child, <Branch>curr.getNext(), 0)
+          let next: Subject = this._insertRecursive(json, parent, op.path.offset + 1);
+          (<Branch>next).attach(child, 0)
         }
         break
       }

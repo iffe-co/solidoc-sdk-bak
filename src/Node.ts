@@ -3,10 +3,10 @@ import { Subject } from './Subject';
 import { Graph } from './Graph'
 
 class Branch extends Subject {
+  public children: Subject[] = []; // TODO: make it private
+
   constructor(uri: string, graph: Graph) {
     super(uri, graph);
-    // TODO: type/next can be extract to Subject super()
-    this._predicates.next = new NamedNodeProperty('http://www.solidoc.net/ontologies#nextNode', 'next');
     this._predicates.child = new NamedNodeProperty('http://www.solidoc.net/ontologies#firstChild', 'child');
     this.isDeleted = false
   }
@@ -21,30 +21,42 @@ class Branch extends Subject {
     };
   }
 
-  public setChild = (node: Subject) => {
+  private setChild = (node: Subject) => {
     this.set({ child: node ? node.get('id') : '' })
   }
 
-  // offset === Infinity => return the last child
   public getChild = (offset: number): Subject => {
     if (offset < 0) {
       throw new Error(`Trying to getChild(${offset}) of ${this._uri}`);
     }
+    (offset === Infinity) && (offset = this.children.length - 1);
+    return this.children[offset]
+  }
 
-    let childUri: string = this.get('child');
-    let child: Subject = this._graph.getSubject(childUri);
-
-    if (offset < Infinity) {
-      while (offset > 0 && child) {
-        child = child.getNext()
-        offset--
-      }
+  public attach = (curr: Subject, offset: number) => {
+    if (offset === 0) {
+      this.setChild(curr)
     } else {
-      while (child.getNext()) {
-        child = child.getNext()
-      }
+      let prev: Subject = this.getChild(offset - 1) || this.getChild(Infinity);
+      prev.setNext(curr)
     }
-    return child;
+    let next: Subject = this.getChild(offset)
+    curr.setNext(next)
+    this.children.splice(offset, 0, curr)
+  }
+
+  public detach = (offset: number): Subject => {
+    let curr: Subject = this.getChild(offset);
+    if (!curr) return curr
+    let next: Subject = this.getChild(offset + 1);
+    if (offset === 0) {
+      this.setChild(next);
+    } else {
+      let prev: Subject = this.getChild(offset - 1);
+      prev.setNext(next)
+    }
+    this.children.splice(offset, 1)
+    return curr
   }
 }
 
@@ -70,7 +82,6 @@ class Leaf extends Subject {
   constructor(uri: string, graph: Graph) {
     // TODO: remove uri property
     super(uri, graph);
-    this._predicates.next = new NamedNodeProperty('http://www.solidoc.net/ontologies#nextNode', 'next');
     this._predicates.text = new TextProperty('http://www.solidoc.net/ontologies#text', 'text');
     this.isDeleted = false
   }
@@ -111,49 +122,22 @@ interface Element {
 type Node = Text | Element
 
 const Process = {
-  attach: (curr: Subject, parent: Branch, offset: number) => {
-    if (offset === 0) {
-      let child: Subject = parent.getChild(0)
-      parent.setChild(curr)
-      curr.setNext(child)
-    } else {
-      let prev: Subject = parent.getChild(offset - 1) || parent.getChild(Infinity);
-      let next: Subject = prev.getNext()
-      prev.setNext(curr)
-      curr.setNext(next)
-    }
-  },
-
-  detach: (parent: Branch, offset: number): Subject => {
-    let curr: Subject = parent.getChild(offset);
-    if (!curr) return curr
-    if (offset === 0) {
-      parent.setChild(curr.getNext());
-    } else {
-      // TODO: traversed twice
-      let prev: Subject = parent.getChild(offset - 1);
-      prev.setNext(curr.getNext())
-    }
-    return curr
-  },
-
   removeRecursive: (head: Subject) => {
     head.isDeleted = true
 
-    let curr = (head instanceof Branch) ? head.getChild(0) : undefined;
-    while (curr) {
-      Process.removeRecursive(curr);
-      curr = curr.getNext()
+    // TODO: use map??
+    for (let i = 0; head instanceof Branch && i < head.children.length; i++) {
+      Process.removeRecursive(head.children[i])
     }
   },
 
   isAncestor: (from: Subject, to: Subject): boolean => {
     if (from === to) return true
 
-    let curr = (from instanceof Branch) ? from.getChild(0) : undefined;
-    while (curr) {
+    // TODO: use map??
+    for (let i = 0; from instanceof Branch && i < from.children.length; i++) {
+      let curr = from.children[i]
       if (Process.isAncestor(curr, to)) return true
-      curr = curr.getNext();
     }
     return false
   },
