@@ -331,3 +331,34 @@ describe('Split Branch Node', () => {
     assert.deepStrictEqual(extractChildrenId(pageJson.children[1]), [tid1])
   });
 });
+
+describe('Set Node', () => {
+  beforeEach(() => {
+    page = new Page(json);
+  });
+
+  it('sets a paragraph by adding a property', () => {
+    let op: Operation = { type: 'set_node', path: { parentUri: pageUri, offset: 0 }, newProperties: { name: 'alice' } }
+    page.apply(op)
+    let pageJson = page.toJson()
+    assert(pageJson.children[0].name === 'alice')
+    // TODO: sparql
+  });
+  it('sets a paragraph by adding and removing', () => {
+    let op1: Operation = { type: 'set_node', path: { parentUri: pageUri, offset: 0 }, newProperties: { name: 'alice' } }
+    let op2: Operation = { type: 'set_node', path: { parentUri: pageUri, offset: 0 }, newProperties: { name: null, age: 25 } }
+    page.apply(op1)
+    page.apply(op2)
+    let pageJson = page.toJson()
+    assert(pageJson.children[0].name === undefined)
+    assert(pageJson.children[0].age === 25)
+    // TODO: sparql
+  });
+  it('sets a text by adding a property', () => {
+    let op: Operation = { type: 'set_node', path: { parentUri: paraUri1, offset: 0 }, newProperties: { bold: false } }
+    page.apply(op)
+    let pageJson = page.toJson()
+    assert(pageJson.children[0].children[0].bold === false)
+    // TODO: sparql
+  });
+});

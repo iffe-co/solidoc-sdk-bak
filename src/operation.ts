@@ -54,7 +54,7 @@ export type RemoveTextOperation = {
 export type SetNodeOperation = {
   type: 'set_node'
   path: Path
-  properties: Partial<Node>
+  // properties: Partial<Node>
   newProperties: Partial<Node>
   [key: string]: any
 }
