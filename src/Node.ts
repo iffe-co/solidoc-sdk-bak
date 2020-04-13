@@ -4,7 +4,7 @@ import { Graph } from './Graph'
 import { Node } from './interface'
 
 class Branch extends Subject {
-  public children: Subject[] = []; // TODO: make it private
+  private _children: Subject[] = [];
 
   constructor(uri: string, graph: Graph) {
     super(uri, graph);
@@ -30,8 +30,8 @@ class Branch extends Subject {
     if (offset < 0) {
       throw new Error(`Trying to getChild(${offset}) of ${this._uri}`);
     }
-    (offset === Infinity) && (offset = this.children.length - 1);
-    return this.children[offset]
+    (offset === Infinity) && (offset = this._children.length - 1);
+    return this._children[offset]
   }
 
   public insertChild = (curr: Subject, offset: number) => {
@@ -43,7 +43,7 @@ class Branch extends Subject {
     }
     let next: Subject = this.getChild(offset)
     curr.setNext(next)
-    this.children.splice(offset, 0, curr)
+    this._children.splice(offset, 0, curr)
   }
 
   public removeChild = (offset: number): Subject => {
@@ -56,7 +56,7 @@ class Branch extends Subject {
       let prev: Subject = this.getChild(offset - 1);
       prev.setNext(next)
     }
-    this.children.splice(offset, 1)
+    this._children.splice(offset, 1)
     return curr
   }
 
@@ -67,10 +67,10 @@ class Branch extends Subject {
     } else {
       this.setChild(curr)
     }
-    this.children.push(curr)
+    this._children.push(curr)
     while (curr.getNext()) {
       curr = curr.getNext()
-      this.children.push(curr)
+      this._children.push(curr)
     }
   }
 
@@ -82,8 +82,12 @@ class Branch extends Subject {
       prev.setNext(null)
     }
     let curr: Subject = this.getChild(offset);
-    this.children = this.children.slice(0, offset)
+    this._children = this._children.slice(0, offset)
     return curr
+  }
+
+  public getChildrenNum = (): number => {
+    return this._children.length
   }
 }
 
@@ -143,13 +147,13 @@ const Process = {
     const headJson = head.toJson();
 
     // TODO: use map??
-    for (let i = 0; head instanceof Branch && i < head.children.length; i++) {
-      if (i == 0 && head.get('child') !== head.children[i].get('id')) {
+    for (let i = 0; head instanceof Branch && i < head.getChildrenNum(); i++) {
+      if (i == 0 && head.get('child') !== head.getChild(i).get('id')) {
         throw new Error('first child error')
-      } else if (i < head.children.length - 1 && head.children[i].get('next') !== head.children[i + 1].get('id')) {
+      } else if (i < head.getChildrenNum() - 1 && head.getChild(i).get('next') !== head.getChild(i + 1).get('id')) {
         throw new Error('next error')
       }
-      headJson.children.push(Process.toJson(head.children[i]))
+      headJson.children.push(Process.toJson(head.getChild(i)))
     }
 
     return headJson
@@ -159,8 +163,8 @@ const Process = {
     head.isDeleted = true
 
     // TODO: use map??
-    for (let i = 0; head instanceof Branch && i < head.children.length; i++) {
-      Process.removeRecursive(head.children[i])
+    for (let i = 0; head instanceof Branch && i < head.getChildrenNum(); i++) {
+      Process.removeRecursive(head.getChild(i))
     }
   },
 
@@ -168,8 +172,8 @@ const Process = {
     if (from === to) return true
 
     // TODO: use map??
-    for (let i = 0; from instanceof Branch && i < from.children.length; i++) {
-      let curr = from.children[i]
+    for (let i = 0; from instanceof Branch && i < from.getChildrenNum(); i++) {
+      let curr = from.getChild(i)
       if (Process.isAncestor(curr, to)) return true
     }
     return false
