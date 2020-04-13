@@ -1,9 +1,6 @@
-// import Graph from '../../../../app/data_model/ldp/Graph';
 import { Page } from '../src/Page';
-import { Operation } from '../src/operation'
+import { Operation } from '../src/interface'
 import * as assert from 'power-assert';
-// import { Branch } from '../src/Node';
-// import { Subject } from '../src/Subject';
 
 const pageUri = 'http://example.org/alice/a';
 // const pageJson = { id: pageUri, title: "Alice's Profile", children: [] };

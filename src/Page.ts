@@ -1,7 +1,7 @@
-import { Branch, Root, Leaf, Node, Element, Process } from './Node';
+import { Branch, Root, Leaf, Process } from './Node';
 import { Subject } from './Subject';
 import { Graph } from './Graph';
-import { Path, Operation } from './operation'
+import { Path, Operation, Node, Element } from './interface'
 
 class Page extends Graph {
   constructor(json: Element) {

@@ -111,16 +111,6 @@ class Leaf extends Subject {
   }
 }
 
-interface Text {
-  text: string
-  [key: string]: any
-}
-interface Element {
-  children: Node[]
-  [key: string]: any
-}
-type Node = Text | Element
-
 const Process = {
   removeRecursive: (head: Subject) => {
     head.isDeleted = true
@@ -143,4 +133,4 @@ const Process = {
   },
 }
 
-export { Branch, Root, Leaf, Text, Element, Node, Process }
+export { Branch, Root, Leaf, Process }

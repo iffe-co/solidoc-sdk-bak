@@ -1,4 +1,12 @@
-import { Node } from './Node'
+export interface Text {
+  text: string
+  [key: string]: any
+}
+export interface Element {
+  children: Node[]
+  [key: string]: any
+}
+export type Node = Text | Element
 
 export interface Path {
   parentUri: string,

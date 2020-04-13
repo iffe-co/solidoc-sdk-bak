@@ -42,19 +42,22 @@ describe('Paragraph', () => {
   });
   it('modifies optional property', () => {
     para.set({ name: "bob" })
-    assert(para.toJson().name === 'bob');
+    let paraJson: any = para.toJson();
+    assert(paraJson.name === 'bob');
     // TODO: 
     // const sparql = para.getSparqlForUpdate('http://example.org/test');
   })
   it('adds optional property', () => {
     para.set({ age: 25 })
-    assert(para.toJson().age === 25);
+    let paraJson: any = para.toJson();
+    assert(paraJson.age === 25);
     // TODO: 
     // const sparql = para.getSparqlForUpdate('http://example.org/test');
   })
   it('deletes optional property', () => {
     para.set({ name: null })
-    assert(para.toJson().name === undefined);
+    let paraJson: any = para.toJson();
+    assert(paraJson.name === undefined);
     // TODO: 
     // const sparql = para.getSparqlForUpdate('http://example.org/test');
   })
@@ -103,7 +106,8 @@ describe('Leaf', () => {
   });
   it('adds a boolean property', () => {
     leaf.set({ bold: true });
-    assert(leaf.toJson().bold === true);
+    let leafJson: any = leaf.toJson();
+    assert(leafJson.bold === true);
     // TODO: sparql
   });
   it('inserts text at offset 0', () => {
