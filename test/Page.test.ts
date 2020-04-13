@@ -273,13 +273,22 @@ describe('Merge Text Node', () => {
 
 describe('Merge Element Node', () => {
   beforeEach(() => {
-    page = new Page(json);
+    let newJson: Element = {
+      id: pageUri,
+      type: 'http://www.solidoc.net/ontologies#Root',
+      title: "Alice's Profile",
+      children: [
+        { id: 'tag1', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson1] },
+        { id: 'tag2', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson2, textJson3] },
+      ],
+    };
+    page = new Page(newJson);
   });
   it('merges paragraph 2', () => {
     let op: Operation = { type: 'merge_node', path: { parentUri: pageUri, offset: 1 } }
     page.apply(op)
     let pageJson = page.toJson()
-    assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [tid1, tid2])
+    assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [tid1, tid2, tid3])
   });
   it('throws on merging paragraph 1', () => {
     let op: Operation = { type: 'merge_node', path: { parentUri: pageUri, offset: 0 } }
@@ -319,7 +328,16 @@ describe('Split Text Node', () => {
 
 describe('Split Branch Node', () => {
   beforeEach(() => {
-    page = new Page(json);
+    let newJson: Element = {
+      id: pageUri,
+      type: 'http://www.solidoc.net/ontologies#Root',
+      title: "Alice's Profile",
+      children: [
+        { id: 'tag1', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson1, textJson3] },
+        { id: 'tag2', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson2] },
+      ],
+    };
+    page = new Page(newJson);
   });
   it('splits paragraph 1', () => {
     let op: Operation = { type: 'split_node', path: { parentUri: pageUri, offset: 0 }, position: 0, properties: { id: pid3, type: 'http://www.solidoc.net/ontologies#Paragraph' } }
@@ -327,7 +345,7 @@ describe('Split Branch Node', () => {
     let pageJson = page.toJson()
     assert.deepStrictEqual(extractChildrenId(pageJson), [pid1, pid3, pid2])
     assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [])
-    assert.deepStrictEqual(extractChildrenId(pageJson.children[1]), [tid1])
+    assert.deepStrictEqual(extractChildrenId(pageJson.children[1]), [tid1, tid3])
   });
 });
 

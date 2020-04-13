@@ -22,7 +22,7 @@ class Branch extends Subject {
     };
   }
 
-  private setChild = (node: Subject) => {
+  private setChild = (node: Subject | null) => {
     this.set({ child: node ? node.get('id') : '' })
   }
 
@@ -34,7 +34,7 @@ class Branch extends Subject {
     return this.children[offset]
   }
 
-  public attach = (curr: Subject, offset: number) => {
+  public insertChild = (curr: Subject, offset: number) => {
     if (offset === 0) {
       this.setChild(curr)
     } else {
@@ -46,7 +46,7 @@ class Branch extends Subject {
     this.children.splice(offset, 0, curr)
   }
 
-  public detach = (offset: number): Subject => {
+  public removeChild = (offset: number): Subject => {
     let curr: Subject = this.getChild(offset);
     if (!curr) return curr
     let next: Subject = this.getChild(offset + 1);
@@ -57,6 +57,32 @@ class Branch extends Subject {
       prev.setNext(next)
     }
     this.children.splice(offset, 1)
+    return curr
+  }
+
+  public appendChildren = (curr: Subject) => {
+    let last: Subject = this.getChild(Infinity)
+    if (last) {
+      last.setNext(curr)
+    } else {
+      this.setChild(curr)
+    }
+    this.children.push(curr)
+    while (curr.getNext()) {
+      curr = curr.getNext()
+      this.children.push(curr)
+    }
+  }
+
+  public detachChildren = (offset: number): Subject => {
+    if (offset === 0) {
+      this.setChild(null);
+    } else {
+      let prev: Subject = this.getChild(offset - 1);
+      prev.setNext(null)
+    }
+    let curr: Subject = this.getChild(offset);
+    this.children = this.children.slice(0, offset)
     return curr
   }
 }
@@ -120,7 +146,7 @@ const Process = {
     for (let i = 0; head instanceof Branch && i < head.children.length; i++) {
       if (i == 0 && head.get('child') !== head.children[i].get('id')) {
         throw new Error('first child error')
-      } else if (i < head.children.length - 1 && head.children[i].get('next') !== head.children[i+1].get('id')) {
+      } else if (i < head.children.length - 1 && head.children[i].get('next') !== head.children[i + 1].get('id')) {
         throw new Error('next error')
       }
       headJson.children.push(Process.toJson(head.children[i]))

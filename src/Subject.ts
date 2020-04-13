@@ -56,8 +56,12 @@ abstract class Subject {
     this._predicates['option'].set(JSON.stringify(option));
   }
 
-  public setNext = (node: Subject) => {
+  public setNext = (node: Subject | null) => {
     this.set({ next: node ? node._uri : '' })
+  }
+  public getNext = (): Subject => {
+    let nextUri: string = this.get('next');
+    return this._graph.getSubject(nextUri);
   }
 
   public getSparqlForUpdate = (graph: string): string => {
