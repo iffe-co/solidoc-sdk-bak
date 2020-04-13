@@ -1,6 +1,7 @@
 import { NamedNodeProperty, TextProperty } from './Property';
 import { Subject } from './Subject';
 import { Graph } from './Graph'
+import { Node } from './interface'
 
 class Branch extends Subject {
   public children: Subject[] = []; // TODO: make it private
@@ -112,6 +113,22 @@ class Leaf extends Subject {
 }
 
 const Process = {
+  toJson: (head: Subject): Node => {
+    const headJson = head.toJson();
+
+    // TODO: use map??
+    for (let i = 0; head instanceof Branch && i < head.children.length; i++) {
+      if (i == 0 && head.get('child') !== head.children[i].get('id')) {
+        throw new Error('first child error')
+      } else if (i < head.children.length - 1 && head.children[i].get('next') !== head.children[i+1].get('id')) {
+        throw new Error('next error')
+      }
+      headJson.children.push(Process.toJson(head.children[i]))
+    }
+
+    return headJson
+  },
+
   removeRecursive: (head: Subject) => {
     head.isDeleted = true
 

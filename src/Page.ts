@@ -57,21 +57,9 @@ class Page extends Graph {
     return node;
   }
 
-  public toJson = (head?: Subject): Node => {
-    if (!head) head = this._getRoot();
-    const headJson = head.toJson();
-
-    // TODO: use map??
-    for (let i = 0; head instanceof Branch && i < head.children.length; i++) {
-      if (i == 0 && head.get('child') !== head.children[i].get('id')) {
-        throw new Error('first child error')
-      } else if (i < head.children.length - 1 && head.children[i].get('next') !== head.children[i+1].get('id')) {
-        throw new Error('next error')
-      }
-      headJson.children.push(this.toJson(head.children[i]))
-    }
-
-    return headJson
+  public toJson = (): Node => {
+    let head = this._getRoot();
+    return Process.toJson(head)
   }
 
   public apply(op: Operation) {
@@ -131,7 +119,7 @@ class Page extends Graph {
         if (curr instanceof Leaf) {
           let clipped: string = curr.removeText(op.position, Infinity);
           let json = {
-            ...this.toJson(curr),
+            ...Process.toJson(curr),
             ...op.properties,
             text: clipped
           }
@@ -140,7 +128,7 @@ class Page extends Graph {
           // TODO: use move_node
           let child: Subject = (<Branch>curr).detach(op.position);
           let json = {
-            ...this.toJson(curr),
+            ...Process.toJson(curr),
             ...op.properties,
             children: []
           }

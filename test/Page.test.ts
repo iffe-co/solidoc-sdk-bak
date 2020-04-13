@@ -1,5 +1,5 @@
 import { Page } from '../src/Page';
-import { Operation } from '../src/interface'
+import { Operation, Element } from '../src/interface'
 import * as assert from 'power-assert';
 
 const pageUri = 'http://example.org/alice/a';
@@ -44,7 +44,7 @@ turtle += ` <http://www.solidoc.net/ontologies#firstChild> <${textUri2}>.`;
 turtle += `<${textUri2}> a <http://www.solidoc.net/ontologies#Leaf>;`;
 turtle += ` <http://www.solidoc.net/ontologies#text> "Paragraph 2".`;
 
-let json: any = {
+let json: Element = {
   id: pageUri,
   type: 'http://www.solidoc.net/ontologies#Root',
   title: "Alice's Profile",
@@ -231,7 +231,7 @@ describe('Move Node', () => {
 
 describe('Merge Text Node', () => {
   beforeEach(() => {
-    let newJson: any = {
+    let newJson: Element = {
       id: pageUri,
       type: 'http://www.solidoc.net/ontologies#Root',
       title: "Alice's Profile",
