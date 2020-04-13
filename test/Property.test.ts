@@ -9,7 +9,7 @@ describe('Named Node Property', () => {
   const turtle = '<http://example.org/alice> a <http://xmlns.com/foaf/0.1/Person> .';
   const quads: any[] = parser.parse(turtle);
 
-  const deleteClause = 'WITH <http://example.org/test> DELETE { <http://example.org/alice> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o } WHERE { <http://example.org/alice> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o };\n';
+  const deleteClause = 'WITH <http://example.org/test> DELETE WHERE { <http://example.org/alice> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o };\n';
   const insertClause = 'INSERT DATA { GRAPH <http://example.org/test> { <http://example.org/alice> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/homepage>} };\n';
 
   beforeEach(() => {
@@ -60,25 +60,40 @@ describe('Named Node Property', () => {
 
 describe('Text Property', () => {
   let prop: TextProperty;
-  const turtle = '<http://example.org/alice> <http://xmlns.com/foaf/0.1/nick> "Alie" .';
+  const turtle = `<http://example.org/alice> <http://www.solidoc.net/ontologies#option> "{\\"name\\":\\"alice\\"}" .`;
   const quads: any[] = parser.parse(turtle);
 
-  const deleteClause = 'WITH <http://example.org/test> DELETE { <http://example.org/alice> <http://xmlns.com/foaf/0.1/nick> ?o } WHERE { <http://example.org/alice> <http://xmlns.com/foaf/0.1/nick> ?o };\n';
-  const insertClause = 'INSERT DATA { GRAPH <http://example.org/test> { <http://example.org/alice> <http://xmlns.com/foaf/0.1/nick> "Lissie"} };\n';
+  const deleteClause = `WITH <http://example.org/test> DELETE WHERE { <http://example.org/alice> <http://xmlns.com/foaf/0.1/nick> ?o };\n`;
+  const insertClause = `INSERT DATA { GRAPH <http://example.org/test> { <http://example.org/alice> <http://www.solidoc.net/ontologies#option> "{\\"name\\":\\"alice\\",\\"age\\":25}"} };\n`;
 
   beforeEach(() => {
-    prop = new TextProperty('http://xmlns.com/foaf/0.1/nick', 'nick');
+    prop = new TextProperty('http://www.solidoc.net/ontologies#option', 'option');
   });
   it('parses quad as text', () => {
     prop.fromQuad(quads[0]);
-    assert(prop.value === 'Alie');
-    assert(prop.get() === 'Alie');
+    assert(prop.value === '{"name":"alice"}');
   });
-  it('generates sparql for update', () => {
-    prop.fromQuad(quads[0]);
-    prop.set('Lissie');
 
+  it('generates sparql for update', async () => {
+    prop.fromQuad(quads[0]);
+    prop.set('{"name":"alice","age":25}');
     const sparql: string = prop.getSparqlForUpdate('http://example.org/test', 'http://example.org/alice');
     assert(sparql, deleteClause + insertClause);
+  });
+
+  it('generates sparql for deletion only', async () => {
+    prop.fromQuad(quads[0]);
+    prop.set('');
+    const sparql: string = prop.getSparqlForUpdate('http://example.org/test', 'http://example.org/alice');
+    assert(sparql, deleteClause);
+  });
+
+  it('generates sparql for insertion only', async () => {
+    prop.fromQuad(quads[0]);
+    prop.set('');
+    prop.commit();
+    prop.set('{"name":"alice","age":25}');
+    const sparql: string = prop.getSparqlForUpdate('http://example.org/test', 'http://example.org/alice');
+    assert(sparql, insertClause);
   });
 });

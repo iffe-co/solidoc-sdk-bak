@@ -18,7 +18,18 @@ abstract class Property {
     return this.uncommitted;
   }
 
-  public abstract getSparqlForUpdate(graph: string, subject: string): string
+  protected _getSparqlForDeletion = (graph: string, subject: string): string => {
+    let sparql: string = ''
+    if (this.uncommitted !== this.value && this.value) {
+      sparql = `WITH <${graph}> DELETE WHERE { <${subject}> <${this.id}> ?o };\n`;
+    }
+    return sparql
+  }
+  protected abstract _getSparqlForInsertion (graph: string, subject: string): string
+
+  public getSparqlForUpdate = (graph: string, subject: string): string => {
+    return this._getSparqlForDeletion(graph, subject) + this._getSparqlForInsertion(graph, subject)
+  }
 
   public commit = () => {
     this.value = this.uncommitted;
@@ -34,16 +45,10 @@ class NamedNodeProperty extends Property {
     this.value = quad.object.id;
     this.uncommitted = this.value;
   }
-  public getSparqlForUpdate = (graph: string, subject: string): string => {
-    let sparql = '';
-    // TODO: multi-value case?
-    if (this.uncommitted !== this.value) {
-      if (this.value) {
-        sparql += `WITH <${graph}> DELETE { <${subject}> <${this.id}> ?o } WHERE { <${subject}> <${this.id}> ?o };\n`;
-      }
-      if (this.uncommitted) {
-        sparql += `INSERT DATA { GRAPH <${graph}> { <${subject}> <${this.id}> <${this.uncommitted}>} };\n`;
-      }
+  protected _getSparqlForInsertion = (graph: string, subject: string): string => {
+    let sparql = ''
+    if (this.uncommitted !== this.value && this.uncommitted) {
+      sparql += `INSERT DATA { GRAPH <${graph}> { <${subject}> <${this.id}> <${this.uncommitted}>} };\n`;
     }
     return sparql;
   }
@@ -55,15 +60,12 @@ class TextProperty extends Property {
     this.value = text.substring(1, text.lastIndexOf('"'));
     this.uncommitted = this.value;
   }
-  public getSparqlForUpdate = (graph: string, subject: string): string => {
-    let sparql = '';
-    if (this.uncommitted !== this.value) {
-      if (this.value) {
-        sparql += `WITH <${graph}> DELETE { <${subject}> <${this.id}> ?o } WHERE { <${subject}> <${this.id}> ?o };\n`;
-      }
-      if (this.uncommitted) {
-        sparql += `INSERT DATA { GRAPH <${graph}> { <${subject}> <${this.id}> "${this.uncommitted}"} };\n`;
-      }
+  protected _getSparqlForInsertion = (graph: string, subject: string): string => {
+    let sparql = ''
+    if (this.uncommitted !== this.value && this.uncommitted) {
+      let backSlashEscaped: string = this.uncommitted.replace(/\\/g, '\\\\');
+      let doubleQuoteEscaped: string = backSlashEscaped.replace(/"/g, '\\"');
+      sparql += `INSERT DATA { GRAPH <${graph}> { <${subject}> <${this.id}> "${doubleQuoteEscaped}"} };\n`;
     }
     return sparql;
   }
