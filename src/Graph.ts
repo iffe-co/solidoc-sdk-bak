@@ -1,4 +1,5 @@
 import { Subject } from './Subject';
+import { Branch } from './Node'
 import * as n3 from 'n3';
 
 const parser = new n3.Parser();
@@ -18,11 +19,13 @@ abstract class Graph {
   public getSubject = (uri: string): Subject => {
     return this._nodes[uri];
   }
+
   public fromTurtle = (turtle: string) => {
     this._flush();
     const quads: any[] = parser.parse(turtle);
     this._addSubjects(quads);
     this._assignProperties(quads);
+    this._assembleTree(this._getRoot());
   }
 
   private _flush = () => {
@@ -45,6 +48,19 @@ abstract class Graph {
     })
   }
 
+  private _assembleTree = (head?: Subject) => {
+    if (!(head instanceof Branch)) return
+
+    let currUri = head.get('child');
+    let curr: Subject = this._nodes[currUri]
+    curr && head.appendChildren(curr)
+    
+    while (curr) {
+      this._assembleTree(curr);
+      curr = curr.getNext();
+    }
+  }
+
   protected abstract _addPlaceHolder(uri: string, type: string): Subject
 
   public getSparqlForUpdate = (): string => {
@@ -64,6 +80,7 @@ abstract class Graph {
       }
     });
   }
+
   public undo = () => {
     Object.keys(this._nodes).forEach(uri => {
       this._nodes[uri].undo();

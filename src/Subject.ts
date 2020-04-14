@@ -11,6 +11,7 @@ abstract class Subject {
     this._uri = uri;
     this._graph = graph;
     this._predicates.type = new NamedNodeProperty('http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'type');
+    this._predicates.next = new NamedNodeProperty('http://www.solidoc.net/ontologies#nextNode', 'next');
     this._predicates.option = new TextProperty('http://www.solidoc.net/ontologies#option', 'option');
   }
 
@@ -55,7 +56,7 @@ abstract class Subject {
     this._predicates['option'].set(JSON.stringify(option));
   }
 
-  public setNext = (node: Subject) => {
+  public setNext = (node: Subject | null) => {
     this.set({ next: node ? node._uri : '' })
   }
   public getNext = (): Subject => {

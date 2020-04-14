@@ -1,12 +1,13 @@
 import { NamedNodeProperty, TextProperty } from './Property';
 import { Subject } from './Subject';
 import { Graph } from './Graph'
+import { Node } from './interface'
 
 class Branch extends Subject {
+  private _children: Subject[] = [];
+
   constructor(uri: string, graph: Graph) {
     super(uri, graph);
-    // TODO: type/next can be extract to Subject super()
-    this._predicates.next = new NamedNodeProperty('http://www.solidoc.net/ontologies#nextNode', 'next');
     this._predicates.child = new NamedNodeProperty('http://www.solidoc.net/ontologies#firstChild', 'child');
     this.isDeleted = false
   }
@@ -21,30 +22,72 @@ class Branch extends Subject {
     };
   }
 
-  public setChild = (node: Subject) => {
+  private setChild = (node: Subject | null) => {
     this.set({ child: node ? node.get('id') : '' })
   }
 
-  // offset === Infinity => return the last child
   public getChild = (offset: number): Subject => {
     if (offset < 0) {
       throw new Error(`Trying to getChild(${offset}) of ${this._uri}`);
     }
+    (offset === Infinity) && (offset = this._children.length - 1);
+    return this._children[offset]
+  }
 
-    let childUri: string = this.get('child');
-    let child: Subject = this._graph.getSubject(childUri);
-
-    if (offset < Infinity) {
-      while (offset > 0 && child) {
-        child = child.getNext()
-        offset--
-      }
+  public insertChild = (curr: Subject, offset: number) => {
+    if (offset === 0) {
+      this.setChild(curr)
     } else {
-      while (child.getNext()) {
-        child = child.getNext()
-      }
+      let prev: Subject = this.getChild(offset - 1) || this.getChild(Infinity);
+      prev.setNext(curr)
     }
-    return child;
+    let next: Subject = this.getChild(offset)
+    curr.setNext(next)
+    this._children.splice(offset, 0, curr)
+  }
+
+  public removeChild = (offset: number): Subject => {
+    let curr: Subject = this.getChild(offset);
+    if (!curr) return curr
+    let next: Subject = this.getChild(offset + 1);
+    if (offset === 0) {
+      this.setChild(next);
+    } else {
+      let prev: Subject = this.getChild(offset - 1);
+      prev.setNext(next)
+    }
+    this._children.splice(offset, 1)
+    return curr
+  }
+
+  public appendChildren = (curr: Subject) => {
+    let last: Subject = this.getChild(Infinity)
+    if (last) {
+      last.setNext(curr)
+    } else {
+      this.setChild(curr)
+    }
+    this._children.push(curr)
+    while (curr.getNext()) {
+      curr = curr.getNext()
+      this._children.push(curr)
+    }
+  }
+
+  public detachChildren = (offset: number): Subject => {
+    if (offset === 0) {
+      this.setChild(null);
+    } else {
+      let prev: Subject = this.getChild(offset - 1);
+      prev.setNext(null)
+    }
+    let curr: Subject = this.getChild(offset);
+    this._children = this._children.slice(0, offset)
+    return curr
+  }
+
+  public getChildrenNum = (): number => {
+    return this._children.length
   }
 }
 
@@ -70,7 +113,6 @@ class Leaf extends Subject {
   constructor(uri: string, graph: Graph) {
     // TODO: remove uri property
     super(uri, graph);
-    this._predicates.next = new NamedNodeProperty('http://www.solidoc.net/ontologies#nextNode', 'next');
     this._predicates.text = new TextProperty('http://www.solidoc.net/ontologies#text', 'text');
     this.isDeleted = false
   }
@@ -100,63 +142,42 @@ class Leaf extends Subject {
   }
 }
 
-interface Text {
-  text: string
-  [key: string]: any
-}
-interface Element {
-  children: Node[]
-  [key: string]: any
-}
-type Node = Text | Element
-
 const Process = {
-  attach: (curr: Subject, parent: Branch, offset: number) => {
-    if (offset === 0) {
-      let child: Subject = parent.getChild(0)
-      parent.setChild(curr)
-      curr.setNext(child)
-    } else {
-      let prev: Subject = parent.getChild(offset - 1) || parent.getChild(Infinity);
-      let next: Subject = prev.getNext()
-      prev.setNext(curr)
-      curr.setNext(next)
-    }
-  },
+  toJson: (head: Subject): Node => {
+    const headJson = head.toJson();
 
-  detach: (parent: Branch, offset: number): Subject => {
-    let curr: Subject = parent.getChild(offset);
-    if (!curr) return curr
-    if (offset === 0) {
-      parent.setChild(curr.getNext());
-    } else {
-      // TODO: traversed twice
-      let prev: Subject = parent.getChild(offset - 1);
-      prev.setNext(curr.getNext())
+    // TODO: use map??
+    for (let i = 0; head instanceof Branch && i < head.getChildrenNum(); i++) {
+      if (i == 0 && head.get('child') !== head.getChild(i).get('id')) {
+        throw new Error('first child error')
+      } else if (i < head.getChildrenNum() - 1 && head.getChild(i).get('next') !== head.getChild(i + 1).get('id')) {
+        throw new Error('next error')
+      }
+      headJson.children.push(Process.toJson(head.getChild(i)))
     }
-    return curr
+
+    return headJson
   },
 
   removeRecursive: (head: Subject) => {
     head.isDeleted = true
 
-    let curr = (head instanceof Branch) ? head.getChild(0) : undefined;
-    while (curr) {
-      Process.removeRecursive(curr);
-      curr = curr.getNext()
+    // TODO: use map??
+    for (let i = 0; head instanceof Branch && i < head.getChildrenNum(); i++) {
+      Process.removeRecursive(head.getChild(i))
     }
   },
 
   isAncestor: (from: Subject, to: Subject): boolean => {
     if (from === to) return true
 
-    let curr = (from instanceof Branch) ? from.getChild(0) : undefined;
-    while (curr) {
+    // TODO: use map??
+    for (let i = 0; from instanceof Branch && i < from.getChildrenNum(); i++) {
+      let curr = from.getChild(i)
       if (Process.isAncestor(curr, to)) return true
-      curr = curr.getNext();
     }
     return false
   },
 }
 
-export { Branch, Root, Leaf, Text, Element, Node, Process }
+export { Branch, Root, Leaf, Process }
