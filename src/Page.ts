@@ -23,7 +23,7 @@ class Page extends Graph {
   }
 
   protected _addPlaceHolder = (uri: string, type?: string): Subject => {
-    if (this._nodes[uri] && !this._nodes[uri].isDeleted) {
+    if (this._nodes[uri] && !this._nodes[uri].isDeleted()) {
       throw new Error('Trying to add an existing node: ' + uri);
     }
     // even if a marked-removed node exists, it should be recreated
@@ -39,7 +39,7 @@ class Page extends Graph {
 
   private _getBranchInstance = (uri: string): Branch => {
     let node = this._nodes[uri];
-    if (!node || node.isDeleted) {
+    if (!node || node.isDeleted()) {
       throw new Error('The node does not exist: ' + uri);
     } else if (!(node instanceof Branch)) {
       throw new Error('The request node is not a branch: ' + uri)
@@ -49,7 +49,7 @@ class Page extends Graph {
   private _getLeafInstance = (path: Path): Leaf => {
     let parent: Branch = this._getBranchInstance(path.parentUri);
     let node = parent.getChild(path.offset)
-    if (!node || node.isDeleted) {
+    if (!node || node.isDeleted()) {
       throw new Error('The node does not exist: ' + path.parentUri + ' offset = ' + path.offset);
     } else if (!(node instanceof Leaf)) {
       throw new Error('The request node is not a branch: ' + path.parentUri + ' offset = ' + path.offset)
@@ -88,9 +88,6 @@ class Page extends Graph {
           throw new Error('Trying to append the node to itself or its descendent')
         }
 
-        if (parent === newParent && op.path.offset < op.newPath.offset) {
-          op.newPath.offset--;
-        }
         newParent.insertChild(curr, op.newPath.offset);
         break
       }
@@ -139,7 +136,7 @@ class Page extends Graph {
       case 'set_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
         const curr: Subject = parent.getChild(op.path.offset);
-        // TODO: disallow setting id/text/children
+        // TODO: disallow setting id/text/children/next
         curr.set(op.newProperties)
         break
       }

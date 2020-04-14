@@ -5,11 +5,12 @@ abstract class Subject {
   protected _uri: string
   protected _graph: Graph
   protected _predicates: { [key: string]: Property } = {}
-  public isDeleted: boolean
+  protected _isDeleted: boolean
 
   constructor(uri: string, graph: Graph) {
     this._uri = uri;
     this._graph = graph;
+    this._isDeleted = false
     this._predicates.type = new NamedNodeProperty('http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'type');
     this._predicates.next = new NamedNodeProperty('http://www.solidoc.net/ontologies#nextNode', 'next');
     this._predicates.option = new TextProperty('http://www.solidoc.net/ontologies#option', 'option');
@@ -38,7 +39,7 @@ abstract class Subject {
   }
 
   public set = (props: any) => {
-    if (this.isDeleted) {
+    if (this._isDeleted) {
       throw new Error('Trying to update a deleted subject: ' + this._uri);
     }
     let option: any = JSON.parse(this.get('option') || '{}')
@@ -66,7 +67,7 @@ abstract class Subject {
 
   public getSparqlForUpdate = (graph: string): string => {
     let sparql = '';
-    if (this.isDeleted) {
+    if (this._isDeleted) {
       sparql += `WITH <${graph}> DELETE { <${this._uri}> ?p ?o } WHERE { <${this._uri}> ?p ?o };\n`;
     } else {
       Object.keys(this._predicates).forEach(key => {
@@ -83,10 +84,18 @@ abstract class Subject {
   }
 
   public undo = () => {
-    this.isDeleted = false
+    this._isDeleted = false
     Object.keys(this._predicates).forEach(key => {
       this._predicates[key].undo();
     });
+  }
+
+  public delete = () => {
+    this._isDeleted = true
+  }
+
+  public isDeleted = (): boolean => {
+    return this._isDeleted
   }
 }
 

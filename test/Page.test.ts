@@ -204,7 +204,7 @@ describe('Move Node', () => {
     assert.deepStrictEqual(pageJson.children[0].children[0], textJson2)
   });
   it('moves paragraph 1 to the end', () => {
-    let op: Operation = { type: 'move_node', path: { parentUri: pageUri, offset: 0 }, newPath: { parentUri: pageUri, offset: 2 } }
+    let op: Operation = { type: 'move_node', path: { parentUri: pageUri, offset: 0 }, newPath: { parentUri: pageUri, offset: 1 } }
     page.apply(op)
     let pageJson = page.toJson()
     assert.deepStrictEqual(extractChildrenId(pageJson), [pid2, pid1])

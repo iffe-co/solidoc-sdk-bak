@@ -31,14 +31,14 @@ describe('Paragraph', () => {
     assert(para.get('type') === 'http://www.solidoc.net/ontologies#NumberedList');
   });
   it('generates sparql after deletion', () => {
-    para.isDeleted = true;
+    para.delete();
     const sparql = para.getSparqlForUpdate('http://example.org/test');
     assert(sparql === 'WITH <http://example.org/test> DELETE { <http://example.org/alice#tag1> ?p ?o } WHERE { <http://example.org/alice#tag1> ?p ?o };\n');
   });
   it('undoes deletion', () => {
-    para.isDeleted = true;
+    para.delete();
     para.undo();
-    assert(!para.isDeleted);
+    assert(!para.isDeleted());
   });
   it('modifies optional property', () => {
     para.set({ name: "bob" })

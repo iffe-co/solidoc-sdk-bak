@@ -73,7 +73,7 @@ abstract class Graph {
 
   public commit = () => {
     Object.keys(this._nodes).forEach(uri => {
-      if (this._nodes[uri].isDeleted) {
+      if (this._nodes[uri].isDeleted()) {
         delete this._nodes[uri];
       } else {
         this._nodes[uri].commit();

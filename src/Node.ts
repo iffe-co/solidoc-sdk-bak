@@ -9,7 +9,6 @@ class Branch extends Subject {
   constructor(uri: string, graph: Graph) {
     super(uri, graph);
     this._predicates.child = new NamedNodeProperty('http://www.solidoc.net/ontologies#firstChild', 'child');
-    this.isDeleted = false
   }
 
   public toJson = (): Element => {
@@ -114,7 +113,6 @@ class Leaf extends Subject {
     // TODO: remove uri property
     super(uri, graph);
     this._predicates.text = new TextProperty('http://www.solidoc.net/ontologies#text', 'text');
-    this.isDeleted = false
   }
 
   public toJson = (): Text => {
@@ -160,7 +158,7 @@ const Process = {
   },
 
   removeRecursive: (head: Subject) => {
-    head.isDeleted = true
+    head.delete()
 
     // TODO: use map??
     for (let i = 0; head instanceof Branch && i < head.getChildrenNum(); i++) {
