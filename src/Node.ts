@@ -157,6 +157,21 @@ const Process = {
     return headJson
   },
 
+  insertRecursive: (json: Node, graph: Graph, parent: Branch, offset: number): Subject => {
+    let currUri: string = graph.getUri() + '#' + json.id
+    let curr: Subject = (json.type === 'http://www.solidoc.net/ontologies#Leaf') ? new Leaf(currUri, graph) : new Branch(currUri, graph)
+
+    curr.set(json);
+    graph.registerNode(curr);
+
+    parent.insertChild(curr, offset);
+
+    for (let i = 0; curr instanceof Branch && i < json.children.length; i++) {
+      Process.insertRecursive(json.children[i], graph, curr, i)
+    }
+    return curr
+  },
+
   removeRecursive: (head: Subject) => {
     head.delete()
 

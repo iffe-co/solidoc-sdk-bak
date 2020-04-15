@@ -1,25 +1,18 @@
 import { Branch, Root, Leaf, Process } from './Node';
 import { Subject } from './Subject';
 import { Graph } from './Graph';
-import { Path, Operation, Node, Element } from './interface'
+import { Path, Operation, Element } from './interface'
 
 class Page extends Graph {
   constructor(json: Element) {
     super(json.id);
-    this._insertRecursive(json);
-  }
-
-  private _insertRecursive = (json: Node, parent?: Branch, offset?: number): Subject => {
-    let currUri: string = (parent) ? this._uri + '#' + json.id : json.id
-    let curr: Subject = this._addPlaceHolder(currUri, json.type);
+    let curr: Subject = new Root(json.id, this)
     curr.set(json);
-
-    parent && parent.insertChild(curr, <number>offset);
+    this.registerNode(curr);
 
     for (let i = 0; curr instanceof Branch && i < json.children.length; i++) {
-      this._insertRecursive(json.children[i], curr, i)
+      Process.insertRecursive(json.children[i], this, curr, i)
     }
-    return curr
   }
 
   protected _addPlaceHolder = (uri: string, type?: string): Subject => {
@@ -27,7 +20,7 @@ class Page extends Graph {
       throw new Error('Trying to add an existing node: ' + uri);
     }
     // even if a marked-removed node exists, it should be recreated
-    if (uri === this._uri) {
+    if (uri === this.getUri()) {
       this._nodes[uri] = new Root(uri, this)
     } else if (type === 'http://www.solidoc.net/ontologies#Leaf') {
       this._nodes[uri] = new Leaf(uri, this)
@@ -66,7 +59,7 @@ class Page extends Graph {
     switch (op.type) {
       case 'insert_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        this._insertRecursive(op.node, parent, op.path.offset)
+        Process.insertRecursive(op.node, this, parent, op.path.offset)
         break
       }
 
@@ -119,7 +112,7 @@ class Page extends Graph {
             ...op.properties,
             text: clipped
           }
-          this._insertRecursive(json, parent, op.path.offset + 1)
+          Process.insertRecursive(json, this, parent, op.path.offset + 1)
         } else {
           let child: Subject = (<Branch>curr).detachChildren(op.position);
           let json = {
@@ -127,7 +120,7 @@ class Page extends Graph {
             ...op.properties,
             children: []
           }
-          let next: Subject = this._insertRecursive(json, parent, op.path.offset + 1);
+          let next: Subject = Process.insertRecursive(json, this, parent, op.path.offset + 1);
           (<Branch>next).appendChildren(child)
         }
         break

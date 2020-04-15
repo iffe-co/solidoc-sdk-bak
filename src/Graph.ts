@@ -6,13 +6,16 @@ const parser = new n3.Parser();
 
 // a graph could be a page or a database
 abstract class Graph {
-  protected _uri: string
+  private _uri: string
   protected _nodes: { [uri: string]: Subject } = {}
 
   constructor(uri: string) {
     this._uri = uri;
   }
 
+  public getUri = (): string => {
+    return this._uri
+  }
   protected _getRoot = (): Subject => {
     return this._nodes[this._uri];
   }
@@ -62,6 +65,10 @@ abstract class Graph {
   }
 
   protected abstract _addPlaceHolder(uri: string, type: string): Subject
+
+  public registerNode = (node: Subject) => {
+    this._nodes[node.get('id')] = node;
+  }
 
   public getSparqlForUpdate = (): string => {
     let sparql = '';
