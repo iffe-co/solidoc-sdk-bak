@@ -59,6 +59,7 @@ let page: Page;
 describe('Create Page', () => {
   it('parses from quads', () => {
     page = new Page(pageUri, turtle);
+    console.log(page.toJson())
     assert.deepStrictEqual(page.toJson(), json);
   });
   // it('parses from json', () => {

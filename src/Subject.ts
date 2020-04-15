@@ -1,16 +1,15 @@
 import { Property, NamedNodeProperty, TextProperty } from './Property';
-import { Graph } from './Graph'
 
 abstract class Subject {
   protected _uri: string
-  protected _graph: Graph
   protected _predicates: { [key: string]: Property } = {}
   protected _isDeleted: boolean
+  protected _next: Subject | null
 
-  constructor(uri: string, graph: Graph) {
+  constructor(uri: string) {
     this._uri = uri;
-    this._graph = graph;
     this._isDeleted = false
+    this._next = null
     this._predicates.type = new NamedNodeProperty('http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'type');
     this._predicates.next = new NamedNodeProperty('http://www.solidoc.net/ontologies#nextNode', 'next');
     this._predicates.option = new TextProperty('http://www.solidoc.net/ontologies#option', 'option');
@@ -59,10 +58,10 @@ abstract class Subject {
 
   public setNext = (node: Subject | null) => {
     this.set({ next: node ? node._uri : '' })
+    this._next = node
   }
-  public getNext = (): Subject => {
-    let nextUri: string = this.get('next');
-    return this._graph.getSubject(nextUri);
+  public getNext = (): Subject | null => {
+    return this._next
   }
 
   public getSparqlForUpdate = (graph: string): string => {

@@ -8,7 +8,7 @@ abstract class Graph {
 
   constructor(uri: string, turtle: string) {
     this._uri = uri;
-    Process.parseTurtle(turtle, this._nodes, this)
+    Process.parseTurtle(turtle, this._nodes)
   }
 
   public getUri = (): string => {

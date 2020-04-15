@@ -9,8 +9,8 @@ const parser = new n3.Parser();
 class Branch extends Subject {
   private _children: Subject[] = [];
 
-  constructor(uri: string, graph: Graph) {
-    super(uri, graph);
+  constructor(uri: string) {
+    super(uri);
     this._predicates.child = new NamedNodeProperty('http://www.solidoc.net/ontologies#firstChild', 'child');
   }
 
@@ -70,9 +70,10 @@ class Branch extends Subject {
       this.setChild(curr)
     }
     this._children.push(curr)
-    while (curr.getNext()) {
-      curr = curr.getNext()
-      this._children.push(curr)
+    let node: Subject | null = curr.getNext()
+    while (node) {
+      this._children.push(node)
+      node = node.getNext()
     }
   }
 
@@ -94,8 +95,8 @@ class Branch extends Subject {
 }
 
 class Root extends Branch {
-  constructor(uri: string, graph: Graph) {
-    super(uri, graph);
+  constructor(uri: string) {
+    super(uri);
     this._predicates.title = new TextProperty('http://purl.org/dc/terms/title', 'title');
   }
 
@@ -112,9 +113,9 @@ class Root extends Branch {
 }
 
 class Leaf extends Subject {
-  constructor(uri: string, graph: Graph) {
-    // TODO: remove uri property
-    super(uri, graph);
+  constructor(uri: string) {
+    // TODO: using blank nodes
+    super(uri);
     this._predicates.text = new TextProperty('http://www.solidoc.net/ontologies#text', 'text');
   }
 
@@ -144,24 +145,27 @@ class Leaf extends Subject {
 }
 
 const Process = {
-  parseTurtle: (turtle: string, nodes: { [uri: string]: Subject }, graph: Graph) => {
+  parseTurtle: (turtle: string, nodes: { [uri: string]: Subject }) => {
     const quads: any[] = parser.parse(turtle);
     quads.forEach(quad => {
       if (quad.predicate.id === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type') {
         let uri = quad.subject.id
         let type = quad.object.id
         if (type === 'http://www.solidoc.net/ontologies#Root') {
-          nodes[uri] = new Root(uri, graph)
+          nodes[uri] = new Root(uri)
         } else if (type === 'http://www.solidoc.net/ontologies#Leaf') {
-          nodes[uri] = new Leaf(uri, graph)
+          nodes[uri] = new Leaf(uri)
         } else {
-          nodes[uri] = new Branch(uri, graph)
+          nodes[uri] = new Branch(uri)
         }
       }
     })
 
     quads.forEach(quad => {
       nodes[quad.subject.id].fromQuad(quad);
+      if (quad.predicate.id === 'http://www.solidoc.net/ontologies#nextNode') {
+        nodes[quad.subject.id].setNext(nodes[quad.object.id])
+      }
     })
 
   },
@@ -170,7 +174,7 @@ const Process = {
     if (!(head instanceof Branch)) return
 
     let currUri = head.get('child');
-    let curr: Subject = nodes[currUri]
+    let curr: Subject | null = nodes[currUri]
     curr && head.appendChildren(curr)
 
     while (curr) {
@@ -197,7 +201,7 @@ const Process = {
 
   insertRecursive: (json: Node, graph: Graph, parent: Branch, offset: number): Subject => {
     let currUri: string = graph.getUri() + '#' + json.id
-    let curr: Subject = (json.type === 'http://www.solidoc.net/ontologies#Leaf') ? new Leaf(currUri, graph) : new Branch(currUri, graph)
+    let curr: Subject = (json.type === 'http://www.solidoc.net/ontologies#Leaf') ? new Leaf(currUri) : new Branch(currUri)
 
     curr.set(json);
     graph.registerNode(curr);
