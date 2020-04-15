@@ -14,10 +14,10 @@ abstract class Graph {
   public getUri = (): string => {
     return this._uri
   }
-  public getNode = (uri: string): Subject => {
+  public retrieveNode = (uri: string): Subject => {
     return this._nodes[uri];
   }
-  public setNode = (node: Subject) => {
+  public registerNode = (node: Subject) => {
     this._nodes[node.get('id')] = node;
   }
 

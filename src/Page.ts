@@ -109,7 +109,7 @@ class Page extends Graph {
       case 'set_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
         const curr: Subject = parent.getChildFromChildren(op.path.offset);
-        // TODO: disallow setting id/text/children/next
+        // TODO: disallow setting id/text/children/next/option
         curr.set(op.newProperties)
         break
       }

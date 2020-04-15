@@ -13,15 +13,15 @@ const Process = {
       if (quad.predicate.id === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type') {
         // nodes[quad.subject.id] = Process.createNode(quad.subject.id, quad.object.id)
         let node = createNode(quad.subject.id, quad.object.id);
-        graph.setNode(node)
+        graph.registerNode(node)
       }
     })
 
     quads.forEach(quad => {
-      let node = graph.getNode(quad.subject.id)
+      let node = graph.retrieveNode(quad.subject.id)
       node.fromQuad(quad);
       if (quad.predicate.id === 'http://www.solidoc.net/ontologies#nextNode') {
-        let next = graph.getNode(quad.object.id)
+        let next = graph.retrieveNode(quad.object.id)
         node.setNext(next)
       }
     })
@@ -31,7 +31,7 @@ const Process = {
     if (!(head instanceof Branch)) return
 
     let currUri = head.get('firstChild');
-    let curr: Subject | null = graph.getNode(currUri)
+    let curr: Subject | null = graph.retrieveNode(currUri)
     curr && head.appendChildren(curr)
 
     while (curr) {
@@ -61,7 +61,7 @@ const Process = {
     let curr: Subject = (json.type === 'http://www.solidoc.net/ontologies#Leaf') ? new Leaf(currUri) : new Branch(currUri)
 
     curr.set(json);
-    graph.setNode(curr);
+    graph.registerNode(curr);
 
     parent.insertChild(curr, offset);
 

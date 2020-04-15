@@ -1,4 +1,4 @@
-import { Property, NamedNodeProperty, TextProperty } from './Property';
+import { Property, NamedNodeProperty, JsonProperty } from './Property';
 
 abstract class Subject {
   protected _uri: string
@@ -12,7 +12,7 @@ abstract class Subject {
     this._next = null
     this._predicates.type = new NamedNodeProperty('http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'type');
     this._predicates.next = new NamedNodeProperty('http://www.solidoc.net/ontologies#nextNode', 'next');
-    this._predicates.option = new TextProperty('http://www.solidoc.net/ontologies#option', 'option');
+    this._predicates.option = new JsonProperty('http://www.solidoc.net/ontologies#option', 'option');
   }
 
   public fromQuad = (quad: any) => {
@@ -41,19 +41,17 @@ abstract class Subject {
     if (this._isDeleted) {
       throw new Error('Trying to update a deleted subject: ' + this._uri);
     }
-    let option: any = JSON.parse(this.get('option') || '{}')
+    let option = {}
     Object.keys(props).forEach(key => {
       if (key === 'id' || key === 'children') {
         //
       } else if (this._predicates[key]) {
         this._predicates[key].set(props[key]);
-      } else if (props[key] === null) {
-        delete option[key];
       } else {
         option[key] = props[key]
       }
     });
-    this._predicates['option'].set(JSON.stringify(option));
+    (<JsonProperty>(this._predicates['option'])).set(option);
   }
 
   public setNext = (node: Subject | null) => {
