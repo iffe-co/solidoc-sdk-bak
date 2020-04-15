@@ -1,33 +1,12 @@
-import { Branch, Root, Leaf, Process } from './Node';
+import { Branch, Leaf, Process } from './Node';
 import { Subject } from './Subject';
 import { Graph } from './Graph';
 import { Path, Operation, Element } from './interface'
 
 class Page extends Graph {
-  constructor(json: Element) {
-    super(json.id);
-    let curr: Subject = new Root(json.id, this)
-    curr.set(json);
-    this.registerNode(curr);
-
-    for (let i = 0; curr instanceof Branch && i < json.children.length; i++) {
-      Process.insertRecursive(json.children[i], this, curr, i)
-    }
-  }
-
-  protected _addPlaceHolder = (uri: string, type?: string): Subject => {
-    if (this._nodes[uri] && !this._nodes[uri].isDeleted()) {
-      throw new Error('Trying to add an existing node: ' + uri);
-    }
-    // even if a marked-removed node exists, it should be recreated
-    if (uri === this.getUri()) {
-      this._nodes[uri] = new Root(uri, this)
-    } else if (type === 'http://www.solidoc.net/ontologies#Leaf') {
-      this._nodes[uri] = new Leaf(uri, this)
-    } else {
-      this._nodes[uri] = new Branch(uri, this)
-    }
-    return this._nodes[uri];
+  constructor(uri: string, turtle: string) {
+    super(uri, turtle);
+    Process.assembleTree(this._nodes, this._getRoot())
   }
 
   private _getBranchInstance = (uri: string): Branch => {

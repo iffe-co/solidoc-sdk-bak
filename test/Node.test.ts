@@ -4,7 +4,7 @@ import * as n3 from 'n3';
 import * as assert from 'power-assert';
 
 const parser = new n3.Parser();
-const page = new Page({ id: 'http://example.org/alice', children: [] });
+const page = new Page('http://example.org/alice', '');
 
 describe('Paragraph', () => {
   let para: Branch;

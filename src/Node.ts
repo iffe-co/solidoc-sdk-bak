@@ -2,6 +2,9 @@ import { NamedNodeProperty, TextProperty } from './Property';
 import { Subject } from './Subject';
 import { Graph } from './Graph'
 import { Node } from './interface'
+import * as n3 from 'n3';
+
+const parser = new n3.Parser();
 
 class Branch extends Subject {
   private _children: Subject[] = [];
@@ -141,6 +144,41 @@ class Leaf extends Subject {
 }
 
 const Process = {
+  parseTurtle: (turtle: string, nodes: { [uri: string]: Subject }, graph: Graph) => {
+    const quads: any[] = parser.parse(turtle);
+    quads.forEach(quad => {
+      if (quad.predicate.id === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type') {
+        let uri = quad.subject.id
+        let type = quad.object.id
+        if (type === 'http://www.solidoc.net/ontologies#Root') {
+          nodes[uri] = new Root(uri, graph)
+        } else if (type === 'http://www.solidoc.net/ontologies#Leaf') {
+          nodes[uri] = new Leaf(uri, graph)
+        } else {
+          nodes[uri] = new Branch(uri, graph)
+        }
+      }
+    })
+
+    quads.forEach(quad => {
+      nodes[quad.subject.id].fromQuad(quad);
+    })
+
+  },
+
+  assembleTree: (nodes: { [uri: string]: Subject }, head: Subject) => {
+    if (!(head instanceof Branch)) return
+
+    let currUri = head.get('child');
+    let curr: Subject = nodes[currUri]
+    curr && head.appendChildren(curr)
+
+    while (curr) {
+      Process.assembleTree(nodes, curr);
+      curr = curr.getNext();
+    }
+  },
+
   toJson: (head: Subject): Node => {
     const headJson = head.toJson();
 
