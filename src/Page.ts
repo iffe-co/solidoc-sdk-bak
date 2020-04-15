@@ -21,7 +21,7 @@ class Page extends Graph {
   }
   private _getLeafInstance = (path: Path): Leaf => {
     let parent: Branch = this._getBranchInstance(path.parentUri);
-    let node = parent.getChild(path.offset)
+    let node = parent.getChildFromChildren(path.offset)
     if (!node || node.isDeleted()) {
       throw new Error('The node does not exist: ' + path.parentUri + ' offset = ' + path.offset);
     } else if (!(node instanceof Leaf)) {
@@ -67,8 +67,8 @@ class Page extends Graph {
 
       case 'merge_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        const prev: Subject = parent.getChild(op.path.offset - 1);
-        const curr: Subject = parent.getChild(op.path.offset);
+        const prev: Subject = parent.getChildFromChildren(op.path.offset - 1);
+        const curr: Subject = parent.getChildFromChildren(op.path.offset);
 
         if (prev instanceof Leaf && curr instanceof Leaf) {
           prev.insertText(Infinity, curr.get('text'));
@@ -84,7 +84,7 @@ class Page extends Graph {
 
       case 'split_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        const curr: Subject = parent.getChild(op.path.offset);
+        const curr: Subject = parent.getChildFromChildren(op.path.offset);
         if (curr instanceof Leaf) {
           let clipped: string = curr.removeText(op.position, Infinity);
           let json = {
@@ -108,7 +108,7 @@ class Page extends Graph {
 
       case 'set_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        const curr: Subject = parent.getChild(op.path.offset);
+        const curr: Subject = parent.getChildFromChildren(op.path.offset);
         // TODO: disallow setting id/text/children/next
         curr.set(op.newProperties)
         break

@@ -30,7 +30,7 @@ const Process = {
   assembleTree: (head: Subject, graph: Graph) => {
     if (!(head instanceof Branch)) return
 
-    let currUri = head.get('child');
+    let currUri = head.get('firstChild');
     let curr: Subject | null = graph.getNode(currUri)
     curr && head.appendChildren(curr)
 
@@ -45,12 +45,12 @@ const Process = {
 
     // TODO: use map??
     for (let i = 0; head instanceof Branch && i < head.getChildrenNum(); i++) {
-      if (i == 0 && head.get('child') !== head.getChild(i).get('id')) {
-        throw new Error('first child error')
-      } else if (i < head.getChildrenNum() - 1 && head.getChild(i).get('next') !== head.getChild(i + 1).get('id')) {
+      if (i == 0 && head.get('firstChild') !== head.getChildFromChildren(i).get('id')) {
+        throw new Error('firstChild error')
+      } else if (i < head.getChildrenNum() - 1 && head.getChildFromChildren(i).get('next') !== head.getChildFromChildren(i + 1).get('id')) {
         throw new Error('next error')
       }
-      headJson.children.push(Process.toJson(head.getChild(i)))
+      headJson.children.push(Process.toJson(head.getChildFromChildren(i)))
     }
 
     return headJson
@@ -76,7 +76,7 @@ const Process = {
 
     // TODO: use map??
     for (let i = 0; head instanceof Branch && i < head.getChildrenNum(); i++) {
-      Process.removeRecursive(head.getChild(i))
+      Process.removeRecursive(head.getChildFromChildren(i))
     }
   },
 
@@ -85,7 +85,7 @@ const Process = {
 
     // TODO: use map??
     for (let i = 0; from instanceof Branch && i < from.getChildrenNum(); i++) {
-      let curr = from.getChild(i)
+      let curr = from.getChildFromChildren(i)
       if (Process.isAncestor(curr, to)) return true
     }
     return false

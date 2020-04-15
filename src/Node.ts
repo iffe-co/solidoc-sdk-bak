@@ -6,7 +6,7 @@ class Branch extends Subject {
 
   constructor(uri: string) {
     super(uri);
-    this._predicates.child = new NamedNodeProperty('http://www.solidoc.net/ontologies#firstChild', 'child');
+    this._predicates.firstChild = new NamedNodeProperty('http://www.solidoc.net/ontologies#firstChild', 'firstChild');
   }
 
   public toJson = (): Element => {
@@ -19,11 +19,11 @@ class Branch extends Subject {
     };
   }
 
-  private setChild = (node: Subject | null) => {
-    this.set({ child: node ? node.get('id') : '' })
+  private setFirstChild = (node: Subject | null) => {
+    this.set({ firstChild: node ? node.get('id') : '' })
   }
 
-  public getChild = (offset: number): Subject => {
+  public getChildFromChildren = (offset: number): Subject => {
     if (offset < 0) {
       throw new Error(`Trying to getChild(${offset}) of ${this._uri}`);
     }
@@ -33,24 +33,24 @@ class Branch extends Subject {
 
   public insertChild = (curr: Subject, offset: number) => {
     if (offset === 0) {
-      this.setChild(curr)
+      this.setFirstChild(curr)
     } else {
-      let prev: Subject = this.getChild(offset - 1) || this.getChild(Infinity);
+      let prev: Subject = this.getChildFromChildren(offset - 1) || this.getChildFromChildren(Infinity);
       prev.setNext(curr)
     }
-    let next: Subject = this.getChild(offset)
+    let next: Subject = this.getChildFromChildren(offset)
     curr.setNext(next)
     this._children.splice(offset, 0, curr)
   }
 
   public removeChild = (offset: number): Subject => {
-    let curr: Subject = this.getChild(offset);
+    let curr: Subject = this.getChildFromChildren(offset);
     if (!curr) return curr
-    let next: Subject = this.getChild(offset + 1);
+    let next: Subject = this.getChildFromChildren(offset + 1);
     if (offset === 0) {
-      this.setChild(next);
+      this.setFirstChild(next);
     } else {
-      let prev: Subject = this.getChild(offset - 1);
+      let prev: Subject = this.getChildFromChildren(offset - 1);
       prev.setNext(next)
     }
     this._children.splice(offset, 1)
@@ -58,11 +58,11 @@ class Branch extends Subject {
   }
 
   public appendChildren = (curr: Subject) => {
-    let last: Subject = this.getChild(Infinity)
+    let last: Subject = this.getChildFromChildren(Infinity)
     if (last) {
       last.setNext(curr)
     } else {
-      this.setChild(curr)
+      this.setFirstChild(curr)
     }
     this._children.push(curr)
     let node: Subject | null = curr.getNext()
@@ -74,12 +74,12 @@ class Branch extends Subject {
 
   public detachChildren = (offset: number): Subject => {
     if (offset === 0) {
-      this.setChild(null);
+      this.setFirstChild(null);
     } else {
-      let prev: Subject = this.getChild(offset - 1);
+      let prev: Subject = this.getChildFromChildren(offset - 1);
       prev.setNext(null)
     }
-    let curr: Subject = this.getChild(offset);
+    let curr: Subject = this.getChildFromChildren(offset);
     this._children = this._children.slice(0, offset)
     return curr
   }

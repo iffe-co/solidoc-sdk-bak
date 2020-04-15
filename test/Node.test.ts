@@ -79,7 +79,7 @@ describe('Root', () => {
       title: "Alice's Profile",
       children: [],
     });
-    assert(root.get('child') === 'http://example.org/alice#tag1');
+    assert(root.get('firstChild') === 'http://example.org/alice#tag1');
   });
 });
 
