@@ -1,5 +1,5 @@
 import { Subject } from './Subject';
-import { Process } from './Node'
+import { Process } from './Process'
 
 // a graph could be a page or a database
 abstract class Graph {

@@ -1,7 +1,8 @@
-import { Branch, Leaf, Process } from './Node';
+import { Branch, Leaf } from './Node';
 import { Subject } from './Subject';
 import { Graph } from './Graph';
 import { Path, Operation, Element } from './interface'
+import { Process } from './Process'
 
 class Page extends Graph {
   constructor(uri: string, turtle: string) {
