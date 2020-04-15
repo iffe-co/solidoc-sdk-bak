@@ -6,7 +6,7 @@ import { Path, Operation, Element } from './interface'
 class Page extends Graph {
   constructor(uri: string, turtle: string) {
     super(uri, turtle);
-    Process.assembleTree(this._nodes, this._getRoot())
+    Process.assembleTree(this._nodes[uri], this)
   }
 
   private _getBranchInstance = (uri: string): Branch => {
@@ -30,7 +30,7 @@ class Page extends Graph {
   }
 
   public toJson = (): Element => {
-    let head = this._getRoot();
+    let head = this._nodes[this.getUri()];
     return <Element>(Process.toJson(head))
   }
 

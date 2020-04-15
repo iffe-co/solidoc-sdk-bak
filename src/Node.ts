@@ -145,41 +145,46 @@ class Leaf extends Subject {
 }
 
 const Process = {
-  parseTurtle: (turtle: string, nodes: { [uri: string]: Subject }) => {
+  createNode: (uri: string, type: string): Subject => {
+    if (type === 'http://www.solidoc.net/ontologies#Root') {
+      return new Root(uri)
+    } else if (type === 'http://www.solidoc.net/ontologies#Leaf') {
+      return new Leaf(uri)
+    } else {
+      return new Branch(uri)
+    }
+  },
+
+  parseTurtle: (turtle: string, graph: Graph) => {
     const quads: any[] = parser.parse(turtle);
     quads.forEach(quad => {
       if (quad.predicate.id === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type') {
-        let uri = quad.subject.id
-        let type = quad.object.id
-        if (type === 'http://www.solidoc.net/ontologies#Root') {
-          nodes[uri] = new Root(uri)
-        } else if (type === 'http://www.solidoc.net/ontologies#Leaf') {
-          nodes[uri] = new Leaf(uri)
-        } else {
-          nodes[uri] = new Branch(uri)
-        }
+        // nodes[quad.subject.id] = Process.createNode(quad.subject.id, quad.object.id)
+        let node = Process.createNode(quad.subject.id, quad.object.id);
+        graph.setNode(node)
       }
     })
 
     quads.forEach(quad => {
-      nodes[quad.subject.id].fromQuad(quad);
+      let node = graph.getNode(quad.subject.id)
+      node.fromQuad(quad);
       if (quad.predicate.id === 'http://www.solidoc.net/ontologies#nextNode') {
-        nodes[quad.subject.id].setNext(nodes[quad.object.id])
+        let next = graph.getNode(quad.object.id)
+        node.setNext(next)
       }
     })
-
   },
 
-  assembleTree: (nodes: { [uri: string]: Subject }, head: Subject) => {
+  assembleTree: (head: Subject, graph: Graph) => {
     if (!(head instanceof Branch)) return
 
     let currUri = head.get('child');
-    let curr: Subject | null = nodes[currUri]
+    let curr: Subject | null = graph.getNode(currUri)
     curr && head.appendChildren(curr)
 
     while (curr) {
-      Process.assembleTree(nodes, curr);
-      curr = curr.getNext();
+      Process.assembleTree(curr, graph);
+      curr = curr.getNext()
     }
   },
 
@@ -204,7 +209,7 @@ const Process = {
     let curr: Subject = (json.type === 'http://www.solidoc.net/ontologies#Leaf') ? new Leaf(currUri) : new Branch(currUri)
 
     curr.set(json);
-    graph.registerNode(curr);
+    graph.setNode(curr);
 
     parent.insertChild(curr, offset);
 

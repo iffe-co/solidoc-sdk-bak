@@ -8,20 +8,16 @@ abstract class Graph {
 
   constructor(uri: string, turtle: string) {
     this._uri = uri;
-    Process.parseTurtle(turtle, this._nodes)
+    Process.parseTurtle(turtle, this)
   }
 
   public getUri = (): string => {
     return this._uri
   }
-  protected _getRoot = (): Subject => {
-    return this._nodes[this._uri];
-  }
-  public getSubject = (uri: string): Subject => {
+  public getNode = (uri: string): Subject => {
     return this._nodes[uri];
   }
-
-  public registerNode = (node: Subject) => {
+  public setNode = (node: Subject) => {
     this._nodes[node.get('id')] = node;
   }
 
