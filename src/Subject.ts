@@ -1,18 +1,18 @@
-import { Property, NamedNodeProperty, TextProperty } from './Property';
-import { Graph } from './Graph'
+import { Property, NamedNodeProperty, JsonProperty } from './Property';
 
 abstract class Subject {
   protected _uri: string
-  protected _graph: Graph
   protected _predicates: { [key: string]: Property } = {}
-  public isDeleted: boolean
+  protected _isDeleted: boolean
+  protected _next: Subject | null
 
-  constructor(uri: string, graph: Graph) {
+  constructor(uri: string) {
     this._uri = uri;
-    this._graph = graph;
+    this._isDeleted = false
+    this._next = null
     this._predicates.type = new NamedNodeProperty('http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'type');
     this._predicates.next = new NamedNodeProperty('http://www.solidoc.net/ontologies#nextNode', 'next');
-    this._predicates.option = new TextProperty('http://www.solidoc.net/ontologies#option', 'option');
+    this._predicates.option = new JsonProperty('http://www.solidoc.net/ontologies#option', 'option');
   }
 
   public fromQuad = (quad: any) => {
@@ -38,35 +38,33 @@ abstract class Subject {
   }
 
   public set = (props: any) => {
-    if (this.isDeleted) {
+    if (this._isDeleted) {
       throw new Error('Trying to update a deleted subject: ' + this._uri);
     }
-    let option: any = JSON.parse(this.get('option') || '{}')
+    let option = {}
     Object.keys(props).forEach(key => {
       if (key === 'id' || key === 'children') {
         //
       } else if (this._predicates[key]) {
         this._predicates[key].set(props[key]);
-      } else if (props[key] === null) {
-        delete option[key];
       } else {
         option[key] = props[key]
       }
     });
-    this._predicates['option'].set(JSON.stringify(option));
+    (<JsonProperty>(this._predicates['option'])).set(option);
   }
 
   public setNext = (node: Subject | null) => {
     this.set({ next: node ? node._uri : '' })
+    this._next = node
   }
-  public getNext = (): Subject => {
-    let nextUri: string = this.get('next');
-    return this._graph.getSubject(nextUri);
+  public getNext = (): Subject | null => {
+    return this._next
   }
 
   public getSparqlForUpdate = (graph: string): string => {
     let sparql = '';
-    if (this.isDeleted) {
+    if (this._isDeleted) {
       sparql += `WITH <${graph}> DELETE { <${this._uri}> ?p ?o } WHERE { <${this._uri}> ?p ?o };\n`;
     } else {
       Object.keys(this._predicates).forEach(key => {
@@ -83,10 +81,18 @@ abstract class Subject {
   }
 
   public undo = () => {
-    this.isDeleted = false
+    this._isDeleted = false
     Object.keys(this._predicates).forEach(key => {
       this._predicates[key].undo();
     });
+  }
+
+  public delete = () => {
+    this._isDeleted = true
+  }
+
+  public isDeleted = (): boolean => {
+    return this._isDeleted
   }
 }
 

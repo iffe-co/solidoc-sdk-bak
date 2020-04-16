@@ -58,19 +58,18 @@ let page: Page;
 
 describe('Create Page', () => {
   it('parses from quads', () => {
-    page = new Page({ id: pageUri, type: 'http://www.solidoc.net/ontologies#Root', children: [] });
-    page.fromTurtle(turtle);
+    page = new Page(pageUri, turtle);
     assert.deepStrictEqual(page.toJson(), json);
   });
-  it('parses from json', () => {
-    page = new Page(json);
-    assert.deepStrictEqual(page.toJson(), json);
-  });
+  // it('parses from json', () => {
+  //   page = new Page(json);
+  //   assert.deepStrictEqual(page.toJson(), json);
+  // });
 });
 
 describe('Insert Node', () => {
   beforeEach(() => {
-    page = new Page(json);
+    page = new Page(pageUri, turtle);
   });
 
   it('inserts a text node at paragraph beginning', () => {
@@ -128,7 +127,7 @@ describe('Insert Node', () => {
 
 describe('Delete Node', () => {
   beforeEach(() => {
-    page = new Page(json);
+    page = new Page(pageUri, turtle);
   });
 
   it('deletes a paragraph at the beginning', () => {
@@ -193,7 +192,7 @@ describe('Delete Node', () => {
 
 describe('Move Node', () => {
   beforeEach(() => {
-    page = new Page(json);
+    page = new Page(pageUri, turtle);
   });
 
   it('moves paragraph 2 to the beginning', () => {
@@ -204,7 +203,7 @@ describe('Move Node', () => {
     assert.deepStrictEqual(pageJson.children[0].children[0], textJson2)
   });
   it('moves paragraph 1 to the end', () => {
-    let op: Operation = { type: 'move_node', path: { parentUri: pageUri, offset: 0 }, newPath: { parentUri: pageUri, offset: 2 } }
+    let op: Operation = { type: 'move_node', path: { parentUri: pageUri, offset: 0 }, newPath: { parentUri: pageUri, offset: 1 } }
     page.apply(op)
     let pageJson = page.toJson()
     assert.deepStrictEqual(extractChildrenId(pageJson), [pid2, pid1])
@@ -231,16 +230,9 @@ describe('Move Node', () => {
 
 describe('Merge Text Node', () => {
   beforeEach(() => {
-    let newJson: Element = {
-      id: pageUri,
-      type: 'http://www.solidoc.net/ontologies#Root',
-      title: "Alice's Profile",
-      children: [
-        { id: 'tag1', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson1, textJson3] },
-        { id: 'tag2', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson2] },
-      ],
-    };
-    page = new Page(newJson);
+    page = new Page(pageUri, turtle);
+    let op: Operation = { type: 'insert_node', path: { parentUri: paraUri1, offset: 1 }, node: textJson3 }
+    page.apply(op)
   });
   it('merges text nodes', () => {
     let op: Operation = { type: 'merge_node', path: { parentUri: paraUri1, offset: 1 } }
@@ -273,16 +265,9 @@ describe('Merge Text Node', () => {
 
 describe('Merge Element Node', () => {
   beforeEach(() => {
-    let newJson: Element = {
-      id: pageUri,
-      type: 'http://www.solidoc.net/ontologies#Root',
-      title: "Alice's Profile",
-      children: [
-        { id: 'tag1', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson1] },
-        { id: 'tag2', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson2, textJson3] },
-      ],
-    };
-    page = new Page(newJson);
+    page = new Page(pageUri, turtle);
+    let op: Operation = { type: 'insert_node', path: { parentUri: paraUri2, offset: 1 }, node: textJson3 }
+    page.apply(op)
   });
   it('merges paragraph 2', () => {
     let op: Operation = { type: 'merge_node', path: { parentUri: pageUri, offset: 1 } }
@@ -314,7 +299,7 @@ describe('Merge Element Node', () => {
 
 describe('Split Text Node', () => {
   beforeEach(() => {
-    page = new Page(json);
+    page = new Page(pageUri, turtle);
   });
   it('splits text 1', () => {
     let op: Operation = { type: 'split_node', path: { parentUri: paraUri1, offset: 0 }, position: 1, properties: { id: tid3, type: 'http://www.solidoc.net/ontologies#Leaf' } }
@@ -328,16 +313,9 @@ describe('Split Text Node', () => {
 
 describe('Split Branch Node', () => {
   beforeEach(() => {
-    let newJson: Element = {
-      id: pageUri,
-      type: 'http://www.solidoc.net/ontologies#Root',
-      title: "Alice's Profile",
-      children: [
-        { id: 'tag1', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson1, textJson3] },
-        { id: 'tag2', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson2] },
-      ],
-    };
-    page = new Page(newJson);
+    page = new Page(pageUri, turtle);
+    let op: Operation = { type: 'insert_node', path: { parentUri: paraUri1, offset: 1 }, node: textJson3 }
+    page.apply(op)
   });
   it('splits paragraph 1', () => {
     let op: Operation = { type: 'split_node', path: { parentUri: pageUri, offset: 0 }, position: 0, properties: { id: pid3, type: 'http://www.solidoc.net/ontologies#Paragraph' } }
@@ -351,7 +329,7 @@ describe('Split Branch Node', () => {
 
 describe('Set Node', () => {
   beforeEach(() => {
-    page = new Page(json);
+    page = new Page(pageUri, turtle);
   });
 
   it('sets a paragraph by adding a property', () => {

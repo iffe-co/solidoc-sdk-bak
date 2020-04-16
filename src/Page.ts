@@ -1,45 +1,18 @@
-import { Branch, Root, Leaf, Process } from './Node';
+import { Branch, Leaf } from './Node';
 import { Subject } from './Subject';
 import { Graph } from './Graph';
-import { Path, Operation, Node, Element } from './interface'
+import { Path, Operation, Element } from './interface'
+import { Process } from './Process'
 
 class Page extends Graph {
-  constructor(json: Element) {
-    super(json.id);
-    this._insertRecursive(json);
-  }
-
-  private _insertRecursive = (json: Node, parent?: Branch, offset?: number): Subject => {
-    let currUri: string = (parent) ? this._uri + '#' + json.id : json.id
-    let curr: Subject = this._addPlaceHolder(currUri, json.type);
-    curr.set(json);
-
-    parent && parent.insertChild(curr, <number>offset);
-
-    for (let i = 0; curr instanceof Branch && i < json.children.length; i++) {
-      this._insertRecursive(json.children[i], curr, i)
-    }
-    return curr
-  }
-
-  protected _addPlaceHolder = (uri: string, type?: string): Subject => {
-    if (this._nodes[uri] && !this._nodes[uri].isDeleted) {
-      throw new Error('Trying to add an existing node: ' + uri);
-    }
-    // even if a marked-removed node exists, it should be recreated
-    if (uri === this._uri) {
-      this._nodes[uri] = new Root(uri, this)
-    } else if (type === 'http://www.solidoc.net/ontologies#Leaf') {
-      this._nodes[uri] = new Leaf(uri, this)
-    } else {
-      this._nodes[uri] = new Branch(uri, this)
-    }
-    return this._nodes[uri];
+  constructor(uri: string, turtle: string) {
+    super(uri, turtle);
+    Process.assembleTree(this._nodes[uri], this)
   }
 
   private _getBranchInstance = (uri: string): Branch => {
     let node = this._nodes[uri];
-    if (!node || node.isDeleted) {
+    if (!node || node.isDeleted()) {
       throw new Error('The node does not exist: ' + uri);
     } else if (!(node instanceof Branch)) {
       throw new Error('The request node is not a branch: ' + uri)
@@ -48,8 +21,8 @@ class Page extends Graph {
   }
   private _getLeafInstance = (path: Path): Leaf => {
     let parent: Branch = this._getBranchInstance(path.parentUri);
-    let node = parent.getChild(path.offset)
-    if (!node || node.isDeleted) {
+    let node = parent.getChildFromChildren(path.offset)
+    if (!node || node.isDeleted()) {
       throw new Error('The node does not exist: ' + path.parentUri + ' offset = ' + path.offset);
     } else if (!(node instanceof Leaf)) {
       throw new Error('The request node is not a branch: ' + path.parentUri + ' offset = ' + path.offset)
@@ -58,7 +31,7 @@ class Page extends Graph {
   }
 
   public toJson = (): Element => {
-    let head = this._getRoot();
+    let head = this._nodes[this.getUri()];
     return <Element>(Process.toJson(head))
   }
 
@@ -66,7 +39,7 @@ class Page extends Graph {
     switch (op.type) {
       case 'insert_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        this._insertRecursive(op.node, parent, op.path.offset)
+        Process.insertRecursive(op.node, this, parent, op.path.offset)
         break
       }
 
@@ -88,17 +61,14 @@ class Page extends Graph {
           throw new Error('Trying to append the node to itself or its descendent')
         }
 
-        if (parent === newParent && op.path.offset < op.newPath.offset) {
-          op.newPath.offset--;
-        }
         newParent.insertChild(curr, op.newPath.offset);
         break
       }
 
       case 'merge_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        const prev: Subject = parent.getChild(op.path.offset - 1);
-        const curr: Subject = parent.getChild(op.path.offset);
+        const prev: Subject = parent.getChildFromChildren(op.path.offset - 1);
+        const curr: Subject = parent.getChildFromChildren(op.path.offset);
 
         if (prev instanceof Leaf && curr instanceof Leaf) {
           prev.insertText(Infinity, curr.get('text'));
@@ -114,7 +84,7 @@ class Page extends Graph {
 
       case 'split_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        const curr: Subject = parent.getChild(op.path.offset);
+        const curr: Subject = parent.getChildFromChildren(op.path.offset);
         if (curr instanceof Leaf) {
           let clipped: string = curr.removeText(op.position, Infinity);
           let json = {
@@ -122,7 +92,7 @@ class Page extends Graph {
             ...op.properties,
             text: clipped
           }
-          this._insertRecursive(json, parent, op.path.offset + 1)
+          Process.insertRecursive(json, this, parent, op.path.offset + 1)
         } else {
           let child: Subject = (<Branch>curr).detachChildren(op.position);
           let json = {
@@ -130,7 +100,7 @@ class Page extends Graph {
             ...op.properties,
             children: []
           }
-          let next: Subject = this._insertRecursive(json, parent, op.path.offset + 1);
+          let next: Subject = Process.insertRecursive(json, this, parent, op.path.offset + 1);
           (<Branch>next).appendChildren(child)
         }
         break
@@ -138,8 +108,8 @@ class Page extends Graph {
 
       case 'set_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        const curr: Subject = parent.getChild(op.path.offset);
-        // TODO: disallow setting id/text/children
+        const curr: Subject = parent.getChildFromChildren(op.path.offset);
+        // TODO: disallow setting id/text/children/next/option
         curr.set(op.newProperties)
         break
       }

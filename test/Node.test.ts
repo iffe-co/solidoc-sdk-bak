@@ -1,10 +1,8 @@
 import { Branch, Root, Leaf } from '../src/Node';
-import { Page } from '../src/Page'
 import * as n3 from 'n3';
 import * as assert from 'power-assert';
 
 const parser = new n3.Parser();
-const page = new Page({ id: 'http://example.org/alice', children: [] });
 
 describe('Paragraph', () => {
   let para: Branch;
@@ -14,7 +12,7 @@ describe('Paragraph', () => {
   const quads: any[] = parser.parse(turtle);
 
   beforeEach(() => {
-    para = new Branch('http://example.org/alice#tag1', page);
+    para = new Branch('http://example.org/alice#tag1');
     quads.forEach(para.fromQuad);
   });
   it('parses quads and converts to readable Json', () => {
@@ -31,14 +29,14 @@ describe('Paragraph', () => {
     assert(para.get('type') === 'http://www.solidoc.net/ontologies#NumberedList');
   });
   it('generates sparql after deletion', () => {
-    para.isDeleted = true;
+    para.delete();
     const sparql = para.getSparqlForUpdate('http://example.org/test');
     assert(sparql === 'WITH <http://example.org/test> DELETE { <http://example.org/alice#tag1> ?p ?o } WHERE { <http://example.org/alice#tag1> ?p ?o };\n');
   });
   it('undoes deletion', () => {
-    para.isDeleted = true;
+    para.delete();
     para.undo();
-    assert(!para.isDeleted);
+    assert(!para.isDeleted());
   });
   it('modifies optional property', () => {
     para.set({ name: "bob" })
@@ -71,7 +69,7 @@ describe('Root', () => {
   const quads: any[] = parser.parse(turtle);
 
   beforeEach(() => {
-    root = new Root('http://example.org/alice', page);
+    root = new Root('http://example.org/alice');
     quads.forEach(root.fromQuad);
   });
   it('parses from quads', () => {
@@ -81,7 +79,7 @@ describe('Root', () => {
       title: "Alice's Profile",
       children: [],
     });
-    assert(root.get('child') === 'http://example.org/alice#tag1');
+    assert(root.get('firstChild') === 'http://example.org/alice#tag1');
   });
 });
 
@@ -93,7 +91,7 @@ describe('Leaf', () => {
   const quads: any[] = parser.parse(turtle);
 
   beforeEach(() => {
-    leaf = new Leaf('http://example.org/alice#tag1', page);
+    leaf = new Leaf('http://example.org/alice#tag1');
     quads.forEach(leaf.fromQuad);
   });
   it('parses from quads', () => {
