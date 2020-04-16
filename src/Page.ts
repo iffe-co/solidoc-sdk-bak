@@ -2,16 +2,16 @@ import { Branch, Leaf } from './Node';
 import { Subject } from './Subject';
 import { Graph } from './Graph';
 import { Path, Operation, Element } from './interface'
-import { Process } from './Process'
+import { Process, nodes } from './Process'
 
 class Page extends Graph {
   constructor(uri: string, turtle: string) {
     super(uri, turtle);
-    Process.assembleTree(this._nodes[uri], this)
+    Process.assembleTree(nodes.get(uri), this)
   }
 
   private _getBranchInstance = (uri: string): Branch => {
-    let node = this._nodes[uri];
+    let node = nodes.get(uri);
     if (!node || node.isDeleted()) {
       throw new Error('The node does not exist: ' + uri);
     } else if (!(node instanceof Branch)) {
@@ -31,7 +31,7 @@ class Page extends Graph {
   }
 
   public toJson = (): Element => {
-    let head = this._nodes[this.getUri()];
+    let head = nodes.get(this.getUri());
     return <Element>(Process.toJson(head))
   }
 

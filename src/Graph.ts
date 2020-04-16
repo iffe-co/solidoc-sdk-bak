@@ -1,48 +1,41 @@
-import { Subject } from './Subject';
-import { Process } from './Process'
+import { Process, nodes } from './Process'
 
 // a graph could be a page or a database
 abstract class Graph {
   private _uri: string
-  protected _nodes: { [uri: string]: Subject } = {}
 
   constructor(uri: string, turtle: string) {
     this._uri = uri;
-    Process.parseTurtle(turtle, this)
+    Process.parseTurtle(turtle)
   }
 
   public getUri = (): string => {
     return this._uri
   }
-  public retrieveNode = (uri: string): Subject => {
-    return this._nodes[uri];
-  }
-  public registerNode = (node: Subject) => {
-    this._nodes[node.get('id')] = node;
-  }
+
 
   public getSparqlForUpdate = (): string => {
     let sparql = '';
-    Object.keys(this._nodes).forEach(uri => {
-      sparql += this._nodes[uri].getSparqlForUpdate(this._uri);
-    });
+    for(let node of nodes.values()) {
+      sparql += node.getSparqlForUpdate(this._uri);
+    }
     return sparql;
   }
 
   public commit = () => {
-    Object.keys(this._nodes).forEach(uri => {
-      if (this._nodes[uri].isDeleted()) {
-        delete this._nodes[uri];
+    for (let [uri, node] of nodes.entries()) {
+      if (node.isDeleted()) {
+        nodes.delete(uri);
       } else {
-        this._nodes[uri].commit();
+        node.commit();
       }
-    });
+    }
   }
 
   public undo = () => {
-    Object.keys(this._nodes).forEach(uri => {
-      this._nodes[uri].undo();
-    });
+    for (let node of nodes.values()) {
+        node.undo();
+    }
   }
 }
 

@@ -4,12 +4,12 @@ abstract class Subject {
   protected _uri: string
   protected _predicates: { [key: string]: Property } = {}
   protected _isDeleted: boolean
-  protected _next: Subject | null
+  protected _next: Subject | undefined
 
   constructor(uri: string) {
     this._uri = uri;
     this._isDeleted = false
-    this._next = null
+    this._next = undefined
     this._predicates.type = new NamedNodeProperty('http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'type');
     this._predicates.next = new NamedNodeProperty('http://www.solidoc.net/ontologies#nextNode', 'next');
     this._predicates.option = new JsonProperty('http://www.solidoc.net/ontologies#option', 'option');
@@ -54,11 +54,11 @@ abstract class Subject {
     (<JsonProperty>(this._predicates['option'])).set(option);
   }
 
-  public setNext = (node: Subject | null) => {
+  public setNext = (node: Subject | undefined) => {
     this.set({ next: node ? node._uri : '' })
     this._next = node
   }
-  public getNext = (): Subject | null => {
+  public getNext = (): Subject | undefined => {
     return this._next
   }
 
