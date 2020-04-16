@@ -105,6 +105,15 @@ class Root extends Branch {
       ...option
     };
   }
+
+  public delete = () => {
+    throw new Error('The root node is not removable :' + this._uri);
+  }
+
+  public setNext = (node: Subject | null) => {
+    throw new Error('The root node cannot have syblings: ' + this._uri + JSON.stringify(node));
+  }
+
 }
 
 class Leaf extends Subject {
