@@ -1,4 +1,5 @@
 import { Property, NamedNodeProperty, JsonProperty } from './Property';
+import { uriToKey } from '../config/ontology'
 
 abstract class Subject {
   protected _uri: string
@@ -16,24 +17,21 @@ abstract class Subject {
   }
 
   public fromQuad(quad: any) {
-    let found = false;
-    // TODO: O(n^2) complexity
-    Object.keys(this._predicates).forEach(key => {
-      if (this._predicates[key].id === quad.predicate.id) {
-        this._predicates[key].fromQuad(quad);
-        found = true;
-      }
-    });
-    if (!found) {
-      console.log('Quad not matched:');
-      console.log(quad);
+    let key = uriToKey[quad.predicate.id];
+    if (!key || !this._predicates[key]) {
+      console.log('Quad not matched: ' + JSON.stringify(quad));
+      return;
     }
+    this._predicates[key].fromQuad(quad)
   }
 
   public abstract toJson(): any
 
   public get = (key: string): string => {
     if (key === 'id') return this._uri;
+    if (!this._predicates[key]) {
+      throw new Error('Try to get an unknown property: ' + this._uri + key)
+    }
     return this._predicates[key] ? this._predicates[key].get() : '';
   }
 
