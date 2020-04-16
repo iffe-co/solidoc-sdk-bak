@@ -106,12 +106,11 @@ class Root extends Branch {
     };
   }
 
-  public delete = () => {
-    throw new Error('The root node is not removable :' + this._uri);
-  }
-
-  public setNext = (node: Subject | undefined) => {
-    throw new Error('setNext: The root node cannot have syblings: ' + this._uri + node?.get('id'));
+  public fromQuad(quad: any) {
+    if (quad.predicate.id === 'http://www.solidoc.net/ontologies#nextNode') {
+      throw new Error('fromQuad: The root node cannot have syblings: ' + this._uri)
+    }
+    super.fromQuad(quad)
   }
 
   public set(props: any) {
@@ -121,11 +120,12 @@ class Root extends Branch {
     super.set(props)
   }
 
-  public fromQuad(quad: any) {
-    if (quad.predicate.id === 'http://www.solidoc.net/ontologies#nextNode') {
-      throw new Error('fromQuad: The root node cannot have syblings: ' + this._uri)
-    }
-    super.fromQuad(quad)
+  public setNext = (node: Subject | undefined) => {
+    throw new Error('setNext: The root node cannot have syblings: ' + this._uri + node?.get('id'));
+  }
+
+  public delete = () => {
+    throw new Error('The root node is not removable :' + this._uri);
   }
 
 }

@@ -17,43 +17,43 @@ describe('Named Node Property', () => {
   });
   it('parses quad as a named node', () => {
     prop.fromQuad(quads[0]);
-    assert(prop.get() === 'http://xmlns.com/foaf/0.1/Person');
+    assert.strictEqual(prop.get(), 'http://xmlns.com/foaf/0.1/Person');
   });
   it('generates null sparql for a new property', () => {
     const sparql: string = prop.getSparqlForUpdate('http://example.org/test', 'http://example.org/alice');
-    assert(sparql === '');
+    assert.strictEqual(sparql, '');
   });
   it('generate sparql for updated property', () => {
     prop.fromQuad(quads[0]);
     prop.set('http://xmlns.com/foaf/0.1/homepage');
 
     const sparql: string = prop.getSparqlForUpdate('http://example.org/test', 'http://example.org/alice');
-    assert(sparql === deleteClause + insertClause);
+    assert.strictEqual(sparql, deleteClause + insertClause);
   });
   it('generate sparql for deleted property', () => {
     prop.fromQuad(quads[0]);
     prop.set('');
 
     const sparql: string = prop.getSparqlForUpdate('http://example.org/test', 'http://example.org/alice');
-    assert(sparql === deleteClause);
+    assert.strictEqual(sparql, deleteClause);
   });
   it('generate sparql for a just-set property', () => {
     prop.set('http://xmlns.com/foaf/0.1/homepage');
 
     const sparql: string = prop.getSparqlForUpdate('http://example.org/test', 'http://example.org/alice');
-    assert(sparql === insertClause);
+    assert.strictEqual(sparql, insertClause);
   });
   it('commits correctly', () => {
     prop.fromQuad(quads[0]);
     prop.set('http://xmlns.com/foaf/0.1/homepage');
     prop.commit();
-    assert(prop.get() === 'http://xmlns.com/foaf/0.1/homepage');
+    assert.strictEqual(prop.get(), 'http://xmlns.com/foaf/0.1/homepage');
   });
   it('undoes correctly', () => {
     prop.fromQuad(quads[0]);
     prop.set('http://xmlns.com/foaf/0.1/homepage');
     prop.undo();
-    assert(prop.get() === 'http://xmlns.com/foaf/0.1/Person');
+    assert.strictEqual(prop.get(), 'http://xmlns.com/foaf/0.1/Person');
 
   });
 });
@@ -63,29 +63,30 @@ describe('Text Property', () => {
   const turtle = `<http://example.org/alice> <http://www.solidoc.net/ontologies#option> "{\\"name\\":\\"alice\\"}" .`;
   const quads: any[] = parser.parse(turtle);
 
-  const deleteClause = `WITH <http://example.org/test> DELETE WHERE { <http://example.org/alice> <http://xmlns.com/foaf/0.1/nick> ?o };\n`;
+  const deleteClause = `WITH <http://example.org/test> DELETE WHERE { <http://example.org/alice> <http://www.solidoc.net/ontologies#option> ?o };\n`;
   const insertClause = `INSERT DATA { GRAPH <http://example.org/test> { <http://example.org/alice> <http://www.solidoc.net/ontologies#option> "{\\"name\\":\\"alice\\",\\"age\\":25}"} };\n`;
 
   beforeEach(() => {
     prop = new TextProperty('http://www.solidoc.net/ontologies#option', 'option');
   });
+
   it('parses quad as text', () => {
     prop.fromQuad(quads[0]);
-    assert(prop.value === '{"name":"alice"}');
+    assert.strictEqual(prop.value, '{"name":"alice"}');
   });
 
   it('generates sparql for update', async () => {
     prop.fromQuad(quads[0]);
     prop.set('{"name":"alice","age":25}');
     const sparql: string = prop.getSparqlForUpdate('http://example.org/test', 'http://example.org/alice');
-    assert(sparql, deleteClause + insertClause);
+    assert.strictEqual(sparql, deleteClause + insertClause);
   });
 
   it('generates sparql for deletion only', async () => {
     prop.fromQuad(quads[0]);
     prop.set('');
     const sparql: string = prop.getSparqlForUpdate('http://example.org/test', 'http://example.org/alice');
-    assert(sparql, deleteClause);
+    assert.strictEqual(sparql, deleteClause);
   });
 
   it('generates sparql for insertion only', async () => {
@@ -94,7 +95,7 @@ describe('Text Property', () => {
     prop.commit();
     prop.set('{"name":"alice","age":25}');
     const sparql: string = prop.getSparqlForUpdate('http://example.org/test', 'http://example.org/alice');
-    assert(sparql, insertClause);
+    assert.strictEqual(sparql, insertClause);
   });
 });
 
@@ -111,22 +112,22 @@ describe('Json Property', () => {
   });
 
   it('initial value', () => {
-    assert(prop.value === '{}')
+    assert.strictEqual(prop.value, '{}')
     let sparql = prop.getSparqlForUpdate('http://example.org/test', 'http://example.org/alice')
-    assert(sparql === '');
+    assert.strictEqual(sparql, '');
   });
 
   it('parses quad as json', () => {
     prop.fromQuad(quads[0]);
     assert.deepStrictEqual(prop.options, { name: 'alice' });
     let sparql = prop.getSparqlForUpdate('http://example.org/test', 'http://example.org/alice')
-    assert(sparql === '');
+    assert.strictEqual(sparql, '');
   });
 
   it('gets sparql after set from null', () => {
     prop.set({ name: 'alice' })
     let sparql = prop.getSparqlForUpdate('http://example.org/test', 'http://example.org/alice')
-    assert(sparql === insertClause);
+    assert.strictEqual(sparql, insertClause);
   });
 
   it('gets sparql after adding a property', () => {
@@ -134,7 +135,7 @@ describe('Json Property', () => {
     prop.set({ age: 25 })
     let sparql = prop.getSparqlForUpdate('http://example.org/test', 'http://example.org/alice')
     let insertClause = `INSERT DATA { GRAPH <http://example.org/test> { <http://example.org/alice> <http://www.solidoc.net/ontologies#option> "{\\"name\\":\\"alice\\",\\"age\\":25}"} };\n`;
-    assert(sparql === deleteClause + insertClause);
+    assert.strictEqual(sparql, deleteClause + insertClause);
   });
 
   it('gets sparql after removing a property', () => {
@@ -142,7 +143,7 @@ describe('Json Property', () => {
     prop.set({ name: null })
     let sparql = prop.getSparqlForUpdate('http://example.org/test', 'http://example.org/alice')
     let insertClause = `INSERT DATA { GRAPH <http://example.org/test> { <http://example.org/alice> <http://www.solidoc.net/ontologies#option> "{}"} };\n`;
-    assert(sparql === deleteClause + insertClause);
+    assert.strictEqual(sparql, deleteClause + insertClause);
   });
 
   it('gets sparql after reseting a property', () => {
@@ -150,6 +151,6 @@ describe('Json Property', () => {
     prop.set({ name: 'Alice' })
     let sparql = prop.getSparqlForUpdate('http://example.org/test', 'http://example.org/alice')
     let insertClause = `INSERT DATA { GRAPH <http://example.org/test> { <http://example.org/alice> <http://www.solidoc.net/ontologies#option> "{\\"name\\":\\"Alice\\"}"} };\n`;
-    assert(sparql === deleteClause + insertClause);
+    assert.strictEqual(sparql, deleteClause + insertClause);
   });
 });
