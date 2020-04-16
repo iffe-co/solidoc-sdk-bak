@@ -15,7 +15,7 @@ abstract class Subject {
     this._predicates.option = new JsonProperty('http://www.solidoc.net/ontologies#option', 'option');
   }
 
-  public fromQuad = (quad: any) => {
+  public fromQuad(quad: any) {
     let found = false;
     // TODO: O(n^2) complexity
     Object.keys(this._predicates).forEach(key => {
@@ -37,7 +37,7 @@ abstract class Subject {
     return this._predicates[key] ? this._predicates[key].get() : '';
   }
 
-  public set = (props: any) => {
+  public set(props: any) {
     if (this._isDeleted) {
       throw new Error('Trying to update a deleted subject: ' + this._uri);
     }

@@ -13,7 +13,7 @@ describe('Paragraph', () => {
 
   beforeEach(() => {
     para = new Branch('http://example.org/alice#tag1');
-    quads.forEach(para.fromQuad);
+    quads.forEach(quad => para.fromQuad(quad));
   });
   it('parses quads and converts to readable Json', () => {
     assert.deepStrictEqual(para.toJson(), {

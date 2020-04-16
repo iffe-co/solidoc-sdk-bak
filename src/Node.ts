@@ -111,7 +111,21 @@ class Root extends Branch {
   }
 
   public setNext = (node: Subject | null) => {
-    throw new Error('The root node cannot have syblings: ' + this._uri + JSON.stringify(node));
+    throw new Error('setNext: The root node cannot have syblings: ' + this._uri + node?.get('id'));
+  }
+
+  public set(props: any) {
+    if (Object.keys(props).includes('next')) {
+      throw new Error('set: The root node cannot have syblings: ' + this._uri);
+    }
+    super.set(props)
+  }
+
+  public fromQuad(quad: any) {
+    if (quad.predicate.id === 'http://www.solidoc.net/ontologies#nextNode') {
+      throw new Error('fromQuad: The root node cannot have syblings: ' + this._uri)
+    }
+    super.fromQuad(quad)
   }
 
 }

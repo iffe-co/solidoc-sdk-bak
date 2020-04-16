@@ -13,7 +13,7 @@ describe('Root', () => {
 
   beforeEach(() => {
     root = new Root('http://example.org/alice');
-    quads.forEach(root.fromQuad);
+    quads.forEach(quad => root.fromQuad(quad));
   });
 
   it('parses from quads', () => {
@@ -44,6 +44,32 @@ describe('Root', () => {
       return
     }
     assert(0)
+  })
+
+  it('throws on set({next: <node>})', () => {
+    try {
+      root.set({ next: 'http://example.org/bob' })
+    } catch (e) {
+      return
+    }
+    assert(0)
+  })
+
+  it('throws on parsing a quad with nextNode predicate', () => {
+    let turtle = '<http://example.org/alice> <http://www.solidoc.net/ontologies#nextNode> <http://example.org/bob>.';
+    let quads = parser.parse(turtle)
+    try {
+      root.fromQuad(quads[0])
+    } catch (e) {
+      return
+    }
+    assert(0)
+  })
+
+  it('sets title', () => {
+    root.set({ title: 'Welcome' })
+    let json: any = root.toJson()
+    assert(json.title === 'Welcome')
   })
 
 });

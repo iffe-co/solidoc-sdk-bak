@@ -13,7 +13,7 @@ describe('Leaf', () => {
 
   beforeEach(() => {
     leaf = new Leaf('http://example.org/alice#tag1');
-    quads.forEach(leaf.fromQuad);
+    quads.forEach(quad => leaf.fromQuad(quad));
   });
   it('parses from quads', () => {
     assert.deepStrictEqual(leaf.toJson(), {
