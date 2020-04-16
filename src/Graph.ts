@@ -6,6 +6,7 @@ abstract class Graph {
 
   constructor(uri: string, turtle: string) {
     this._uri = uri;
+    turtle || (turtle = `<${uri}> a <http://www.solidoc.net/ontologies#Root>.`);
     Process.parseTurtle(turtle)
   }
 

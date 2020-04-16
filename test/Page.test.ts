@@ -61,10 +61,15 @@ describe('Create Page', () => {
     page = new Page(pageUri, turtle);
     assert.deepStrictEqual(page.toJson(), json);
   });
-  // it('parses from json', () => {
-  //   page = new Page(json);
-  //   assert.deepStrictEqual(page.toJson(), json);
-  // });
+  it('parses from empty string', () => {
+    page = new Page(pageUri, '');
+    assert.deepStrictEqual(page.toJson(), {
+      id: pageUri,
+      type: 'http://www.solidoc.net/ontologies#Root',
+      title: '',
+      children: [],
+    });
+  });
 });
 
 describe('Insert Node', () => {

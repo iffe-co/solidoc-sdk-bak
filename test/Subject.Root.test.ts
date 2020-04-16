@@ -4,12 +4,13 @@ import * as assert from 'power-assert';
 
 const parser = new n3.Parser();
 
-describe('Root', () => {
+let turtle = '<http://example.org/alice> a <http://www.solidoc.net/ontologies#Root>;';
+turtle += ' <http://purl.org/dc/terms/title> "Alice\'s Profile";';
+turtle += ' <http://www.solidoc.net/ontologies#firstChild> <http://example.org/alice#tag1>.';
+const quads: any[] = parser.parse(turtle);
+
+describe('Create Node', () => {
   let root: Root;
-  let turtle = '<http://example.org/alice> a <http://www.solidoc.net/ontologies#Root>;';
-  turtle += ' <http://purl.org/dc/terms/title> "Alice\'s Profile";';
-  turtle += ' <http://www.solidoc.net/ontologies#firstChild> <http://example.org/alice#tag1>.';
-  const quads: any[] = parser.parse(turtle);
 
   beforeEach(() => {
     root = new Root('http://example.org/alice');
@@ -24,7 +25,18 @@ describe('Root', () => {
       children: [],
     });
     assert(root.get('firstChild') === 'http://example.org/alice#tag1');
-    assert(root.getChildrenNum() === 0) // setting the children[] is not in node construction
+    assert(root.getChildrenNum() === 0) // children[] is not assigned during node construction
+  });
+
+  it 
+});
+
+describe('Operations', () => {
+  let root: Root;
+
+  beforeEach(() => {
+    root = new Root('http://example.org/alice');
+    quads.forEach(quad => root.fromQuad(quad));
   });
 
   it('disallows deletion', () => {
@@ -55,7 +67,7 @@ describe('Root', () => {
     assert(0)
   })
 
-  it('throws on parsing a quad with nextNode predicate', () => {
+  it('throws on parsing #nextNode predicate', () => {
     let turtle = '<http://example.org/alice> <http://www.solidoc.net/ontologies#nextNode> <http://example.org/bob>.';
     let quads = parser.parse(turtle)
     try {
