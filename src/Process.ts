@@ -70,7 +70,7 @@ const Process = {
 
   insertRecursive: (json: Node, graph: Graph, parent: Branch, offset: number): Subject => {
     let currUri: string = graph.getUri() + '#' + json.id
-    let curr: Subject = createNode(json.id, json.type)
+    let curr: Subject = createNode(currUri, json.type)
 
     curr.set(json);
     nodes.set(currUri, curr);
