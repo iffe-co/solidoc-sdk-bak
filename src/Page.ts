@@ -107,9 +107,18 @@ class Page extends Graph {
       }
 
       case 'set_node': {
-        const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        const curr: Subject = parent.getChildFromChildren(op.path.offset);
+        let curr: Subject | undefined
+        if (op.path.parentUri) {
+          const parent: Branch = this._getBranchInstance(op.path.parentUri);
+          curr = parent.getChildFromChildren(op.path.offset);
+        } else {
+          curr = nodes.get(this.getUri())
+        }
         // TODO: disallow setting id/text/children/next/option
+        if (!curr) {
+          throw new Error('No such node: ' + op.path.parentUri + op.path.offset)
+        }
+
         curr.set(op.newProperties)
         break
       }

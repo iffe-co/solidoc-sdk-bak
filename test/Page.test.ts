@@ -332,6 +332,13 @@ describe('Set Node', () => {
     page = new Page(pageUri, turtle);
   });
 
+  it('sets page title', () => {
+    let op: Operation = { type: 'set_node', path: { parentUri: '', offset: 0 }, newProperties: { title: 'Welcome' } }
+    page.apply(op)
+    let pageJson: any = page.toJson()
+    assert(pageJson.title === 'Welcome')
+  })
+
   it('sets a paragraph by adding a property', () => {
     let op: Operation = { type: 'set_node', path: { parentUri: pageUri, offset: 0 }, newProperties: { name: 'alice' } }
     page.apply(op)
