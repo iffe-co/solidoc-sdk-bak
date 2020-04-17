@@ -38,7 +38,7 @@ const Process = {
 
     let currUri = head.get('firstChild');
     let curr: Subject | undefined = nodes.get(currUri)
-    curr && head.appendChildren(curr)
+    curr && head.insertChildren(curr, 0)
 
     while (curr) {
       Process.assembleTree(curr, graph);
@@ -54,12 +54,12 @@ const Process = {
 
     // TODO: use map??
     for (let i = 0; head instanceof Branch && i < head.getChildrenNum(); i++) {
-      if (i == 0 && head.get('firstChild') !== head.getChildFromChildren(i).get('id')) {
+      if (i == 0 && head.get('firstChild') !== head.getIndexedChild(i).get('id')) {
         throw new Error('firstChild error')
-      } else if (i < head.getChildrenNum() - 1 && head.getChildFromChildren(i).get('next') !== head.getChildFromChildren(i + 1).get('id')) {
+      } else if (i < head.getChildrenNum() - 1 && head.getIndexedChild(i).get('next') !== head.getIndexedChild(i + 1).get('id')) {
         throw new Error('next error')
       }
-      headJson.children.push(Process.toJson(head.getChildFromChildren(i)))
+      headJson.children.push(Process.toJson(head.getIndexedChild(i)))
     }
 
     return headJson
@@ -72,7 +72,7 @@ const Process = {
     curr.set(json);
     nodes.set(currUri, curr);
 
-    parent.insertChild(curr, offset);
+    parent.insertChildren(curr, offset);
 
     for (let i = 0; curr instanceof Branch && i < json.children.length; i++) {
       Process.insertRecursive(json.children[i], graph, curr, i)
@@ -85,7 +85,7 @@ const Process = {
 
     // TODO: use map??
     for (let i = 0; head instanceof Branch && i < head.getChildrenNum(); i++) {
-      Process.removeRecursive(head.getChildFromChildren(i))
+      Process.removeRecursive(head.getIndexedChild(i))
     }
   },
 
@@ -94,7 +94,7 @@ const Process = {
 
     // TODO: use map??
     for (let i = 0; from instanceof Branch && i < from.getChildrenNum(); i++) {
-      let curr = from.getChildFromChildren(i)
+      let curr = from.getIndexedChild(i)
       if (Process.isAncestor(curr, to)) return true
     }
     return false

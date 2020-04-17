@@ -21,7 +21,7 @@ class Page extends Graph {
   }
   private _getLeafInstance = (path: Path): Leaf => {
     let parent: Branch = this._getBranchInstance(path.parentUri);
-    let node = parent.getChildFromChildren(path.offset)
+    let node = parent.getIndexedChild(path.offset)
     if (!node || node.isDeleted()) {
       throw new Error('The node does not exist: ' + path.parentUri + ' offset = ' + path.offset);
     } else if (!(node instanceof Leaf)) {
@@ -45,7 +45,7 @@ class Page extends Graph {
 
       case 'remove_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        const curr: Subject = parent.removeChild(op.path.offset);
+        const curr: Subject = parent.removeChildren(op.path.offset, 1);
         curr && Process.removeRecursive(curr);
         break
       }
@@ -54,37 +54,37 @@ class Page extends Graph {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
         const newParent: Branch = this._getBranchInstance(op.newPath.parentUri);
 
-        const curr: Subject = parent.removeChild(op.path.offset);
+        const curr: Subject = parent.removeChildren(op.path.offset, 1);
 
         if (Process.isAncestor(curr, newParent)) {
-          parent.insertChild(curr, op.path.offset);
+          parent.insertChildren(curr, op.path.offset);
           throw new Error('Trying to append the node to itself or its descendent')
         }
 
-        newParent.insertChild(curr, op.newPath.offset);
+        newParent.insertChildren(curr, op.newPath.offset);
         break
       }
 
       case 'merge_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        const prev: Subject = parent.getChildFromChildren(op.path.offset - 1);
-        const curr: Subject = parent.getChildFromChildren(op.path.offset);
+        const prev: Subject = parent.getIndexedChild(op.path.offset - 1);
+        const curr: Subject = parent.getIndexedChild(op.path.offset);
 
         if (prev instanceof Leaf && curr instanceof Leaf) {
           prev.insertText(Infinity, curr.get('text'));
         } else if (prev instanceof Branch && curr instanceof Branch) {
-          let child: Subject = curr.detachChildren(0);
-          prev.appendChildren(child)
+          let child: Subject = curr.removeChildren(0, Infinity)
+          prev.insertChildren(child, Infinity)
         } else {
           throw new Error(`Cannot merge.`);
         }
-        parent.removeChild(op.path.offset)
+        parent.removeChildren(op.path.offset, 1)
         break
       }
 
       case 'split_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        const curr: Subject = parent.getChildFromChildren(op.path.offset);
+        const curr: Subject = parent.getIndexedChild(op.path.offset);
         if (curr instanceof Leaf) {
           let clipped: string = curr.removeText(op.position, Infinity);
           let json = {
@@ -94,14 +94,14 @@ class Page extends Graph {
           }
           Process.insertRecursive(json, this, parent, op.path.offset + 1)
         } else {
-          let child: Subject = (<Branch>curr).detachChildren(op.position);
+          let child: Subject = (<Branch>curr).removeChildren(op.position, Infinity);
           let json = {
             ...Process.toJson(curr),
             ...op.properties,
             children: []
           }
           let next: Subject = Process.insertRecursive(json, this, parent, op.path.offset + 1);
-          (<Branch>next).appendChildren(child)
+          (<Branch>next).insertChildren(child, 0)
         }
         break
       }
@@ -110,7 +110,7 @@ class Page extends Graph {
         let curr: Subject | undefined
         if (op.path.parentUri) {
           const parent: Branch = this._getBranchInstance(op.path.parentUri);
-          curr = parent.getChildFromChildren(op.path.offset);
+          curr = parent.getIndexedChild(op.path.offset);
         } else {
           curr = nodes.get(this.getUri())
         }

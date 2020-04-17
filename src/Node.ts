@@ -23,64 +23,54 @@ class Branch extends Subject {
     this.set({ firstChild: node ? node.get('id') : '' })
   }
 
-  public getChildFromChildren = (offset: number): Subject => {
-    if (offset < 0) {
-      throw new Error(`Trying to getChild(${offset}) of ${this._uri}`);
-    }
-    (offset === Infinity) && (offset = this._children.length - 1);
+  public getIndexedChild = (offset: number): Subject => {
     return this._children[offset]
   }
+  public getLastChild = (): Subject => {
+    return this._children[this._children.length - 1]
+  }
 
-  public insertChild = (curr: Subject, offset: number) => {
-    if (offset === 0) {
+  public insertChildren = (curr: Subject, offset: number) => {
+    if (!curr) {
+      throw new Error('Trying to insert a null subject')
+    }
+
+    let prev: Subject = this.getIndexedChild(offset - 1) || this.getLastChild();
+    if (offset === 0 || !prev) {
       this.setFirstChild(curr)
     } else {
-      let prev: Subject = this.getChildFromChildren(offset - 1) || this.getChildFromChildren(Infinity);
       prev.setNext(curr)
     }
-    let next: Subject = this.getChildFromChildren(offset)
-    curr.setNext(next)
+
+    let next: Subject = this.getIndexedChild(offset)
     this._children.splice(offset, 0, curr)
+    while (curr.getNext()) {
+      offset++
+      curr = <Subject>(curr.getNext())
+      this._children.splice(offset, 0, curr)
+    }
+
+    curr.setNext(next)
   }
 
-  public removeChild = (offset: number): Subject => {
-    let curr: Subject = this.getChildFromChildren(offset);
-    if (!curr) return curr
-    let next: Subject = this.getChildFromChildren(offset + 1);
-    if (offset === 0) {
+  public removeChildren = (offset: number, length: number): Subject => {
+    if (length <= 0) {
+      throw new Error('Remove children length = ' + length)
+    }
+
+    let next: Subject = this.getIndexedChild(offset + length);
+    let prev: Subject = this.getIndexedChild(offset - 1);
+    if (offset === 0 || !prev) {
       this.setFirstChild(next);
     } else {
-      let prev: Subject = this.getChildFromChildren(offset - 1);
       prev.setNext(next)
     }
-    this._children.splice(offset, 1)
-    return curr
-  }
 
-  public appendChildren = (curr: Subject) => {
-    let last: Subject = this.getChildFromChildren(Infinity)
-    if (last) {
-      last.setNext(curr)
-    } else {
-      this.setFirstChild(curr)
-    }
-    this._children.push(curr)
-    let node: Subject | undefined = curr.getNext()
-    while (node) {
-      this._children.push(node)
-      node = node.getNext()
-    }
-  }
+    let lastToRemove = this.getIndexedChild(offset + length - 1);
+    lastToRemove && lastToRemove.setNext(undefined)
 
-  public detachChildren = (offset: number): Subject => {
-    if (offset === 0) {
-      this.setFirstChild(undefined);
-    } else {
-      let prev: Subject = this.getChildFromChildren(offset - 1);
-      prev.setNext(undefined)
-    }
-    let curr: Subject = this.getChildFromChildren(offset);
-    this._children = this._children.slice(0, offset)
+    let curr: Subject = this.getIndexedChild(offset);
+    this._children.splice(offset, length)
     return curr
   }
 
