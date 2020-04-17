@@ -23,26 +23,26 @@ class Branch extends Subject {
     this.set({ firstChild: node ? node.get('id') : '' })
   }
 
-  public getIndexedChild = (offset: number): Subject => {
+  public getIndexedChild = (offset: number): Subject | undefined=> {
     return this._children[offset]
   }
-  public getLastChild = (): Subject => {
+  public getLastChild = (): Subject | undefined => {
     return this._children[this._children.length - 1]
   }
 
-  public insertChildren = (curr: Subject, offset: number) => {
+  public insertChildren = (curr: Subject | undefined, offset: number) => {
     if (!curr) {
       throw new Error('Trying to insert a null subject')
     }
 
-    let prev: Subject = this.getIndexedChild(offset - 1) || this.getLastChild();
+    let prev: Subject | undefined = this.getIndexedChild(offset - 1) || this.getLastChild();
     if (offset === 0 || !prev) {
       this.setFirstChild(curr)
     } else {
       prev.setNext(curr)
     }
 
-    let next: Subject = this.getIndexedChild(offset)
+    let next: Subject | undefined = this.getIndexedChild(offset)
     this._children.splice(offset, 0, curr)
     while (curr.getNext()) {
       offset++
@@ -53,13 +53,13 @@ class Branch extends Subject {
     curr.setNext(next)
   }
 
-  public removeChildren = (offset: number, length: number): Subject => {
+  public removeChildren = (offset: number, length: number): Subject | undefined => {
     if (length <= 0) {
       throw new Error('Remove children length = ' + length)
     }
 
-    let next: Subject = this.getIndexedChild(offset + length);
-    let prev: Subject = this.getIndexedChild(offset - 1);
+    let next: Subject | undefined = this.getIndexedChild(offset + length);
+    let prev: Subject | undefined = this.getIndexedChild(offset - 1);
     if (offset === 0 || !prev) {
       this.setFirstChild(next);
     } else {
@@ -69,7 +69,7 @@ class Branch extends Subject {
     let lastToRemove = this.getIndexedChild(offset + length - 1);
     lastToRemove && lastToRemove.setNext(undefined)
 
-    let curr: Subject = this.getIndexedChild(offset);
+    let curr: Subject | undefined = this.getIndexedChild(offset);
     this._children.splice(offset, length)
     return curr
   }

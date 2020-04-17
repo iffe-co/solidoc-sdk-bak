@@ -45,7 +45,7 @@ class Page extends Graph {
 
       case 'remove_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        const curr: Subject = parent.removeChildren(op.path.offset, 1);
+        const curr: Subject | undefined = parent.removeChildren(op.path.offset, 1);
         curr && Process.removeRecursive(curr);
         break
       }
@@ -54,7 +54,10 @@ class Page extends Graph {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
         const newParent: Branch = this._getBranchInstance(op.newPath.parentUri);
 
-        const curr: Subject = parent.removeChildren(op.path.offset, 1);
+        const curr: Subject | undefined = parent.removeChildren(op.path.offset, 1);
+        if (!curr) {
+          throw new Error('No such node')
+        }
 
         if (Process.isAncestor(curr, newParent)) {
           parent.insertChildren(curr, op.path.offset);
@@ -67,13 +70,13 @@ class Page extends Graph {
 
       case 'merge_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        const prev: Subject = parent.getIndexedChild(op.path.offset - 1);
-        const curr: Subject = parent.getIndexedChild(op.path.offset);
+        const prev: Subject | undefined = parent.getIndexedChild(op.path.offset - 1);
+        const curr: Subject | undefined = parent.getIndexedChild(op.path.offset);
 
         if (prev instanceof Leaf && curr instanceof Leaf) {
           prev.insertText(Infinity, curr.get('text'));
         } else if (prev instanceof Branch && curr instanceof Branch) {
-          let child: Subject = curr.removeChildren(0, Infinity)
+          let child: Subject | undefined = curr.removeChildren(0, Infinity)
           prev.insertChildren(child, Infinity)
         } else {
           throw new Error(`Cannot merge.`);
@@ -84,7 +87,7 @@ class Page extends Graph {
 
       case 'split_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        const curr: Subject = parent.getIndexedChild(op.path.offset);
+        const curr: Subject | undefined = parent.getIndexedChild(op.path.offset);
         if (curr instanceof Leaf) {
           let clipped: string = curr.removeText(op.position, Infinity);
           let json = {
@@ -94,7 +97,10 @@ class Page extends Graph {
           }
           Process.insertRecursive(json, this, parent, op.path.offset + 1)
         } else {
-          let child: Subject = (<Branch>curr).removeChildren(op.position, Infinity);
+          let child: Subject | undefined = (<Branch>curr).removeChildren(op.position, Infinity);
+          if (!child) {
+            throw new Error('No such child')
+          }
           let json = {
             ...Process.toJson(curr),
             ...op.properties,

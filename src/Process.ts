@@ -54,11 +54,11 @@ const Process = {
 
     // TODO: use map??
     for (let i = 0; head instanceof Branch && i < head.getChildrenNum(); i++) {
-      if (i == 0 && head.get('firstChild') !== head.getIndexedChild(i).get('id')) {
-        throw new Error('firstChild error')
-      } else if (i < head.getChildrenNum() - 1 && head.getIndexedChild(i).get('next') !== head.getIndexedChild(i + 1).get('id')) {
-        throw new Error('next error')
-      }
+      // if (i == 0 && head.get('firstChild') !== head.getIndexedChild(i).get('id')) {
+      //   throw new Error('firstChild error')
+      // } else if (i < head.getChildrenNum() - 1 && head.getIndexedChild(i).get('next') !== head.getIndexedChild(i + 1).get('id')) {
+      //   throw new Error('next error')
+      // }
       headJson.children.push(Process.toJson(head.getIndexedChild(i)))
     }
 
@@ -85,7 +85,7 @@ const Process = {
 
     // TODO: use map??
     for (let i = 0; head instanceof Branch && i < head.getChildrenNum(); i++) {
-      Process.removeRecursive(head.getIndexedChild(i))
+      Process.removeRecursive(<Subject>head.getIndexedChild(i))
     }
   },
 
@@ -95,7 +95,7 @@ const Process = {
     // TODO: use map??
     for (let i = 0; from instanceof Branch && i < from.getChildrenNum(); i++) {
       let curr = from.getIndexedChild(i)
-      if (Process.isAncestor(curr, to)) return true
+      if (Process.isAncestor(<Subject>curr, to)) return true
     }
     return false
   },
