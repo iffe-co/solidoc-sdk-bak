@@ -1,26 +1,22 @@
 import { Graph } from './Graph'
 import { Node } from './interface'
-import { createNode, Branch } from './Node'
+import { createNode, nodeMap, Branch } from './Node'
 import { Subject } from './Subject'
 import * as n3 from 'n3';
 
 const parser = new n3.Parser();
-
-export const nodes = new Map<string, Subject>();
-
 
 const Process = {
   parseTurtle: (turtle: string) => {
     const quads: any[] = parser.parse(turtle);
     quads.forEach(quad => {
       if (quad.predicate.id === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type') {
-        let node = createNode(quad.subject.id, quad.object.id);
-        nodes.set(quad.subject.id, node)
+        createNode(quad.subject.id, quad.object.id);
       }
     })
 
     quads.forEach(quad => {
-      let node = nodes.get(quad.subject.id)
+      let node = nodeMap.get(quad.subject.id)
       if (!node) {
         throw new Error('Node does not exist: ' + quad.subject.id)
       }
@@ -37,7 +33,7 @@ const Process = {
     if (!(head instanceof Branch)) return
 
     let currUri = head.get('firstChild');
-    let curr: Subject | undefined = nodes.get(currUri)
+    let curr: Subject | undefined = nodeMap.get(currUri)
     curr && head.insertChildren(curr, 0)
 
     while (curr) {
@@ -70,8 +66,6 @@ const Process = {
     let curr: Subject = createNode(currUri, json.type)
 
     curr.set(json);
-    nodes.set(currUri, curr);
-
     parent.insertChildren(curr, offset);
 
     for (let i = 0; curr instanceof Branch && i < json.children.length; i++) {

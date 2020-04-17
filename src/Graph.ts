@@ -1,4 +1,5 @@
-import { Process, nodes } from './Process'
+import { Process } from './Process'
+import { nodeMap } from './Node'
 
 // a graph could be a page or a database
 abstract class Graph {
@@ -17,16 +18,16 @@ abstract class Graph {
 
   public getSparqlForUpdate = (): string => {
     let sparql = '';
-    for(let node of nodes.values()) {
+    for(let node of nodeMap.values()) {
       sparql += node.getSparqlForUpdate(this._uri);
     }
     return sparql;
   }
 
   public commit = () => {
-    for (let [uri, node] of nodes.entries()) {
+    for (let [uri, node] of nodeMap.entries()) {
       if (node.isDeleted()) {
-        nodes.delete(uri);
+        nodeMap.delete(uri);
       } else {
         node.commit();
       }
@@ -34,7 +35,7 @@ abstract class Graph {
   }
 
   public undo = () => {
-    for (let node of nodes.values()) {
+    for (let node of nodeMap.values()) {
         node.undo();
     }
   }

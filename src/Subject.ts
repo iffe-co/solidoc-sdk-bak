@@ -1,6 +1,6 @@
 import { Property, NamedNodeProperty, JsonProperty } from './Property';
 import { uriToKey } from '../config/ontology'
-import { nodes } from './Process'
+import { nodeMap } from './Node'
 
 abstract class Subject {
   protected _uri: string
@@ -55,7 +55,7 @@ abstract class Subject {
     this.set({ next: node ? node._uri : '' })
   }
   public getNext = (): Subject | undefined => {
-    return nodes.get(this.get('next'))
+    return nodeMap.get(this.get('next'))
   }
 
   public getSparqlForUpdate = (graph: string): string => {

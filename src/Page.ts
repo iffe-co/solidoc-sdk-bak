@@ -1,17 +1,17 @@
-import { Branch, Leaf } from './Node';
+import { Branch, Leaf, nodeMap } from './Node';
 import { Subject } from './Subject';
 import { Graph } from './Graph';
 import { Path, Operation, Element } from './interface'
-import { Process, nodes } from './Process'
+import { Process } from './Process'
 
 class Page extends Graph {
   constructor(uri: string, turtle: string) {
     super(uri, turtle);
-    Process.assembleTree(nodes.get(uri), this)
+    Process.assembleTree(nodeMap.get(uri), this)
   }
 
   private _getBranchInstance = (uri: string): Branch => {
-    let node = nodes.get(uri);
+    let node = nodeMap.get(uri);
     if (!node || node.isDeleted()) {
       throw new Error('The node does not exist: ' + uri);
     } else if (!(node instanceof Branch)) {
@@ -31,7 +31,7 @@ class Page extends Graph {
   }
 
   public toJson = (): Element => {
-    let head = nodes.get(this.getUri());
+    let head = nodeMap.get(this.getUri());
     return <Element>(Process.toJson(head))
   }
 
@@ -118,7 +118,7 @@ class Page extends Graph {
           const parent: Branch = this._getBranchInstance(op.path.parentUri);
           curr = parent.getIndexedChild(op.path.offset);
         } else {
-          curr = nodes.get(this.getUri())
+          curr = nodeMap.get(this.getUri())
         }
         // TODO: disallow setting id/text/children/next/option
         if (!curr) {

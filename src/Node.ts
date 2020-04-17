@@ -152,14 +152,19 @@ class Leaf extends Subject {
   }
 }
 
+const nodeMap = new Map<string, Subject>();
+
 const createNode = (uri: string, type: string): Subject => {
+  let node: Subject
   if (type === 'http://www.solidoc.net/ontologies#Root') {
-    return new Root(uri)
+    node = new Root(uri)
   } else if (type === 'http://www.solidoc.net/ontologies#Leaf') {
-    return new Leaf(uri)
+    node = new Leaf(uri)
   } else {
-    return new Branch(uri)
+    node = new Branch(uri)
   }
+  nodeMap.set(uri, node)
+  return node
 }
 
-export { Branch, Root, Leaf, createNode }
+export { Branch, Root, Leaf, createNode, nodeMap }
