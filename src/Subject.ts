@@ -31,7 +31,7 @@ abstract class Subject {
     if (!this._predicates[key]) {
       throw new Error('Try to get an unknown property: ' + this._uri + key)
     }
-    return this._predicates[key] ? this._predicates[key].get() : '';
+    return this._predicates[key].get();
   }
 
   public set(props: any) {
@@ -59,18 +59,21 @@ abstract class Subject {
   }
 
   public getSparqlForUpdate = (graph: string): string => {
-    let sparql = '';
     if (this._isDeleted) {
-      sparql += `WITH <${graph}> DELETE { <${this._uri}> ?p ?o } WHERE { <${this._uri}> ?p ?o };\n`;
+      return `WITH <${graph}> DELETE { <${this._uri}> ?p ?o } WHERE { <${this._uri}> ?p ?o };\n`;
     } else {
+      let sparql = '';
       Object.keys(this._predicates).forEach(key => {
         sparql += this._predicates[key].getSparqlForUpdate(graph, this._uri);
       });
+      return sparql;
     }
-    return sparql;
   }
 
   public commit = () => {
+    if (this._isDeleted) {
+      throw new Error('A deleted subject should not be committed')
+    }
     Object.keys(this._predicates).forEach(key => {
       this._predicates[key].commit();
     });

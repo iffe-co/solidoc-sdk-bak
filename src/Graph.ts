@@ -15,7 +15,6 @@ abstract class Graph {
     return this._uri
   }
 
-
   public getSparqlForUpdate = (): string => {
     let sparql = '';
     for(let node of nodeMap.values()) {
