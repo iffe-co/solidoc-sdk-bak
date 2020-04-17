@@ -1,27 +1,31 @@
 import { Property, NamedNodeProperty, JsonProperty } from './Property';
-import { Graph } from './Graph'
 import { uriToKey } from '../config/ontology'
 
 abstract class Subject {
   protected _uri: string
   protected _predicates: { [key: string]: Property } = {}
-  protected _isDeleted: boolean
-  protected _graph: Graph
+  private _isDeleted: boolean
+  private _next: Subject | undefined
 
-  constructor(uri: string, graph: Graph) {
+  constructor(uri: string) {
     this._uri = uri;
-    this._graph = graph
     this._isDeleted = false
     this._predicates.type = new NamedNodeProperty('http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'type');
     this._predicates.next = new NamedNodeProperty('http://www.solidoc.net/ontologies#nextNode', 'next');
     this._predicates.option = new JsonProperty('http://www.solidoc.net/ontologies#option', 'option');
   }
 
-  public fromQuad(quad: any) {
+  public fromQuad(quad: any, next?: Subject) {
     let key = uriToKey[quad.predicate.id];
     if (!key || !this._predicates[key]) {
       console.log('Quad not matched: ' + JSON.stringify(quad));
       return;
+    }
+    if (key == 'next' && quad.object.id) {
+      if (!next || next._uri != quad.object.id) {
+        throw new Error('#nextNode inconsistency: ' + quad.object.id)
+      }
+      this.setNext(next)
     }
     this._predicates[key].fromQuad(quad)
   }
@@ -40,6 +44,11 @@ abstract class Subject {
     if (this._isDeleted) {
       throw new Error('Trying to update a deleted subject: ' + this._uri);
     }
+
+    if (Object.keys(props).includes('next')) {
+      throw new Error('The "next" property may not be set: ' + this._uri);
+    }
+
     let option = {}
     Object.keys(props).forEach(key => {
       if (key === 'id' || key === 'children') {
@@ -54,10 +63,12 @@ abstract class Subject {
   }
 
   public setNext = (node: Subject | undefined) => {
-    this.set({ next: node ? node._uri : '' })
+    let nextUri = node ? node._uri : '';
+    this._predicates['next'].set(nextUri);
+    this._next = node;
   }
   public getNext = (): Subject | undefined => {
-    return this._graph.getNode(this.get('next'))
+    return this._next
   }
 
   public getSparqlForUpdate = (graph: string): string => {

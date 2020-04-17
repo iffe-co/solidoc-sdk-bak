@@ -55,17 +55,8 @@ describe('Root', () => {
     assert(0)
   })
 
-  it('throws on set({next: <node>})', () => {
-    try {
-      root.set({ next: 'http://example.org/bob' })
-    } catch (e) {
-      return
-    }
-    assert(0)
-  })
-
   it('throws on setNext()', () => {
-    let next = new Root('http://example.org/bob', page)
+    let next = new Root('http://example.org/bob')
     try {
       root.setNext(next)
     } catch (e) {

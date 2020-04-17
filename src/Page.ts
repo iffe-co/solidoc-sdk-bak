@@ -14,11 +14,11 @@ class Page extends Graph {
   public createNode = (uri: string, type: string): Subject => {
     let node: Subject
     if (type === 'http://www.solidoc.net/ontologies#Root') {
-      node = new Root(uri, this)
+      node = new Root(uri)
     } else if (type === 'http://www.solidoc.net/ontologies#Leaf') {
-      node = new Leaf(uri, this)
+      node = new Leaf(uri)
     } else {
-      node = new Branch(uri, this)
+      node = new Branch(uri)
     }
     this._nodeMap.set(uri, node)
     return node

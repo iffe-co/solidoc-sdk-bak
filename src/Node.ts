@@ -1,12 +1,11 @@
 import { NamedNodeProperty, TextProperty } from './Property';
 import { Subject } from './Subject';
-import { Graph } from './Graph'
 
 class Branch extends Subject {
   private _children: Subject[] = [];
 
-  constructor(uri: string, graph: Graph) {
-    super(uri, graph);
+  constructor(uri: string) {
+    super(uri);
     this._predicates.firstChild = new NamedNodeProperty('http://www.solidoc.net/ontologies#firstChild', 'firstChild');
   }
 
@@ -81,8 +80,8 @@ class Branch extends Subject {
 }
 
 class Root extends Branch {
-  constructor(uri: string, graph: Graph) {
-    super(uri, graph);
+  constructor(uri: string) {
+    super(uri);
     this._predicates.title = new TextProperty('http://purl.org/dc/terms/title', 'title');
   }
 
@@ -104,13 +103,6 @@ class Root extends Branch {
     super.fromQuad(quad)
   }
 
-  public set(props: any) {
-    if (Object.keys(props).includes('next')) {
-      throw new Error('set: The root node cannot have syblings: ' + this._uri);
-    }
-    super.set(props)
-  }
-
   public setNext = (node: Subject | undefined) => {
     throw new Error('setNext: The root node cannot have syblings: ' + this._uri + node?.get('id'));
   }
@@ -122,9 +114,9 @@ class Root extends Branch {
 }
 
 class Leaf extends Subject {
-  constructor(uri: string, graph: Graph) {
+  constructor(uri: string) {
     // TODO: using blank nodes
-    super(uri, graph);
+    super(uri);
     this._predicates.text = new TextProperty('http://www.solidoc.net/ontologies#text', 'text');
   }
 

@@ -25,8 +25,12 @@ const Process = {
       if (!node) {
         throw new Error('Node does not exist: ' + quad.subject.id)
       }
-      node.fromQuad(quad);
-
+      if (quad.predicate.id == 'http://www.solidoc.net/ontologies#nextNode') {
+        let next = page.getNode(quad.object.id);
+        node.fromQuad(quad, next)
+      } else {
+        node.fromQuad(quad);
+      }
     })
   },
 

@@ -8,7 +8,6 @@ const parser = new n3.Parser();
 describe('Leaf', () => {
   let leaf: Leaf;
   let turtle = '<http://example.org/alice#text1> a <http://www.solidoc.net/ontologies#Leaf>;';
-  turtle += ' <http://www.solidoc.net/ontologies#nextNode> <http://example.org/alice#text2>;';
   turtle += ' <http://www.solidoc.net/ontologies#text> "Hello world!".';
   const quads: any[] = parser.parse(turtle);
 
@@ -22,7 +21,6 @@ describe('Leaf', () => {
   it('parses from quads', () => {
     assert.strictEqual(leaf.get('id'), 'http://example.org/alice#text1')
     assert.strictEqual(leaf.get('type'), 'http://www.solidoc.net/ontologies#Leaf')
-    assert.strictEqual(leaf.get('next'), 'http://example.org/alice#text2');
     assert.strictEqual(leaf.get('text'), 'Hello world!')
   });
   

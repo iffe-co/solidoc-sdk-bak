@@ -108,21 +108,47 @@ describe('Paragraph', () => {
       next = <Branch>page.createNode('http://example.org/alice#tag2', 'http://www.solidoc.net/ontologies#Paragraph');
     })
 
-    it('set("next") is together with setNext()', () => {
-      para.set({ "next": "http://example.org/alice#tag2" })
-      assert.strictEqual(para.getNext(), next)
-    });
-
     it('setNext() is together with set("next")', () => {
       para.setNext(next)
       assert.strictEqual(para.get("next"), 'http://example.org/alice#tag2');
     });
 
+    it('disallows set("next")', () => {
+      try {
+        para.set({ "next": "http://example.org/alice#tag2" })
+      } catch (e) {
+        return
+      }
+      assert(0)
+    });
+
     it('parses #nextNode from quads and synced with getNext()', () => {
       let turtle = `<http://example.org/alice#tag1> <http://www.solidoc.net/ontologies#nextNode> <http://example.org/alice#tag2>.`;
       let quads = parser.parse(turtle)
-      para.fromQuad(quads[0])
+      para.fromQuad(quads[0], next)
       assert.strictEqual(para.getNext(), next)
+    })
+
+    it('throws if #nextNode without next', () => {
+      let turtle = `<http://example.org/alice#tag1> <http://www.solidoc.net/ontologies#nextNode> <http://example.org/alice#tag2>.`;
+      let quads = parser.parse(turtle)
+      try {
+        para.fromQuad(quads[0])
+      } catch (e) {
+        return
+      }
+      assert(0)
+    })
+
+    it('throws if #nextNode inconsistent with next', () => {
+      let turtle = `<http://example.org/alice#tag1> <http://www.solidoc.net/ontologies#nextNode> <http://example.org/alice#wrong>.`;
+      let quads = parser.parse(turtle)
+      try {
+        para.fromQuad(quads[0], next)
+      } catch (e) {
+        return
+      }
+      assert(0)
     })
 
     it('unsets next', () => {
@@ -168,10 +194,10 @@ describe('Paragraph', () => {
     })
 
     it('commits attributes', () => {
-      para.set({ next: 'http://example.org/alice#tag2' })
+      para.set({ type: 'http://www.solidoc.net/ontologies#NumberedList' })
       para.commit()
       para.undo()
-      assert.strictEqual(para.get('next'), 'http://example.org/alice#tag2')
+      assert.strictEqual(para.get('type'), 'http://www.solidoc.net/ontologies#NumberedList')
     })
 
     it('undoes deletion', () => {
@@ -181,10 +207,10 @@ describe('Paragraph', () => {
     });
 
     it('undoes attributes', () => {
-      para.set({ next: 'http://example.org/alice#tag2' })
+      para.set({ type: 'http://www.solidoc.net/ontologies#NumberedList' })
       para.delete()
       para.undo()
-      assert.strictEqual(para.get('next'), '')
+      assert.strictEqual(para.get('type'), 'http://www.solidoc.net/ontologies#Paragraph')
     })
 
   });
