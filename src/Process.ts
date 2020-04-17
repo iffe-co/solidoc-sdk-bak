@@ -7,10 +7,15 @@ import * as n3 from 'n3';
 const parser = new n3.Parser();
 
 const Process = {
-  parseTurtle: (turtle: string) => {
+  parseTurtle: (graphUri: string, turtle: string) => {
+    createNode(graphUri, 'http://www.solidoc.net/ontologies#Root');
+    let root = nodeMap.get(graphUri)
+    root?.set({ type: "http://www.solidoc.net/ontologies#Root" })
+
     const quads: any[] = parser.parse(turtle);
     quads.forEach(quad => {
-      if (quad.predicate.id === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type') {
+      if (quad.predicate.id === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type' && quad.subject.id !== graphUri) {
+        // TODO: only create node for known types
         createNode(quad.subject.id, quad.object.id);
       }
     })
