@@ -13,4 +13,3 @@ src/
 index.ts
 
 dist/test
-dist/src/*.d.ts

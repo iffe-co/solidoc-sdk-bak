@@ -19,7 +19,7 @@ class Branch extends Subject {
     };
   }
 
-  private setFirstChild = (node: Subject | null) => {
+  private setFirstChild = (node: Subject | undefined) => {
     this.set({ firstChild: node ? node.get('id') : '' })
   }
 
@@ -65,7 +65,7 @@ class Branch extends Subject {
       this.setFirstChild(curr)
     }
     this._children.push(curr)
-    let node: Subject | null = curr.getNext()
+    let node: Subject | undefined = curr.getNext()
     while (node) {
       this._children.push(node)
       node = node.getNext()
@@ -74,10 +74,10 @@ class Branch extends Subject {
 
   public detachChildren = (offset: number): Subject => {
     if (offset === 0) {
-      this.setFirstChild(null);
+      this.setFirstChild(undefined);
     } else {
       let prev: Subject = this.getChildFromChildren(offset - 1);
-      prev.setNext(null)
+      prev.setNext(undefined)
     }
     let curr: Subject = this.getChildFromChildren(offset);
     this._children = this._children.slice(0, offset)
@@ -105,6 +105,29 @@ class Root extends Branch {
       ...option
     };
   }
+
+  public fromQuad(quad: any) {
+    if (quad.predicate.id === 'http://www.solidoc.net/ontologies#nextNode') {
+      throw new Error('fromQuad: The root node cannot have syblings: ' + this._uri)
+    }
+    super.fromQuad(quad)
+  }
+
+  public set(props: any) {
+    if (Object.keys(props).includes('next')) {
+      throw new Error('set: The root node cannot have syblings: ' + this._uri);
+    }
+    super.set(props)
+  }
+
+  public setNext = (node: Subject | undefined) => {
+    throw new Error('setNext: The root node cannot have syblings: ' + this._uri + node?.get('id'));
+  }
+
+  public delete = () => {
+    throw new Error('The root node is not removable :' + this._uri);
+  }
+
 }
 
 class Leaf extends Subject {

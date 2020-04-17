@@ -61,10 +61,15 @@ describe('Create Page', () => {
     page = new Page(pageUri, turtle);
     assert.deepStrictEqual(page.toJson(), json);
   });
-  // it('parses from json', () => {
-  //   page = new Page(json);
-  //   assert.deepStrictEqual(page.toJson(), json);
-  // });
+  it('parses from empty string', () => {
+    page = new Page(pageUri, '');
+    assert.deepStrictEqual(page.toJson(), {
+      id: pageUri,
+      type: 'http://www.solidoc.net/ontologies#Root',
+      title: '',
+      children: [],
+    });
+  });
 });
 
 describe('Insert Node', () => {
@@ -160,14 +165,13 @@ describe('Delete Node', () => {
     let op: Operation = { type: 'remove_node', path: { parentUri: pageUri, offset: 1 } }
     page.apply(op)
     page.commit();
-    let errMsg = ''
     try {
       let op: Operation = { type: 'remove_node', path: { parentUri: paraUri2, offset: 0 } }
       page.apply(op)
     } catch (e) {
-      errMsg = e.message
+      return
     }
-    assert(errMsg.startsWith('The node does not exist'))
+    assert(0)
   });
   it('does not delete at offset > length', () => {
     let op: Operation = { type: 'remove_node', path: { parentUri: pageUri, offset: 2 } }
@@ -179,14 +183,13 @@ describe('Delete Node', () => {
     let op: Operation = { type: 'remove_node', path: { parentUri: pageUri, offset: 1 } }
     page.apply(op)
     page.commit();
-    let errMsg = ''
     try {
       let op: Operation = { type: 'remove_node', path: { parentUri: paraUri2, offset: 0 } }
       page.apply(op)
     } catch (e) {
-      errMsg = e.message
+      return
     }
-    assert(errMsg.startsWith('The node does not exist'))
+    assert(0)
   });
 });
 
@@ -218,13 +221,12 @@ describe('Move Node', () => {
   });
   it('disallows moving below a child', () => {
     let op: Operation = { type: 'move_node', path: { parentUri: pageUri, offset: 0 }, newPath: { parentUri: paraUri1, offset: 0 } }
-    let errMsg = ''
     try {
       page.apply(op)
     } catch (e) {
-      errMsg = e.message
+      return
     }
-    assert(errMsg.startsWith('Trying to append the node to itself or its descendent'))
+    assert(0)
   });
 });
 
@@ -239,27 +241,25 @@ describe('Merge Text Node', () => {
     page.apply(op)
     let pageJson = page.toJson()
     assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [tid1])
-    assert(pageJson.children[0].children[0].text === textJson1.text + textJson3.text)
+    assert.strictEqual(pageJson.children[0].children[0].text, textJson1.text + textJson3.text)
   });
   it('throws on merging text node 0', () => {
     let op: Operation = { type: 'merge_node', path: { parentUri: paraUri1, offset: 0 } }
-    let errMsg = ''
     try {
       page.apply(op)
     } catch (e) {
-      errMsg = e.message
+      return
     }
-    assert(errMsg.startsWith('Trying to getChild(-1) of'))
+    assert(0)
   });
   it('throws on merging offset > length', () => {
     let op: Operation = { type: 'merge_node', path: { parentUri: paraUri1, offset: 2 } }
-    let errMsg = ''
     try {
       page.apply(op)
     } catch (e) {
-      errMsg = e.message
+      return
     }
-    assert(errMsg.startsWith('Cannot merge'))
+    assert(0);
   });
 });
 
@@ -277,23 +277,21 @@ describe('Merge Element Node', () => {
   });
   it('throws on merging paragraph 1', () => {
     let op: Operation = { type: 'merge_node', path: { parentUri: pageUri, offset: 0 } }
-    let errMsg = ''
     try {
       page.apply(op)
     } catch (e) {
-      errMsg = e.message
+      return
     }
-    assert(errMsg.startsWith('Trying to getChild(-1) of'))
+    assert(0)
   });
   it('throws on merging offset > length', () => {
     let op: Operation = { type: 'merge_node', path: { parentUri: pageUri, offset: 2 } }
-    let errMsg = ''
     try {
       page.apply(op)
     } catch (e) {
-      errMsg = e.message
+      return
     }
-    assert(errMsg.startsWith('Cannot merge'))
+    assert(0)
   });
 });
 
@@ -306,8 +304,8 @@ describe('Split Text Node', () => {
     page.apply(op)
     let pageJson = page.toJson()
     assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [tid1, tid3])
-    assert(pageJson.children[0].children[0].text === 'P')
-    assert(pageJson.children[0].children[1].text === 'aragraph 1')
+    assert.strictEqual(pageJson.children[0].children[0].text, 'P')
+    assert.strictEqual(pageJson.children[0].children[1].text, 'aragraph 1')
   });
 });
 
@@ -332,11 +330,18 @@ describe('Set Node', () => {
     page = new Page(pageUri, turtle);
   });
 
+  it('sets page title', () => {
+    let op: Operation = { type: 'set_node', path: { parentUri: '', offset: 0 }, newProperties: { title: 'Welcome' } }
+    page.apply(op)
+    let pageJson: any = page.toJson()
+    assert.strictEqual(pageJson.title, 'Welcome')
+  })
+
   it('sets a paragraph by adding a property', () => {
     let op: Operation = { type: 'set_node', path: { parentUri: pageUri, offset: 0 }, newProperties: { name: 'alice' } }
     page.apply(op)
     let pageJson = page.toJson()
-    assert(pageJson.children[0].name === 'alice')
+    assert.strictEqual(pageJson.children[0].name, 'alice')
     // TODO: sparql
   });
   it('sets a paragraph by adding and removing', () => {
@@ -345,15 +350,15 @@ describe('Set Node', () => {
     page.apply(op1)
     page.apply(op2)
     let pageJson = page.toJson()
-    assert(pageJson.children[0].name === undefined)
-    assert(pageJson.children[0].age === 25)
+    assert.strictEqual(pageJson.children[0].name, undefined)
+    assert.strictEqual(pageJson.children[0].age, 25)
     // TODO: sparql
   });
   it('sets a text by adding a property', () => {
     let op: Operation = { type: 'set_node', path: { parentUri: paraUri1, offset: 0 }, newProperties: { bold: false } }
     page.apply(op)
     let pageJson = page.toJson()
-    assert(pageJson.children[0].children[0].bold === false)
+    assert.strictEqual(pageJson.children[0].children[0].bold, false)
     // TODO: sparql
   });
 });
