@@ -1,31 +1,40 @@
-import { Process } from './Process'
-import { nodeMap } from './Node'
+import { Subject } from './Subject'
 
 // a graph could be a page or a database
 abstract class Graph {
   private _uri: string
+  protected _nodeMap = new Map<string, Subject>();
 
-  constructor(uri: string, turtle: string) {
+  constructor(uri: string) {
     this._uri = uri;
-    Process.parseTurtle(uri, turtle)
   }
+
+  public abstract createNode(uri: string, type: string): Subject
 
   public getUri = (): string => {
     return this._uri
   }
 
+  public getNode = (uri: string): Subject | undefined => {
+    return this._nodeMap.get(uri)
+  }
+
+  public getRoot = (): Subject | undefined => {
+    return this._nodeMap.get(this._uri)
+  }
+
   public getSparqlForUpdate = (): string => {
     let sparql = '';
-    for(let node of nodeMap.values()) {
+    for(let node of this._nodeMap.values()) {
       sparql += node.getSparqlForUpdate(this._uri);
     }
     return sparql;
   }
 
   public commit = () => {
-    for (let [uri, node] of nodeMap.entries()) {
+    for (let [uri, node] of this._nodeMap.entries()) {
       if (node.isDeleted()) {
-        nodeMap.delete(uri);
+        this._nodeMap.delete(uri);
       } else {
         node.commit();
       }
@@ -33,7 +42,7 @@ abstract class Graph {
   }
 
   public undo = () => {
-    for (let node of nodeMap.values()) {
+    for (let node of this._nodeMap.values()) {
         node.undo();
     }
   }

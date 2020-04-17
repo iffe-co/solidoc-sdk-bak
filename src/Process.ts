@@ -1,27 +1,27 @@
-import { Graph } from './Graph'
+import { Page } from './Page'
 import { Node } from './interface'
-import { createNode, nodeMap, Branch } from './Node'
+import { Branch } from './Node'
 import { Subject } from './Subject'
 import * as n3 from 'n3';
 
 const parser = new n3.Parser();
 
 const Process = {
-  parseTurtle: (graphUri: string, turtle: string) => {
-    createNode(graphUri, 'http://www.solidoc.net/ontologies#Root');
-    let root = nodeMap.get(graphUri)
+  parseTurtle: (page: Page, turtle: string) => {
+    page.createNode(page.getUri(), 'http://www.solidoc.net/ontologies#Root');
+    let root = page.getRoot()
     root?.set({ type: "http://www.solidoc.net/ontologies#Root" })
 
     const quads: any[] = parser.parse(turtle);
     quads.forEach(quad => {
-      if (quad.predicate.id === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type' && quad.subject.id !== graphUri) {
+      if (quad.predicate.id === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type' && quad.subject.id !== page.getUri()) {
         // TODO: only create node for known types
-        createNode(quad.subject.id, quad.object.id);
+        page.createNode(quad.subject.id, quad.object.id);
       }
     })
 
     quads.forEach(quad => {
-      let node = nodeMap.get(quad.subject.id)
+      let node = page.getNode(quad.subject.id)
       if (!node) {
         throw new Error('Node does not exist: ' + quad.subject.id)
       }
@@ -30,7 +30,7 @@ const Process = {
     })
   },
 
-  assembleTree: (head: Subject | undefined, graph: Graph) => {
+  assembleTree: (head: Subject | undefined, page: Page) => {
     if (!head) {
       throw new Error('Traverse from a null head')
     }
@@ -38,11 +38,11 @@ const Process = {
     if (!(head instanceof Branch)) return
 
     let currUri = head.get('firstChild');
-    let curr: Subject | undefined = nodeMap.get(currUri)
+    let curr: Subject | undefined = page.getNode(currUri)
     curr && head.insertChildren(curr, 0)
 
     while (curr) {
-      Process.assembleTree(curr, graph);
+      Process.assembleTree(curr, page);
       curr = curr.getNext()
     }
   },
@@ -66,15 +66,15 @@ const Process = {
     return headJson
   },
 
-  insertRecursive: (json: Node, graph: Graph, parent: Branch, offset: number): Subject => {
-    let currUri: string = graph.getUri() + '#' + json.id
-    let curr: Subject = createNode(currUri, json.type)
+  insertRecursive: (json: Node, page: Page, parent: Branch, offset: number): Subject => {
+    let currUri: string = page.getUri() + '#' + json.id
+    let curr: Subject = page.createNode(currUri, json.type)
 
     curr.set(json);
     parent.insertChildren(curr, offset);
 
     for (let i = 0; curr instanceof Branch && i < json.children.length; i++) {
-      Process.insertRecursive(json.children[i], graph, curr, i)
+      Process.insertRecursive(json.children[i], page, curr, i)
     }
     return curr
   },

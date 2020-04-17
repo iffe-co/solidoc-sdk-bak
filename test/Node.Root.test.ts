@@ -1,4 +1,5 @@
-import { Root, createNode } from '../src/Node';
+import { Root } from '../src/Node';
+import { Page } from '../src/Page'
 import * as n3 from 'n3';
 import * as assert from 'power-assert';
 
@@ -11,9 +12,10 @@ const quads: any[] = parser.parse(turtle);
 
 describe('Root', () => {
   let root: Root;
+  let page = new Page('http://example.org/alice', '')
 
   beforeEach(() => {
-    root = <Root>createNode('http://example.org/alice', 'http://www.solidoc.net/ontologies#Root');
+    root = <Root>page.createNode('http://example.org/alice', 'http://www.solidoc.net/ontologies#Root');
     quads.forEach(quad => root.fromQuad(quad));
   });
 
@@ -63,7 +65,7 @@ describe('Root', () => {
   })
 
   it('throws on setNext()', () => {
-    let next = new Root('http://example.org/bob')
+    let next = new Root('http://example.org/bob', page)
     try {
       root.setNext(next)
     } catch (e) {

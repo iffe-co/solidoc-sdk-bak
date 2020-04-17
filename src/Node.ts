@@ -1,11 +1,12 @@
 import { NamedNodeProperty, TextProperty } from './Property';
 import { Subject } from './Subject';
+import { Graph } from './Graph'
 
 class Branch extends Subject {
   private _children: Subject[] = [];
 
-  constructor(uri: string) {
-    super(uri);
+  constructor(uri: string, graph: Graph) {
+    super(uri, graph);
     this._predicates.firstChild = new NamedNodeProperty('http://www.solidoc.net/ontologies#firstChild', 'firstChild');
   }
 
@@ -80,8 +81,8 @@ class Branch extends Subject {
 }
 
 class Root extends Branch {
-  constructor(uri: string) {
-    super(uri);
+  constructor(uri: string, graph: Graph) {
+    super(uri, graph);
     this._predicates.title = new TextProperty('http://purl.org/dc/terms/title', 'title');
   }
 
@@ -121,9 +122,9 @@ class Root extends Branch {
 }
 
 class Leaf extends Subject {
-  constructor(uri: string) {
+  constructor(uri: string, graph: Graph) {
     // TODO: using blank nodes
-    super(uri);
+    super(uri, graph);
     this._predicates.text = new TextProperty('http://www.solidoc.net/ontologies#text', 'text');
   }
 
@@ -152,19 +153,6 @@ class Leaf extends Subject {
   }
 }
 
-const nodeMap = new Map<string, Subject>();
 
-const createNode = (uri: string, type: string): Subject => {
-  let node: Subject
-  if (type === 'http://www.solidoc.net/ontologies#Root') {
-    node = new Root(uri)
-  } else if (type === 'http://www.solidoc.net/ontologies#Leaf') {
-    node = new Leaf(uri)
-  } else {
-    node = new Branch(uri)
-  }
-  nodeMap.set(uri, node)
-  return node
-}
 
-export { Branch, Root, Leaf, createNode, nodeMap }
+export { Branch, Root, Leaf }

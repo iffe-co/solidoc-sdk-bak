@@ -1,4 +1,4 @@
-import { Branch, Leaf, nodeMap } from './Node';
+import { Root, Branch, Leaf } from './Node';
 import { Subject } from './Subject';
 import { Graph } from './Graph';
 import { Path, Operation, Element } from './interface'
@@ -6,12 +6,27 @@ import { Process } from './Process'
 
 class Page extends Graph {
   constructor(uri: string, turtle: string) {
-    super(uri, turtle);
-    Process.assembleTree(nodeMap.get(uri), this)
+    super(uri);
+    Process.parseTurtle(this, turtle)
+    Process.assembleTree(this._nodeMap.get(uri), this)
   }
 
+  public createNode = (uri: string, type: string): Subject => {
+    let node: Subject
+    if (type === 'http://www.solidoc.net/ontologies#Root') {
+      node = new Root(uri, this)
+    } else if (type === 'http://www.solidoc.net/ontologies#Leaf') {
+      node = new Leaf(uri, this)
+    } else {
+      node = new Branch(uri, this)
+    }
+    this._nodeMap.set(uri, node)
+    return node
+  }
+  
+
   private _getBranchInstance = (uri: string): Branch => {
-    let node = nodeMap.get(uri);
+    let node = this._nodeMap.get(uri);
     if (!node || node.isDeleted()) {
       throw new Error('The node does not exist: ' + uri);
     } else if (!(node instanceof Branch)) {
@@ -31,7 +46,7 @@ class Page extends Graph {
   }
 
   public toJson = (): Element => {
-    let head = nodeMap.get(this.getUri());
+    let head = this._nodeMap.get(this.getUri());
     return <Element>(Process.toJson(head))
   }
 
@@ -118,7 +133,7 @@ class Page extends Graph {
           const parent: Branch = this._getBranchInstance(op.path.parentUri);
           curr = parent.getIndexedChild(op.path.offset);
         } else {
-          curr = nodeMap.get(this.getUri())
+          curr = this._nodeMap.get(this.getUri())
         }
         // TODO: disallow setting id/text/children/next/option
         if (!curr) {
