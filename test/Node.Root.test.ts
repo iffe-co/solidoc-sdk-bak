@@ -13,7 +13,7 @@ describe('Root', () => {
   let root: Root;
 
   beforeEach(() => {
-    root = <Root>createNode(page.uri, ont.sdoc.root);
+    root = <Root>createNode(page.uri, page.type);
     quads.forEach(quad => root.fromQuad(quad));
   });
 

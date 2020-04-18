@@ -59,6 +59,16 @@ config.page.turtle = `<${config.page.uri}> a <${ont.sdoc.root}>;
   <${ont.dct.title}> "${config.page.json.title}";
   <${ont.sdoc.firstChild}> <${config.para[0].uri}>.`
 
+config.para[0].turtle = `<${config.para[0].uri}> a <${ont.sdoc.paragraph}>;
+  <${ont.sdoc.next}> <${config.para[1].uri}>;
+  <${ont.sdoc.firstChild}> <${config.text[0].uri}>.`
+
+config.para[1].turtle = `<${config.para[1].uri}> a <${ont.sdoc.paragraph}>;
+  <${ont.sdoc.next}> <${config.para[2].uri}>;
+  <${ont.sdoc.firstChild}> <${config.text[3].uri}>.`
+
+  config.para[2].turtle = `<${config.para[2].uri}> a <${ont.sdoc.paragraph}>;
+  <${ont.sdoc.firstChild}> <${config.text[6].uri}>.`
 
 config.text[8].turtle = `<${config.text[8].uri}> a <${ont.sdoc.leaf}>;
   <${ont.sdoc.text}> '${config.text[8].json.text}';

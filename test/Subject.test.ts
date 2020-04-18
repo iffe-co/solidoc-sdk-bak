@@ -1,42 +1,49 @@
 import { Branch, createNode } from '../src/Node';
-import * as n3 from 'n3';
+import { ont } from '../config/ontology'
+import { config } from '../config/test'
 import * as assert from 'power-assert';
 
+import * as n3 from 'n3';
 const parser = new n3.Parser();
 
+const node0 = config.para[0]
+const node1 = config.para[1]
+const node2 = config.para[2]
+const page = config.page
+
 describe('Paragraph', () => {
-  let para: Branch;
-  let turtle = `<http://example.org/alice#tag1> a <http://www.solidoc.net/ontologies#Paragraph>;`;
-  turtle += ` <http://www.solidoc.net/ontologies#option> '{"name":"alice"}'.`;
-  const quads: any[] = parser.parse(turtle);
+  // let para0: Branch;
+  let para1: Branch;
+  let para2: Branch;
+  let quads: any[];
 
   beforeEach(() => {
-    para = <Branch>createNode('http://example.org/alice#tag1', 'http://www.solidoc.net/ontologies#Paragraph');
-    quads.forEach(quad => para.fromQuad(quad));
+    para2 = <Branch>createNode(node2.uri, node2.type);
+    quads = parser.parse(node2.turtle);
+    quads.forEach(quad => para2.fromQuad(quad));
   });
 
   describe('Create Node', () => {
 
     it('parses from quads', () => {
-      assert.equal(para.get('uri'), 'http://example.org/alice#tag1')
-      assert.equal(para.get('type'), 'http://www.solidoc.net/ontologies#Paragraph')
-      assert.equal(para.get('firstChild'), '')
+      assert.equal(para2.get('uri'), node2.uri)
+      assert.equal(para2.get('type'), node2.type)
+      assert.equal(para2.get('next'), '')
+      assert.equal(para2.get('firstChild'), node2.json.children[0].uri)
     })
 
     it('translates to Json', () => {
-      assert.deepStrictEqual(para.toJson(), {
-        id: 'tag1',
-        type: 'http://www.solidoc.net/ontologies#Paragraph',
-        children: [],
-        name: 'alice'
+      assert.deepStrictEqual(para2.toJson(), {
+        ...node2.json,
+        children: []
       });
     });
 
     it('discards an unknown quad', () => {
-      let turtle = '<http://example.org/alice> <http://www.solidoc.net/ontologies#unknown> "abc".';
+      let turtle = `<${node2.uri}> <${ont.sdoc.text}> "abc".`;
       let quads = parser.parse(turtle)
-      para.fromQuad(quads[0])
-      let sparql = para.getSparqlForUpdate('http://example.org/alice#tag1');
+      para2.fromQuad(quads[0])
+      let sparql = para2.getSparqlForUpdate(page.uri);
       assert.strictEqual(sparql, '')
     });
   });
@@ -44,76 +51,63 @@ describe('Paragraph', () => {
   describe('Sets and gets', () => {
 
     it('sets and gets a known property', () => {
-      para.set({ type: 'http://www.solidoc.net/ontologies#NumberedList' });
-      assert.strictEqual(para.get('type'), 'http://www.solidoc.net/ontologies#NumberedList');
+      para2.set({ type: ont.sdoc.numberedList });
+      assert.strictEqual(para2.get('type'), ont.sdoc.numberedList);
     });
 
     it('throws on getting an unkown property', () => {
       try {
-        para.get('unknown')
+        para2.get('unknown')
       } catch (e) {
         return
       }
       assert(0)
     })
 
-    it('sets an unknown property', () => {
-      para.set({ age: 25 });
-      assert.deepStrictEqual(JSON.parse(para.get('option')), {
-        name: "alice",
-        "age": 25
-      })
-    })
-
     it('ignores id and children properties', () => {
-      para.set({ id: 'fake id', children: [] });
-      let sparql = para.getSparqlForUpdate('http://example.org/alice#tag1');
+      para2.set({ id: 'fake id', children: ['something'] });
+      let sparql = para2.getSparqlForUpdate(page.uri);
       assert.strictEqual(sparql, '')
     })
 
-  });
-
-  describe('Options', () => {
-
-    it('adds optional property', () => {
-      para.set({ age: 25 })
-      let paraJson: any = para.toJson();
-      assert.strictEqual(paraJson.age, 25);
-      // TODO: 
-      // const sparql = para.getSparqlForUpdate('http://example.org/test');
-    });
+    it('adds an optional property', () => {
+      para2.set({ author: 'alice' });
+      assert.deepStrictEqual(JSON.parse(para2.get('option')), {
+        author: "alice",
+      })
+    })
 
     it('deletes optional property', () => {
-      para.set({ name: null })
-      let paraJson: any = para.toJson();
-      assert.strictEqual(paraJson.name, undefined);
-      // TODO: 
-      // const sparql = para.getSparqlForUpdate('http://example.org/test');
+      para2.set({ author: "alice" })
+      para2.commit()
+      para2.set({ author: null })
+      let json: any = para2.toJson();
+      assert.strictEqual(json.author, undefined);
+      assert.strictEqual(para2.get('option'), '{}')
     });
 
     it('modifies optional property', () => {
-      para.set({ name: "bob" })
-      let paraJson: any = para.toJson();
-      assert.strictEqual(paraJson.name, 'bob');
-      // TODO: 
-      // const sparql = para.getSparqlForUpdate('http://example.org/test');
+      para2.set({ author: "alice" })
+      para2.commit()
+      para2.set({ author: "bob" })
+      let json: any = para2.toJson();
+      assert.strictEqual(json.author, 'bob');
     })
   });
 
-  describe('Next', () => {
-    let next: Branch
+  describe('#nextNode property', () => {
     beforeEach(() => {
-      next = <Branch>createNode('http://example.org/alice#tag2', 'http://www.solidoc.net/ontologies#Paragraph');
+      para1 = <Branch>createNode(node1.uri, node1.type);
     })
 
     it('setNext() is together with set("next")', () => {
-      para.setNext(next)
-      assert.strictEqual(para.get("next"), 'http://example.org/alice#tag2');
+      para1.setNext(para2)
+      assert.strictEqual(para1.get("next"), para2.get('uri'));
     });
 
     it('disallows set("next")', () => {
       try {
-        para.set({ "next": "http://example.org/alice#tag2" })
+        para1.set({ "next": para2.get('uri') })
       } catch (e) {
         return
       }
@@ -121,17 +115,17 @@ describe('Paragraph', () => {
     });
 
     it('parses #nextNode from quads and synced with getNext()', () => {
-      let turtle = `<http://example.org/alice#tag1> <http://www.solidoc.net/ontologies#nextNode> <http://example.org/alice#tag2>.`;
-      let quads = parser.parse(turtle)
-      para.fromQuad(quads[0], next)
-      assert.strictEqual(para.getNext(), next)
+      let quads = parser.parse(node1.turtle)
+      // note the index of quads
+      para1.fromQuad(quads[1], para2)
+      assert.strictEqual(para1.getNext(), para2)
     })
 
     it('throws if #nextNode without next', () => {
-      let turtle = `<http://example.org/alice#tag1> <http://www.solidoc.net/ontologies#nextNode> <http://example.org/alice#tag2>.`;
-      let quads = parser.parse(turtle)
+      let quads = parser.parse(node1.turtle)
       try {
-        para.fromQuad(quads[0])
+        // note the index of quads
+        para1.fromQuad(quads[1])
       } catch (e) {
         return
       }
@@ -139,10 +133,11 @@ describe('Paragraph', () => {
     })
 
     it('throws if #nextNode inconsistent with next', () => {
-      let turtle = `<http://example.org/alice#tag1> <http://www.solidoc.net/ontologies#nextNode> <http://example.org/alice#wrong>.`;
-      let quads = parser.parse(turtle)
+      let quads = parser.parse(node1.turtle)
+      // note the index of quads
+      quads[1].object.id = node0.uri
       try {
-        para.fromQuad(quads[0], next)
+        para1.fromQuad(quads[1], para2)
       } catch (e) {
         return
       }
@@ -150,25 +145,25 @@ describe('Paragraph', () => {
     })
 
     it('unsets next', () => {
-      para.setNext(next)
-      para.commit()
-      para.setNext(undefined)
-      assert.strictEqual(para.getNext(), undefined)
+      para1.setNext(para2)
+      para1.commit()
+      para1.setNext(undefined)
+      assert.strictEqual(para1.getNext(), undefined)
     })
   });
 
   describe('performs deletion', () => {
 
     it('performs deletion', () => {
-      assert.strictEqual(para.isDeleted(), false)
-      para.delete()
-      assert.strictEqual(para.isDeleted(), true)
+      assert.strictEqual(para2.isDeleted(), false)
+      para2.delete()
+      assert.strictEqual(para2.isDeleted(), true)
     });
 
     it('throws on setting a deleted node', () => {
-      para.delete()
+      para2.delete()
       try {
-        para.set({ type: 'http://www.solidoc.net/ontologies#NumberedList' });
+        para2.set({ type: ont.sdoc.numberedList });
       } catch (e) {
         return
       }
@@ -176,40 +171,44 @@ describe('Paragraph', () => {
     })
 
     it('generates sparql after deletion', () => {
-      para.delete();
-      const sparql = para.getSparqlForUpdate('http://example.org/test');
-      assert.strictEqual(sparql, 'WITH <http://example.org/test> DELETE { <http://example.org/alice#tag1> ?p ?o } WHERE { <http://example.org/alice#tag1> ?p ?o };\n');
+      para2.delete();
+      const sparql = para2.getSparqlForUpdate(page.uri);
+      assert.strictEqual(sparql, `WITH <${page.uri}> DELETE { <${node2.uri}> ?p ?o } WHERE { <${node2.uri}> ?p ?o };\n`);
     });
 
     it('disallows committing a deleted node', () => {
-      para.delete();
+      para2.delete();
       try {
-        para.commit();
+        para2.commit();
       } catch (e) {
         return;
       }
       assert(0)
     })
+  });
 
-    it('commits attributes', () => {
-      para.set({ type: 'http://www.solidoc.net/ontologies#NumberedList' })
-      para.commit()
-      para.undo()
-      assert.strictEqual(para.get('type'), 'http://www.solidoc.net/ontologies#NumberedList')
-    })
+  describe('commits and undoes', () => {
 
     it('undoes deletion', () => {
-      para.delete();
-      para.undo();
-      assert.strictEqual(para.isDeleted(), false);
+      para2.delete();
+      para2.undo();
+      assert.strictEqual(para2.isDeleted(), false);
     });
 
     it('undoes attributes', () => {
-      para.set({ type: 'http://www.solidoc.net/ontologies#NumberedList' })
-      para.delete()
-      para.undo()
-      assert.strictEqual(para.get('type'), 'http://www.solidoc.net/ontologies#Paragraph')
+      para2.set({ type: ont.sdoc.numberedList })
+      para2.delete()
+      para2.undo()
+      assert.strictEqual(para2.get('type'), node2.type)
     })
 
-  });
+    it('commits attributes', () => {
+      para2.set({ type: ont.sdoc.numberedList })
+      para2.commit()
+      para2.undo()
+      assert.strictEqual(para2.get('type'), ont.sdoc.numberedList)
+    })
+
+  })
+
 });

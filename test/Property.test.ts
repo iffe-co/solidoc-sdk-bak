@@ -23,7 +23,7 @@ describe('Type: a NamedNode Property', () => {
   });
 
   it('parses quad as a named node', () => {
-    assert.strictEqual(type.get(), ont.sdoc.leaf);
+    assert.strictEqual(type.get(), node.type);
   });
 
   it('generates null sparql for a new property', () => {
@@ -60,7 +60,7 @@ describe('Type: a NamedNode Property', () => {
   it('undoes correctly', () => {
     type.set(ont.sdoc.paragraph);
     type.undo();
-    assert.strictEqual(type.get(), ont.sdoc.leaf);
+    assert.strictEqual(type.get(), node.type);
   });
 });
 

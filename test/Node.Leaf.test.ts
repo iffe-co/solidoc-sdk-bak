@@ -1,5 +1,4 @@
 import { Leaf, createNode } from '../src/Node';
-import { ont } from '../config/ontology'
 import { config } from '../config/test'
 import * as assert from 'power-assert';
 
@@ -14,7 +13,7 @@ describe('Leaf', () => {
   let leaf: Leaf;
 
   beforeEach(() => {
-    leaf = <Leaf>createNode(node.uri, ont.sdoc.leaf);
+    leaf = <Leaf>createNode(node.uri, node.type);
     quads.forEach(quad => leaf.fromQuad(quad));
   });
 
