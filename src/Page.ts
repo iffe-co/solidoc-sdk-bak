@@ -2,13 +2,13 @@ import { Root, Branch, Leaf } from './Node';
 import { Subject } from './Subject';
 import { Graph } from './Graph';
 import { Path, Operation, Element } from './interface'
-import { Process } from './Process'
+import { Recursive } from './Recursive'
 
 class Page extends Graph {
   constructor(uri: string, turtle: string) {
     super(uri);
-    Process.parseTurtle(this, turtle)
-    Process.assembleTree(this._nodeMap.get(uri), this)
+    Recursive.parseTurtle(this, turtle)
+    Recursive.assembleTree(this._nodeMap.get(uri), this)
   }
 
   public createNode = (uri: string, type: string): Subject => {
@@ -47,21 +47,21 @@ class Page extends Graph {
 
   public toJson = (): Element => {
     let head = this._nodeMap.get(this.getUri());
-    return <Element>(Process.toJson(head))
+    return <Element>(Recursive.toJson(head))
   }
 
   public apply = (op: Operation) => {
     switch (op.type) {
       case 'insert_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        Process.insertRecursive(op.node, this, parent, op.path.offset)
+        Recursive.insert(op.node, this, parent, op.path.offset)
         break
       }
 
       case 'remove_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
         const curr: Subject | undefined = parent.removeChildren(op.path.offset, 1);
-        curr && Process.removeRecursive(curr);
+        curr && Recursive.remove(curr);
         break
       }
 
@@ -74,7 +74,7 @@ class Page extends Graph {
           throw new Error('No such node')
         }
 
-        if (Process.isAncestor(curr, newParent)) {
+        if (Recursive.isAncestor(curr, newParent)) {
           parent.insertChildren(curr, op.path.offset);
           throw new Error('Trying to append the node to itself or its descendent')
         }
@@ -106,22 +106,22 @@ class Page extends Graph {
         if (curr instanceof Leaf) {
           let clipped: string = curr.removeText(op.position, Infinity);
           let json = {
-            ...Process.toJson(curr),
+            ...Recursive.toJson(curr),
             ...op.properties,
             text: clipped
           }
-          Process.insertRecursive(json, this, parent, op.path.offset + 1)
+          Recursive.insert(json, this, parent, op.path.offset + 1)
         } else {
           let child: Subject | undefined = (<Branch>curr).removeChildren(op.position, Infinity);
           if (!child) {
             throw new Error('No such child')
           }
           let json = {
-            ...Process.toJson(curr),
+            ...Recursive.toJson(curr),
             ...op.properties,
             children: []
           }
-          let next: Subject = Process.insertRecursive(json, this, parent, op.path.offset + 1);
+          let next: Subject = Recursive.insert(json, this, parent, op.path.offset + 1);
           (<Branch>next).insertChildren(child, 0)
         }
         break

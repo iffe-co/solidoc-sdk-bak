@@ -6,7 +6,7 @@ import * as n3 from 'n3';
 
 const parser = new n3.Parser();
 
-const Process = {
+const Recursive = {
   parseTurtle: (page: Page, turtle: string) => {
     page.createNode(page.getUri(), 'http://www.solidoc.net/ontologies#Root');
     let root = page.getRoot()
@@ -26,6 +26,7 @@ const Process = {
         throw new Error('Node does not exist: ' + quad.subject.id)
       }
       if (quad.predicate.id == 'http://www.solidoc.net/ontologies#nextNode') {
+        // make node.get('next') and node.getNext() always consistent
         let next = page.getNode(quad.object.id);
         node.fromQuad(quad, next)
       } else {
@@ -46,7 +47,7 @@ const Process = {
     curr && head.insertChildren(curr, 0)
 
     while (curr) {
-      Process.assembleTree(curr, page);
+      Recursive.assembleTree(curr, page);
       curr = curr.getNext()
     }
   },
@@ -64,13 +65,13 @@ const Process = {
       // } else if (i < head.getChildrenNum() - 1 && head.getIndexedChild(i).get('next') !== head.getIndexedChild(i + 1).get('id')) {
       //   throw new Error('next error')
       // }
-      headJson.children.push(Process.toJson(head.getIndexedChild(i)))
+      headJson.children.push(Recursive.toJson(head.getIndexedChild(i)))
     }
 
     return headJson
   },
 
-  insertRecursive: (json: Node, page: Page, parent: Branch, offset: number): Subject => {
+  insert: (json: Node, page: Page, parent: Branch, offset: number): Subject => {
     let currUri: string = page.getUri() + '#' + json.id
     let curr: Subject = page.createNode(currUri, json.type)
 
@@ -78,17 +79,17 @@ const Process = {
     parent.insertChildren(curr, offset);
 
     for (let i = 0; curr instanceof Branch && i < json.children.length; i++) {
-      Process.insertRecursive(json.children[i], page, curr, i)
+      Recursive.insert(json.children[i], page, curr, i)
     }
     return curr
   },
 
-  removeRecursive: (head: Subject) => {
+  remove: (head: Subject) => {
     head.delete()
 
     // TODO: use map??
     for (let i = 0; head instanceof Branch && i < head.getChildrenNum(); i++) {
-      Process.removeRecursive(<Subject>head.getIndexedChild(i))
+      Recursive.remove(<Subject>head.getIndexedChild(i))
     }
   },
 
@@ -98,10 +99,10 @@ const Process = {
     // TODO: use map??
     for (let i = 0; from instanceof Branch && i < from.getChildrenNum(); i++) {
       let curr = from.getIndexedChild(i)
-      if (Process.isAncestor(<Subject>curr, to)) return true
+      if (Recursive.isAncestor(<Subject>curr, to)) return true
     }
     return false
   },
 }
 
-export { Process }
+export { Recursive }

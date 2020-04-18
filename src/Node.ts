@@ -52,7 +52,7 @@ class Branch extends Subject {
   }
 
   public removeChildren = (offset: number, length: number): Subject | undefined => {
-    if (offset < 0 || length <= 0) {
+    if (length <= 0) {
       throw new Error(`Remove children: offset = ${offset}, length = ${length}`)
     }
 
@@ -141,7 +141,5 @@ class Leaf extends Subject {
     return removed
   }
 }
-
-
 
 export { Branch, Root, Leaf }
