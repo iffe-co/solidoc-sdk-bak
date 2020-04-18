@@ -10,10 +10,6 @@ const idToUri = (id: string, parent: Branch) => {
 
 const Recursive = {
   assembleTree: (head: Subject | undefined, nodeMap: Map<string, Subject>) => {
-    if (!head) {
-      throw new Error('Traverse from a null head')
-    }
-
     if (!(head instanceof Branch)) return
 
     let currUri = head.get('firstChild');

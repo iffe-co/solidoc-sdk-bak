@@ -72,11 +72,11 @@ class TextProperty extends Property {
 }
 
 class JsonProperty extends TextProperty {
-  options: any
+  json: any
   constructor(id: string, name: string) {
     super(id, name)
     this.value = this.uncommitted = '{}'
-    this.options = {}
+    this.json = {}
   }
 
   public set = (json: any) => {
@@ -84,20 +84,20 @@ class JsonProperty extends TextProperty {
       const value = json[key]
 
       if (value == null) {
-        delete this.options[key]
+        delete this.json[key]
       } else {
-        this.options[key] = value
+        this.json[key] = value
       }
     }
 
-    this.uncommitted = JSON.stringify(this.options);
+    this.uncommitted = JSON.stringify(this.json);
   }
 
   public fromQuad = (quad: any) => {
     const text: string = quad.object.id;
     this.value = text.substring(1, text.lastIndexOf('"'));
     this.uncommitted = this.value;
-    this.options = JSON.parse(this.value)
+    this.json = JSON.parse(this.value)
   }
 
   protected _getSparqlForDeletion = (graph: string, subject: string): string => {

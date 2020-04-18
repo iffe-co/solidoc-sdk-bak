@@ -144,12 +144,16 @@ class Leaf extends Subject {
 
 const createNode = (uri: string, type: string): Subject => {
   let node: Subject
-  if (type === 'http://www.solidoc.net/ontologies#Root') {
-    node = new Root(uri)
-  } else if (type === 'http://www.solidoc.net/ontologies#Leaf') {
-    node = new Leaf(uri)
-  } else {
-    node = new Branch(uri)
+  switch (type) {
+    case 'http://www.solidoc.net/ontologies#Root':
+      node = new Root(uri)
+      break
+    case 'http://www.solidoc.net/ontologies#Leaf':
+      node = new Leaf(uri)
+      break
+    default:
+      node = new Branch(uri)
+      break
   }
   node.set({ type: type })
   return node
