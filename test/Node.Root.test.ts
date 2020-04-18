@@ -1,55 +1,43 @@
 import { Root, createNode } from '../src/Node';
-import * as n3 from 'n3';
+import { ont } from '../config/ontology'
+import { config } from '../config/test'
 import * as assert from 'power-assert';
 
+import * as n3 from 'n3';
 const parser = new n3.Parser();
 
-let turtle = '<http://example.org/alice> a <http://www.solidoc.net/ontologies#Root>;';
-turtle += ' <http://purl.org/dc/terms/title> "Alice\'s Profile";';
-turtle += ' <http://www.solidoc.net/ontologies#firstChild> <http://example.org/alice#tag1>.';
-const quads: any[] = parser.parse(turtle);
+const page = config.page
+const quads: any[] = parser.parse(page.turtle);
 
 describe('Root', () => {
   let root: Root;
 
   beforeEach(() => {
-    root = <Root>createNode('http://example.org/alice', 'http://www.solidoc.net/ontologies#Root');
+    root = <Root>createNode(page.uri, ont.sdoc.root);
     quads.forEach(quad => root.fromQuad(quad));
   });
 
-
   it('parses from quads', () => {
-    assert.strictEqual(root.get('uri'), 'http://example.org/alice')
-    assert.strictEqual(root.get('type'), 'http://www.solidoc.net/ontologies#Root')
-    assert.strictEqual(root.get('title'), "Alice's Profile")
-    assert.strictEqual(root.get('firstChild'), 'http://example.org/alice#tag1')
+    assert.strictEqual(root.get('uri'), page.uri)
+    assert.strictEqual(root.get('type'), page.type)
+    assert.strictEqual(root.get('title'), page.json.title)
+    assert.strictEqual(root.get('firstChild'), page.json.children[0].uri)
   });
 
   it('translates to Json', () => {
     assert.deepStrictEqual(root.toJson(), {
-      id: 'http://example.org/alice',
-      type: 'http://www.solidoc.net/ontologies#Root',
-      title: "Alice's Profile",
-      children: [],
+      ...page.json,
+      children: []
     });
-
   })
 
   it('sets title', () => {
     root.set({ title: 'Welcome' })
     assert.strictEqual(root.get('title'), 'Welcome')
-    let json: any = root.toJson()
-    assert.strictEqual(json.title, 'Welcome')
-  })
-
-  it('sets an option', () => {
-    root.set({ bold: true })
-    let json: any = root.toJson()
-    assert.strictEqual(json.bold, true)
   })
 
   it('throws on parsing #nextNode predicate', () => {
-    let turtle = '<http://example.org/alice> <http://www.solidoc.net/ontologies#nextNode> <http://example.org/bob>.';
+    let turtle = `<${page.uri}> <${ont.sdoc.next}> <${config.para[0].uri}>.`;
     let quads = parser.parse(turtle)
     try {
       root.fromQuad(quads[0])
@@ -60,7 +48,7 @@ describe('Root', () => {
   })
 
   it('throws on setNext(node)', () => {
-    let next = new Root('http://example.org/bob')
+    let next = new Root(config.para[0].uri)
     try {
       root.setNext(next)
     } catch (e) {

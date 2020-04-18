@@ -32,9 +32,9 @@ for (let i = 0; i < 3; i++) {
     id: config.para[i].id,
     type: ont.sdoc.paragraph,
     children: [
-      config.text[i * 3].json,
-      config.text[i * 3 + 1].json,
-      config.text[i * 3 + 2].json,
+      config.text[i * 3],
+      config.text[i * 3 + 1],
+      config.text[i * 3 + 2],
     ]
   }
 }
@@ -48,9 +48,9 @@ config.page = {
     type: ont.sdoc.root,
     title: 'Homepage',
     children: [
-      config.para[0].json,
-      config.para[1].json,
-      config.para[2].json,
+      config.para[0],
+      config.para[1],
+      config.para[2],
     ]
   }
 }
