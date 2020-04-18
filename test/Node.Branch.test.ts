@@ -1,67 +1,74 @@
 import { Branch, Leaf, createNode } from '../src/Node';
+import { config } from '../config/test'
 import * as assert from 'power-assert';
 
-describe('Branch', () => {
-  let para1: Branch
-  // let para2: Branch
+const text0 = config.text[0]
+const text1 = config.text[1]
+const text2 = config.text[2]
+const text3 = config.text[3]
 
-  let text1: Leaf
-  let text2: Leaf
-  let text3: Leaf
-  let text4: Leaf
+const para0 = config.para[0]
+
+describe('Branch', () => {
+  let branch: Branch
+
+  let leaf0: Leaf
+  let leaf1: Leaf
+  let leaf2: Leaf
+  let leaf3: Leaf
+
+  beforeEach(() => {
+    branch = <Branch>createNode(para0.uri, para0.type);
+
+    leaf0 = <Leaf>createNode(text0.uri, text0.type);
+    leaf1 = <Leaf>createNode(text1.uri, text1.type);
+    leaf2 = <Leaf>createNode(text2.uri, text2.type);
+    leaf3 = <Leaf>createNode(text3.uri, text3.type);
+  });
 
   describe('Insertion', () => {
 
-    beforeEach(() => {
-      para1 = <Branch>createNode('http://example.org/alice#tag1', 'http://www.solidoc.net/ontologies#Paragraph');
-      // para2 = <Branch>createNode('http://example.org/alice#tag2', 'http://www.solidoc.net/ontologies#Paragraph');
-
-      text1 = <Leaf>createNode('http://example.org/alice#text1', 'http://www.solidoc.net/ontologies#Leaf');
-      text2 = <Leaf>createNode('http://example.org/alice#text2', 'http://www.solidoc.net/ontologies#Leaf');
-      text3 = <Leaf>createNode('http://example.org/alice#text3', 'http://www.solidoc.net/ontologies#Leaf');
-      text4 = <Leaf>createNode('http://example.org/alice#text4', 'http://www.solidoc.net/ontologies#Leaf');
-    });
-
     it('converts to Json', () => {
-      assert.deepStrictEqual(para1.toJson(), {
-        id: 'tag1',
-        type: 'http://www.solidoc.net/ontologies#Paragraph',
+      assert.deepStrictEqual(branch.toJson(), {
+        id: para0.id,
+        type: para0.type,
         children: []
       })
     })
 
     it('inserts one child to a parent without children', () => {
-      para1.insertChildren(text1, 0);
-      assert.strictEqual(para1.getChildrenNum(), 1);
-      assert.strictEqual(para1.getIndexedChild(0), text1)
-      assert.strictEqual(para1.getIndexedChild(1), undefined)
-      assert.strictEqual(para1.getIndexedChild(-1), undefined)
-      assert.strictEqual(para1.getLastChild(), text1)
+      branch.insertChildren(leaf0, 0);
+      assert.strictEqual(branch.getChildrenNum(), 1);
+      assert.strictEqual(branch.getIndexedChild(0), leaf0)
+      assert.strictEqual(branch.getIndexedChild(1), undefined)
+      assert.strictEqual(branch.getIndexedChild(-1), undefined)
+      assert.strictEqual(branch.getLastChild(), leaf0)
     })
 
     it('inserts a bunch of children to parent without children', () => {
-      text1.setNext(text2)
-      para1.insertChildren(text1, 0);
-      assert.strictEqual(para1.getChildrenNum(), 2);
+      leaf0.setNext(leaf1)
+      branch.insertChildren(leaf0, 0);
+      assert.strictEqual(branch.getChildrenNum(), 2);
     })
 
     it('inserts a bunch of children to the tail', () => {
-      text1.setNext(text2)
-      para1.insertChildren(text1, Infinity);
-      assert.strictEqual(para1.getChildrenNum(), 2);
+      leaf0.setNext(leaf1)
+      branch.insertChildren(leaf0, Infinity);
+      assert.strictEqual(branch.getChildrenNum(), 2);
     })
 
     it('inserts a bunch of children to parent with existing children', () => {
-      text1.setNext(text2)
-      para1.insertChildren(text1, 0);
-      text3.setNext(text4)
-      para1.insertChildren(text3, 1);
-      assert.strictEqual(para1.getChildrenNum(), 4);
+      leaf0.setNext(leaf1)
+      branch.insertChildren(leaf0, 0);
+      leaf2.setNext(leaf3)
+      branch.insertChildren(leaf2, 1);
+      assert.strictEqual(branch.getChildrenNum(), 4);
+      assert.strictEqual(branch.getLastChild(), leaf1);
     })
 
     it('throws on inserting an undefined child', () => {
       try {
-        para1.insertChildren(undefined, 0)
+        branch.insertChildren(undefined, 0)
       } catch (e) {
         return
       }
@@ -72,21 +79,15 @@ describe('Branch', () => {
   describe('Deletion', () => {
 
     beforeEach(() => {
-      para1 = <Branch>createNode('http://example.org/alice#tag1', 'http://www.solidoc.net/ontologies#Paragraph');
-      text1 = <Leaf>createNode('http://example.org/alice#text1', 'http://www.solidoc.net/ontologies#Leaf');
-      text2 = <Leaf>createNode('http://example.org/alice#text2', 'http://www.solidoc.net/ontologies#Leaf');
-      text3 = <Leaf>createNode('http://example.org/alice#text3', 'http://www.solidoc.net/ontologies#Leaf');
-      text4 = <Leaf>createNode('http://example.org/alice#text4', 'http://www.solidoc.net/ontologies#Leaf');
-
-      para1.insertChildren(text1, 0);
-      para1.insertChildren(text2, 1);
-      para1.insertChildren(text3, 2);
-      para1.insertChildren(text4, 3);
+      branch.insertChildren(leaf0, 0);
+      branch.insertChildren(leaf1, 1);
+      branch.insertChildren(leaf2, 2);
+      branch.insertChildren(leaf3, 3);
     })
 
     it('throws on deleting if length <= 0', () => {
       try {
-        para1.removeChildren(0, 0)
+        branch.removeChildren(0, 0)
       } catch (e) {
         return
       }
@@ -94,21 +95,21 @@ describe('Branch', () => {
     });
 
     it('deletes at the beginning', () => {
-      para1.removeChildren(0, 1);
-      assert.strictEqual(para1.getChildrenNum(), 3);
-      assert.strictEqual(para1.getIndexedChild(0), text2)
-      assert.strictEqual(para1.getIndexedChild(1), text3)
-      assert.strictEqual(para1.getIndexedChild(2), text4)
+      branch.removeChildren(0, 1);
+      assert.strictEqual(branch.getChildrenNum(), 3);
+      assert.strictEqual(branch.getIndexedChild(0), leaf1)
+      assert.strictEqual(branch.getIndexedChild(1), leaf2)
+      assert.strictEqual(branch.getIndexedChild(2), leaf3)
     })
 
     it('deletes in the middle', () => {
-      para1.removeChildren(1, 2);
-      assert.strictEqual(para1.getChildrenNum(), 2);
+      branch.removeChildren(1, 2);
+      assert.strictEqual(branch.getChildrenNum(), 2);
     })
 
     it('deletes all', () => {
-      para1.removeChildren(0, Infinity);
-      assert.strictEqual(para1.getChildrenNum(), 0)
+      branch.removeChildren(0, Infinity);
+      assert.strictEqual(branch.getChildrenNum(), 0)
     })
 
   })

@@ -53,6 +53,7 @@ class Branch extends Subject {
 
   public removeChildren = (offset: number, length: number): Subject | undefined => {
     if (length <= 0) {
+      // TODO: allow length === 0 ??
       throw new Error(`Remove children: offset = ${offset}, length = ${length}`)
     }
 
