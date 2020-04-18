@@ -32,6 +32,16 @@ describe('Leaf', () => {
     });
   })
 
+  it('sets an option', () => {
+    leaf.set({bold: true})
+    assert.deepStrictEqual(leaf.toJson(), {
+      id: 'text1',
+      type: 'http://www.solidoc.net/ontologies#Leaf',
+      text: "Hello world!",
+      bold: true
+    });
+  })
+
   it('inserts text at offset 0', () => {
     leaf.insertText(0, 'Alice says: ');
     assert.deepStrictEqual(leaf.toJson(), {

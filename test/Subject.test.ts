@@ -13,7 +13,7 @@ describe('Paragraph', () => {
   let page = new Page('http://example.org/alice', '')
 
   beforeEach(() => {
-      para = <Branch>page.createNode('http://example.org/alice#tag1', 'http://www.solidoc.net/ontologies#Paragraph');
+    para = <Branch>page.createNode('http://example.org/alice#tag1', 'http://www.solidoc.net/ontologies#Paragraph');
     quads.forEach(quad => para.fromQuad(quad));
   });
 

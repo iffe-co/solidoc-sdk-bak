@@ -44,6 +44,12 @@ describe('Root', () => {
     assert.strictEqual(json.title, 'Welcome')
   })
 
+  it('sets an option', () => {
+    root.set({ bold: true })
+    let json: any = root.toJson()
+    assert.strictEqual(json.bold, true)
+  })
+
   it('throws on parsing #nextNode predicate', () => {
     let turtle = '<http://example.org/alice> <http://www.solidoc.net/ontologies#nextNode> <http://example.org/bob>.';
     let quads = parser.parse(turtle)
@@ -55,7 +61,7 @@ describe('Root', () => {
     assert(0)
   })
 
-  it('throws on setNext()', () => {
+  it('throws on setNext(node)', () => {
     let next = new Root('http://example.org/bob')
     try {
       root.setNext(next)
@@ -63,6 +69,11 @@ describe('Root', () => {
       return
     }
     assert(0)
+  })
+
+  it('is ok to setNext(undefined)', () => {
+    root.setNext(undefined)
+    assert.strictEqual(root.getNext(), undefined)
   })
 
   it('disallows deletion', () => {

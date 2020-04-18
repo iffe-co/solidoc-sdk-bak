@@ -9,21 +9,19 @@ class Branch extends Subject {
     this._predicates.firstChild = new NamedNodeProperty('http://www.solidoc.net/ontologies#firstChild', 'firstChild');
   }
 
-  public toJson = (): Element => {
-    let option = JSON.parse(this.get('option') || '{}')
+  public toJson (): Element {
+    let result = super.toJson()
     return {
-      id: this._uri.substr(this._uri.indexOf('#') + 1),
-      type: this.get('type'),
-      children: [],
-      ...option
-    };
+      ...result,
+      children: []
+    }
   }
 
   private setFirstChild = (node: Subject | undefined) => {
     this.set({ firstChild: node ? node.get('id') : '' })
   }
 
-  public getIndexedChild = (offset: number): Subject | undefined=> {
+  public getIndexedChild = (offset: number): Subject | undefined => {
     return this._children[offset]
   }
   public getLastChild = (): Subject | undefined => {
@@ -36,7 +34,7 @@ class Branch extends Subject {
     }
 
     let prev: Subject | undefined = this.getIndexedChild(offset - 1) || this.getLastChild();
-    if (offset === 0 || !prev) {
+    if (!prev) {
       this.setFirstChild(curr)
     } else {
       prev.setNext(curr)
@@ -54,13 +52,13 @@ class Branch extends Subject {
   }
 
   public removeChildren = (offset: number, length: number): Subject | undefined => {
-    if (length <= 0) {
-      throw new Error('Remove children length = ' + length)
+    if (offset < 0 || length <= 0) {
+      throw new Error(`Remove children: offset = ${offset}, length = ${length}`)
     }
 
     let next: Subject | undefined = this.getIndexedChild(offset + length);
     let prev: Subject | undefined = this.getIndexedChild(offset - 1);
-    if (offset === 0 || !prev) {
+    if (!prev) {
       this.setFirstChild(next);
     } else {
       prev.setNext(next)
@@ -85,15 +83,13 @@ class Root extends Branch {
     this._predicates.title = new TextProperty('http://purl.org/dc/terms/title', 'title');
   }
 
-  public toJson = (): Element => {
-    let option = JSON.parse(this.get('option') || '{}')
+  public toJson(): Element {
+    let result = super.toJson();
+    let titleJson = {title: this.get('title')}
     return {
-      id: this._uri.substr(this._uri.indexOf('#') + 1),
-      type: this.get('type'),
-      title: this.get('title'),
-      children: [],
-      ...option
-    };
+      ...result,
+      ...titleJson
+    }
   }
 
   public fromQuad(quad: any) {
@@ -103,8 +99,11 @@ class Root extends Branch {
     super.fromQuad(quad)
   }
 
-  public setNext = (node: Subject | undefined) => {
-    throw new Error('setNext: The root node cannot have syblings: ' + this._uri + node?.get('id'));
+  public setNext (node: Subject | undefined) {
+    if (node) {
+      throw new Error('setNext: The root node cannot have syblings: ' + this._uri);
+    }
+    super.setNext(undefined)
   }
 
   public delete = () => {
@@ -121,13 +120,11 @@ class Leaf extends Subject {
   }
 
   public toJson = (): Text => {
-    let option = JSON.parse(this.get('option') || '{}')
+    let result = super.toJson();
     return {
-      id: this._uri.substr(this._uri.indexOf('#') + 1),
-      type: this.get('type'),
-      text: this.get('text'),
-      ...option
-    };
+      ...result,
+      text: this.get('text')
+    }
   }
 
   public insertText = (offset: number, text: string) => {

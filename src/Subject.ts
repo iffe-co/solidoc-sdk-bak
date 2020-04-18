@@ -30,7 +30,14 @@ abstract class Subject {
     this._predicates[key].fromQuad(quad)
   }
 
-  public abstract toJson(): any
+  public toJson(): any {
+    let option = JSON.parse(this.get('option'))
+    return {
+      id: this._uri.substr(this._uri.indexOf('#') + 1),
+      type: this.get('type'),
+      ...option
+    };
+  }
 
   public get = (key: string): string => {
     if (key === 'id') return this._uri;
@@ -62,12 +69,12 @@ abstract class Subject {
     (<JsonProperty>(this._predicates['option'])).set(option);
   }
 
-  public setNext = (node: Subject | undefined) => {
+  public setNext(node: Subject | undefined) {
     let nextUri = node ? node._uri : '';
     this._predicates['next'].set(nextUri);
     this._next = node;
   }
-  public getNext = (): Subject | undefined => {
+  public getNext(): Subject | undefined {
     return this._next
   }
 
