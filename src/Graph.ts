@@ -28,13 +28,13 @@ abstract class Graph {
     })
 
     quads.forEach(quad => {
-      let node = this.getNode(quad.subject.id)
+      let node = this._nodeMap.get(quad.subject.id)
       if (!node) {
         throw new Error('Node does not exist: ' + quad.subject.id)
       }
       // this is to make node.get('next') and node.getNext() always consistent
       if (quad.predicate.id == 'http://www.solidoc.net/ontologies#nextNode') {
-        let next = this.getNode(quad.object.id);
+        let next = this._nodeMap.get(quad.object.id);
         node.fromQuad(quad, next)
       } else {
         node.fromQuad(quad);
@@ -44,14 +44,6 @@ abstract class Graph {
 
   protected _registerNode = (node: Subject) => {
     this._nodeMap.set(node.get('id'), node)
-  }
-
-  public getUri(): string {
-    return this._uri
-  }
-
-  public getNode = (uri: string): Subject | undefined => {
-    return this._nodeMap.get(uri)
   }
 
   public getRoot = (): Subject | undefined => {

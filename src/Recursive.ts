@@ -1,4 +1,3 @@
-import { Page } from './Page'
 import { Node } from './interface'
 import { Branch, createNode } from './Node'
 import { Subject } from './Subject'
@@ -10,7 +9,7 @@ const idToUri = (id: string, parent: Branch) => {
 }
 
 const Recursive = {
-  assembleTree: (head: Subject | undefined, page: Page) => {
+  assembleTree: (head: Subject | undefined, nodeMap: Map<string, Subject>) => {
     if (!head) {
       throw new Error('Traverse from a null head')
     }
@@ -18,11 +17,11 @@ const Recursive = {
     if (!(head instanceof Branch)) return
 
     let currUri = head.get('firstChild');
-    let curr: Subject | undefined = page.getNode(currUri)
+    let curr: Subject | undefined = nodeMap.get(currUri)
     curr && head.insertChildren(curr, 0)
 
     while (curr) {
-      Recursive.assembleTree(curr, page);
+      Recursive.assembleTree(curr, nodeMap);
       curr = curr.getNext()
     }
   },

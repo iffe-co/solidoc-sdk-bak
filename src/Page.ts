@@ -7,7 +7,7 @@ import { Recursive } from './Recursive'
 class Page extends Graph {
   constructor(uri: string, turtle: string) {
     super(uri, turtle);
-    Recursive.assembleTree(this._nodeMap.get(uri), this)
+    Recursive.assembleTree(this.getRoot(), this._nodeMap)
   }
 
   private _getBranchInstance = (uri: string): Branch => {
@@ -31,7 +31,7 @@ class Page extends Graph {
   }
 
   public toJson = (): Element => {
-    let head = this._nodeMap.get(this.getUri());
+    let head = this.getRoot();
     return <Element>(Recursive.toJson(head))
   }
 
@@ -121,7 +121,7 @@ class Page extends Graph {
           const parent: Branch = this._getBranchInstance(op.path.parentUri);
           curr = parent.getIndexedChild(op.path.offset);
         } else {
-          curr = this._nodeMap.get(this.getUri())
+          curr = this.getRoot()
         }
         // TODO: disallow setting id/text/children/next/option
         if (!curr) {
