@@ -1,4 +1,4 @@
-import { Root, Branch, Leaf } from './Node';
+import { Branch, Leaf } from './Node';
 import { Subject } from './Subject';
 import { Graph } from './Graph';
 import { Path, Operation, Element } from './interface'
@@ -6,24 +6,9 @@ import { Recursive } from './Recursive'
 
 class Page extends Graph {
   constructor(uri: string, turtle: string) {
-    super(uri);
-    Recursive.parseTurtle(this, turtle)
+    super(uri, turtle);
     Recursive.assembleTree(this._nodeMap.get(uri), this)
   }
-
-  public createNode = (uri: string, type: string): Subject => {
-    let node: Subject
-    if (type === 'http://www.solidoc.net/ontologies#Root') {
-      node = new Root(uri)
-    } else if (type === 'http://www.solidoc.net/ontologies#Leaf') {
-      node = new Leaf(uri)
-    } else {
-      node = new Branch(uri)
-    }
-    this._nodeMap.set(uri, node)
-    return node
-  }
-  
 
   private _getBranchInstance = (uri: string): Branch => {
     let node = this._nodeMap.get(uri);
@@ -54,7 +39,8 @@ class Page extends Graph {
     switch (op.type) {
       case 'insert_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        Recursive.insert(op.node, this, parent, op.path.offset)
+        const inserted: Subject[] = Recursive.insert(op.node, parent, op.path.offset)
+        inserted.forEach(this._registerNode)
         break
       }
 
@@ -110,7 +96,8 @@ class Page extends Graph {
             ...op.properties,
             text: clipped
           }
-          Recursive.insert(json, this, parent, op.path.offset + 1)
+          let next: Subject[] = Recursive.insert(json, parent, op.path.offset + 1)
+          this._registerNode(next[0])
         } else {
           let child: Subject | undefined = (<Branch>curr).removeChildren(op.position, Infinity);
           if (!child) {
@@ -121,8 +108,9 @@ class Page extends Graph {
             ...op.properties,
             children: []
           }
-          let next: Subject = Recursive.insert(json, this, parent, op.path.offset + 1);
-          (<Branch>next).insertChildren(child, 0)
+          let next: Subject[] = Recursive.insert(json, parent, op.path.offset + 1);
+          (<Branch>next[0]).insertChildren(child, 0)
+          this._registerNode(next[0])
         }
         break
       }

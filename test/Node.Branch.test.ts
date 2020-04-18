@@ -1,5 +1,4 @@
-import { Branch, Leaf } from '../src/Node';
-import { Page } from '../src/Page'
+import { Branch, Leaf, createNode } from '../src/Node';
 import * as assert from 'power-assert';
 
 describe('Branch', () => {
@@ -11,24 +10,22 @@ describe('Branch', () => {
   let text3: Leaf
   let text4: Leaf
 
-  let page = new Page('http://example.org/alice', '')
-
   describe('Insertion', () => {
 
     beforeEach(() => {
-      para1 = <Branch>page.createNode('http://example.org/alice#tag1', 'http://www.solidoc.net/ontologies#Paragraph');
-      // para2 = <Branch>page.createNode('http://example.org/alice#tag2', 'http://www.solidoc.net/ontologies#Paragraph');
+      para1 = <Branch>createNode('http://example.org/alice#tag1', 'http://www.solidoc.net/ontologies#Paragraph');
+      // para2 = <Branch>createNode('http://example.org/alice#tag2', 'http://www.solidoc.net/ontologies#Paragraph');
 
-      text1 = <Leaf>page.createNode('http://example.org/alice#text1', 'http://www.solidoc.net/ontologies#Leaf');
-      text2 = <Leaf>page.createNode('http://example.org/alice#text2', 'http://www.solidoc.net/ontologies#Leaf');
-      text3 = <Leaf>page.createNode('http://example.org/alice#text3', 'http://www.solidoc.net/ontologies#Leaf');
-      text4 = <Leaf>page.createNode('http://example.org/alice#text4', 'http://www.solidoc.net/ontologies#Leaf');
+      text1 = <Leaf>createNode('http://example.org/alice#text1', 'http://www.solidoc.net/ontologies#Leaf');
+      text2 = <Leaf>createNode('http://example.org/alice#text2', 'http://www.solidoc.net/ontologies#Leaf');
+      text3 = <Leaf>createNode('http://example.org/alice#text3', 'http://www.solidoc.net/ontologies#Leaf');
+      text4 = <Leaf>createNode('http://example.org/alice#text4', 'http://www.solidoc.net/ontologies#Leaf');
     });
 
     it('converts to Json', () => {
       assert.deepStrictEqual(para1.toJson(), {
         id: 'tag1',
-        type: '',
+        type: 'http://www.solidoc.net/ontologies#Paragraph',
         children: []
       })
     })
@@ -75,11 +72,11 @@ describe('Branch', () => {
   describe('Deletion', () => {
 
     beforeEach(() => {
-      para1 = <Branch>page.createNode('http://example.org/alice#tag1', 'http://www.solidoc.net/ontologies#Paragraph');
-      text1 = <Leaf>page.createNode('http://example.org/alice#text1', 'http://www.solidoc.net/ontologies#Leaf');
-      text2 = <Leaf>page.createNode('http://example.org/alice#text2', 'http://www.solidoc.net/ontologies#Leaf');
-      text3 = <Leaf>page.createNode('http://example.org/alice#text3', 'http://www.solidoc.net/ontologies#Leaf');
-      text4 = <Leaf>page.createNode('http://example.org/alice#text4', 'http://www.solidoc.net/ontologies#Leaf');
+      para1 = <Branch>createNode('http://example.org/alice#tag1', 'http://www.solidoc.net/ontologies#Paragraph');
+      text1 = <Leaf>createNode('http://example.org/alice#text1', 'http://www.solidoc.net/ontologies#Leaf');
+      text2 = <Leaf>createNode('http://example.org/alice#text2', 'http://www.solidoc.net/ontologies#Leaf');
+      text3 = <Leaf>createNode('http://example.org/alice#text3', 'http://www.solidoc.net/ontologies#Leaf');
+      text4 = <Leaf>createNode('http://example.org/alice#text4', 'http://www.solidoc.net/ontologies#Leaf');
 
       para1.insertChildren(text1, 0);
       para1.insertChildren(text2, 1);

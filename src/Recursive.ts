@@ -1,40 +1,15 @@
 import { Page } from './Page'
 import { Node } from './interface'
-import { Branch } from './Node'
+import { Branch, createNode } from './Node'
 import { Subject } from './Subject'
-import * as n3 from 'n3';
 
-const parser = new n3.Parser();
+const idToUri = (id: string, parent: Branch) => {
+  let parentUri: string = parent.get('id')
+  let pageUri = parentUri.substr(0, parentUri.indexOf('#'))
+  return pageUri + '#' + id
+}
 
 const Recursive = {
-  parseTurtle: (page: Page, turtle: string) => {
-    page.createNode(page.getUri(), 'http://www.solidoc.net/ontologies#Root');
-    let root = page.getRoot()
-    root?.set({ type: "http://www.solidoc.net/ontologies#Root" })
-
-    const quads: any[] = parser.parse(turtle);
-    quads.forEach(quad => {
-      if (quad.predicate.id === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type' && quad.subject.id !== page.getUri()) {
-        // TODO: only create node for known types
-        page.createNode(quad.subject.id, quad.object.id);
-      }
-    })
-
-    quads.forEach(quad => {
-      let node = page.getNode(quad.subject.id)
-      if (!node) {
-        throw new Error('Node does not exist: ' + quad.subject.id)
-      }
-      if (quad.predicate.id == 'http://www.solidoc.net/ontologies#nextNode') {
-        // make node.get('next') and node.getNext() always consistent
-        let next = page.getNode(quad.object.id);
-        node.fromQuad(quad, next)
-      } else {
-        node.fromQuad(quad);
-      }
-    })
-  },
-
   assembleTree: (head: Subject | undefined, page: Page) => {
     if (!head) {
       throw new Error('Traverse from a null head')
@@ -60,28 +35,27 @@ const Recursive = {
 
     // TODO: use map??
     for (let i = 0; head instanceof Branch && i < head.getChildrenNum(); i++) {
-      // if (i == 0 && head.get('firstChild') !== head.getIndexedChild(i).get('id')) {
-      //   throw new Error('firstChild error')
-      // } else if (i < head.getChildrenNum() - 1 && head.getIndexedChild(i).get('next') !== head.getIndexedChild(i + 1).get('id')) {
-      //   throw new Error('next error')
-      // }
       headJson.children.push(Recursive.toJson(head.getIndexedChild(i)))
     }
 
     return headJson
   },
 
-  insert: (json: Node, page: Page, parent: Branch, offset: number): Subject => {
-    let currUri: string = page.getUri() + '#' + json.id
-    let curr: Subject = page.createNode(currUri, json.type)
+  insert: (json: Node, parent: Branch, offset: number): Subject[] => {
+    let result: Subject[] = []
+    let currUri: string = idToUri(json.id, parent)
+    let curr: Subject = createNode(currUri, json.type)
+    result.push(curr)
 
     curr.set(json);
     parent.insertChildren(curr, offset);
 
     for (let i = 0; curr instanceof Branch && i < json.children.length; i++) {
-      Recursive.insert(json.children[i], page, curr, i)
+      result.push(
+        ...Recursive.insert(json.children[i], curr, i)
+      )
     }
-    return curr
+    return result
   },
 
   remove: (head: Subject) => {

@@ -9,7 +9,7 @@ class Branch extends Subject {
     this._predicates.firstChild = new NamedNodeProperty('http://www.solidoc.net/ontologies#firstChild', 'firstChild');
   }
 
-  public toJson (): Element {
+  public toJson(): Element {
     let result = super.toJson()
     return {
       ...result,
@@ -85,7 +85,7 @@ class Root extends Branch {
 
   public toJson(): Element {
     let result = super.toJson();
-    let titleJson = {title: this.get('title')}
+    let titleJson = { title: this.get('title') }
     return {
       ...result,
       ...titleJson
@@ -99,7 +99,7 @@ class Root extends Branch {
     super.fromQuad(quad)
   }
 
-  public setNext (node: Subject | undefined) {
+  public setNext(node: Subject | undefined) {
     if (node) {
       throw new Error('setNext: The root node cannot have syblings: ' + this._uri);
     }
@@ -142,4 +142,17 @@ class Leaf extends Subject {
   }
 }
 
-export { Branch, Root, Leaf }
+const createNode = (uri: string, type: string): Subject => {
+  let node: Subject
+  if (type === 'http://www.solidoc.net/ontologies#Root') {
+    node = new Root(uri)
+  } else if (type === 'http://www.solidoc.net/ontologies#Leaf') {
+    node = new Leaf(uri)
+  } else {
+    node = new Branch(uri)
+  }
+  node.set({ type: type })
+  return node
+}
+
+export { Branch, Root, Leaf, createNode }

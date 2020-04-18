@@ -1,5 +1,4 @@
-import { Branch } from '../src/Node';
-import { Page } from '../src/Page'
+import { Branch, createNode } from '../src/Node';
 import * as n3 from 'n3';
 import * as assert from 'power-assert';
 
@@ -10,10 +9,9 @@ describe('Paragraph', () => {
   let turtle = `<http://example.org/alice#tag1> a <http://www.solidoc.net/ontologies#Paragraph>;`;
   turtle += ` <http://www.solidoc.net/ontologies#option> '{"name":"alice"}'.`;
   const quads: any[] = parser.parse(turtle);
-  let page = new Page('http://example.org/alice', '')
 
   beforeEach(() => {
-    para = <Branch>page.createNode('http://example.org/alice#tag1', 'http://www.solidoc.net/ontologies#Paragraph');
+    para = <Branch>createNode('http://example.org/alice#tag1', 'http://www.solidoc.net/ontologies#Paragraph');
     quads.forEach(quad => para.fromQuad(quad));
   });
 
@@ -105,7 +103,7 @@ describe('Paragraph', () => {
   describe('Next', () => {
     let next: Branch
     beforeEach(() => {
-      next = <Branch>page.createNode('http://example.org/alice#tag2', 'http://www.solidoc.net/ontologies#Paragraph');
+      next = <Branch>createNode('http://example.org/alice#tag2', 'http://www.solidoc.net/ontologies#Paragraph');
     })
 
     it('setNext() is together with set("next")', () => {

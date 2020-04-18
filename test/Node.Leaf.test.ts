@@ -1,7 +1,6 @@
-import { Leaf } from '../src/Node';
+import { Leaf, createNode } from '../src/Node';
 import * as n3 from 'n3';
 import * as assert from 'power-assert';
-import { Page } from '../src/Page';
 
 const parser = new n3.Parser();
 
@@ -11,10 +10,8 @@ describe('Leaf', () => {
   turtle += ' <http://www.solidoc.net/ontologies#text> "Hello world!".';
   const quads: any[] = parser.parse(turtle);
 
-  let page = new Page('http://example.org/alice', '')
-
   beforeEach(() => {
-    leaf = <Leaf>page.createNode('http://example.org/alice#text1', 'http://www.solidoc.net/ontologies#Leaf');
+    leaf = <Leaf>createNode('http://example.org/alice#text1', 'http://www.solidoc.net/ontologies#Leaf');
     quads.forEach(quad => leaf.fromQuad(quad));
   });
 

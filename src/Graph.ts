@@ -1,17 +1,52 @@
 import { Subject } from './Subject'
+import { createNode } from './Node'
+import * as n3 from 'n3';
+
+const parser = new n3.Parser();
 
 // a graph could be a page or a database
 abstract class Graph {
   private _uri: string
   protected _nodeMap = new Map<string, Subject>();
 
-  constructor(uri: string) {
+  constructor(uri: string, turtle: string) {
     this._uri = uri;
+    this._parseTurtle(uri, turtle)
   }
 
-  public abstract createNode(uri: string, type: string): Subject
+  private _parseTurtle = (uri: string, turtle: string) => {
+    let root = createNode(uri, 'http://www.solidoc.net/ontologies#Root');
+    this._registerNode(root)
 
-  public getUri = (): string => {
+    const quads: any[] = parser.parse(turtle);
+    quads.forEach(quad => {
+      if (quad.predicate.id === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type' && quad.subject.id !== uri) {
+        // TODO: only create node for known types
+        let node = createNode(quad.subject.id, quad.object.id);
+        this._registerNode(node)
+      }
+    })
+
+    quads.forEach(quad => {
+      let node = this.getNode(quad.subject.id)
+      if (!node) {
+        throw new Error('Node does not exist: ' + quad.subject.id)
+      }
+      // this is to make node.get('next') and node.getNext() always consistent
+      if (quad.predicate.id == 'http://www.solidoc.net/ontologies#nextNode') {
+        let next = this.getNode(quad.object.id);
+        node.fromQuad(quad, next)
+      } else {
+        node.fromQuad(quad);
+      }
+    })
+  }
+
+  protected _registerNode = (node: Subject) => {
+    this._nodeMap.set(node.get('id'), node)
+  }
+
+  public getUri(): string {
     return this._uri
   }
 
@@ -25,7 +60,7 @@ abstract class Graph {
 
   public getSparqlForUpdate = (): string => {
     let sparql = '';
-    for(let node of this._nodeMap.values()) {
+    for (let node of this._nodeMap.values()) {
       sparql += node.getSparqlForUpdate(this._uri);
     }
     return sparql;
@@ -43,7 +78,7 @@ abstract class Graph {
 
   public undo = () => {
     for (let node of this._nodeMap.values()) {
-        node.undo();
+      node.undo();
     }
   }
 }
