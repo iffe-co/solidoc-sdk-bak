@@ -15,16 +15,19 @@ export const config: any = {
 for (let i = 0; i < 9; i++) {
   config.text[i].id = 't' + i
   config.text[i].uri = config.page.uri + '#' + config.text[i].id
+  config.text[i].type = ont.sdoc.leaf
   config.text[i].json = {
     id: config.text[i].id,
     type: ont.sdoc.leaf,
-    text: 'text ' + i
+    text: 'text ' + i,
+    bold: true
   }
 }
 
 for (let i = 0; i < 3; i++) {
   config.para[i].id = 'p' + i
   config.para[i].uri = config.page.uri + '#' + config.para[i].id
+  config.para[i].type = ont.sdoc.paragraph
   config.para[i].json = {
     id: config.para[i].id,
     type: ont.sdoc.paragraph,
@@ -48,7 +51,7 @@ config.page = {
       config.para[0].json,
       config.para[1].json,
       config.para[2].json,
-    ]    
+    ]
   }
 }
 

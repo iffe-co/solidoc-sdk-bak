@@ -1,89 +1,70 @@
 import { Leaf, createNode } from '../src/Node';
-import * as n3 from 'n3';
+import { ont } from '../config/ontology'
+import { config } from '../config/test'
 import * as assert from 'power-assert';
 
+import * as n3 from 'n3';
 const parser = new n3.Parser();
+
+const node = config.text[8]
+// const page = config.page
+const quads: any[] = parser.parse(node.turtle);
 
 describe('Leaf', () => {
   let leaf: Leaf;
-  let turtle = '<http://example.org/alice#text1> a <http://www.solidoc.net/ontologies#Leaf>;';
-  turtle += ' <http://www.solidoc.net/ontologies#text> "Hello world!".';
-  const quads: any[] = parser.parse(turtle);
 
   beforeEach(() => {
-    leaf = <Leaf>createNode('http://example.org/alice#text1', 'http://www.solidoc.net/ontologies#Leaf');
+    leaf = <Leaf>createNode(node.uri, ont.sdoc.leaf);
     quads.forEach(quad => leaf.fromQuad(quad));
   });
 
   it('parses from quads', () => {
-    assert.strictEqual(leaf.get('id'), 'http://example.org/alice#text1')
-    assert.strictEqual(leaf.get('type'), 'http://www.solidoc.net/ontologies#Leaf')
-    assert.strictEqual(leaf.get('text'), 'Hello world!')
+    assert.strictEqual(leaf.get('uri'), node.uri)
+    assert.strictEqual(leaf.get('type'), node.type)
+    assert.strictEqual(leaf.get('text'), node.json.text)
   });
   
   it('translate to Json', () => {
-    assert.deepStrictEqual(leaf.toJson(), {
-      id: 'text1',
-      type: 'http://www.solidoc.net/ontologies#Leaf',
-      text: "Hello world!",
-    });
-  })
-
-  it('sets an option', () => {
-    leaf.set({bold: true})
-    assert.deepStrictEqual(leaf.toJson(), {
-      id: 'text1',
-      type: 'http://www.solidoc.net/ontologies#Leaf',
-      text: "Hello world!",
-      bold: true
-    });
+    assert.deepStrictEqual(leaf.toJson(), node.json);
   })
 
   it('inserts text at offset 0', () => {
-    leaf.insertText(0, 'Alice says: ');
+    leaf.insertText(0, 'Insert: ');
     assert.deepStrictEqual(leaf.toJson(), {
-      id: 'text1',
-      type: 'http://www.solidoc.net/ontologies#Leaf',
-      text: "Alice says: Hello world!",
+      ...node.json,
+      text: 'Insert: text 8'
     });
   });
 
   it('inserts text at offset > length', () => {
-    leaf.insertText(100, '!');
+    leaf.insertText(Infinity, '!');
     assert.deepStrictEqual(leaf.toJson(), {
-      id: 'text1',
-      type: 'http://www.solidoc.net/ontologies#Leaf',
-      text: "Hello world!!",
+      ...node.json,
+      text: 'text 8!'
     });
   });
 
   it('removes text head', () => {
-    let removed: string = leaf.removeText(0, 6);
+    let removed: string = leaf.removeText(0, 1);
     assert.deepStrictEqual(leaf.toJson(), {
-      id: 'text1',
-      type: 'http://www.solidoc.net/ontologies#Leaf',
-      text: 'world!',
+      ...node.json,
+      text: 'ext 8'
     });
-    assert.strictEqual(removed, 'Hello ')
+    assert.strictEqual(removed, 't')
   });
 
   it('removes text tail', () => {
     let removed: string = leaf.removeText(1, Infinity);
     assert.deepStrictEqual(leaf.toJson(), {
-      id: 'text1',
-      type: 'http://www.solidoc.net/ontologies#Leaf',
-      text: 'H',
+      ...node.json,
+      text: 't'
     });
-    assert.strictEqual(removed, 'ello world!')
+    assert.strictEqual(removed, 'ext 8')
   });
 
   it('leaves it unchanged if there is no overlap', () => {
-    let removed: string = leaf.removeText(Infinity, 10);
-    assert.deepStrictEqual(leaf.toJson(), {
-      id: 'text1',
-      type: 'http://www.solidoc.net/ontologies#Leaf',
-      text: 'Hello world!',
-    });
+    let removed: string = leaf.removeText(100, 10);
+    assert.deepStrictEqual(leaf.toJson(), node.json);
     assert.strictEqual(removed, '')
   });
 

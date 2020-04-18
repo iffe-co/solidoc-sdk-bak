@@ -43,7 +43,7 @@ abstract class Graph {
   }
 
   protected _registerNode = (node: Subject) => {
-    this._nodeMap.set(node.get('id'), node)
+    this._nodeMap.set(node.get('uri'), node)
   }
 
   public getRoot = (): Subject | undefined => {

@@ -40,7 +40,7 @@ abstract class Subject {
   }
 
   public get = (key: string): string => {
-    if (key === 'id') return this._uri;
+    if (key === 'uri') return this._uri;
     if (!this._predicates[key]) {
       throw new Error('Try to get an unknown property: ' + this._uri + key)
     }

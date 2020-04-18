@@ -18,7 +18,7 @@ describe('Paragraph', () => {
   describe('Create Node', () => {
 
     it('parses from quads', () => {
-      assert.equal(para.get('id'), 'http://example.org/alice#tag1')
+      assert.equal(para.get('uri'), 'http://example.org/alice#tag1')
       assert.equal(para.get('type'), 'http://www.solidoc.net/ontologies#Paragraph')
       assert.equal(para.get('firstChild'), '')
     })

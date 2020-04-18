@@ -3,7 +3,7 @@ import { Branch, createNode } from './Node'
 import { Subject } from './Subject'
 
 const idToUri = (id: string, parent: Branch) => {
-  let parentUri: string = parent.get('id')
+  let parentUri: string = parent.get('uri')
   let pageUri = parentUri.substr(0, parentUri.indexOf('#'))
   return pageUri + '#' + id
 }

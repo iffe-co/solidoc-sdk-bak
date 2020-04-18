@@ -18,7 +18,7 @@ class Branch extends Subject {
   }
 
   private setFirstChild = (node: Subject | undefined) => {
-    this.set({ firstChild: node ? node.get('id') : '' })
+    this.set({ firstChild: node ? node.get('uri') : '' })
   }
 
   public getIndexedChild = (offset: number): Subject | undefined => {

@@ -19,7 +19,7 @@ describe('Root', () => {
 
 
   it('parses from quads', () => {
-    assert.strictEqual(root.get('id'), 'http://example.org/alice')
+    assert.strictEqual(root.get('uri'), 'http://example.org/alice')
     assert.strictEqual(root.get('type'), 'http://www.solidoc.net/ontologies#Root')
     assert.strictEqual(root.get('title'), "Alice's Profile")
     assert.strictEqual(root.get('firstChild'), 'http://example.org/alice#tag1')
