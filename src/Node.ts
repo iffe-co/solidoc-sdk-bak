@@ -101,7 +101,7 @@ class Branch extends Subject {
     }
   }
 
-  public split(offset: number, properties: any, nodeMap: Map<string, Subject>): Subject {
+  public split(offset: number, properties: any, nodeMap: Map<string, Subject>): Subject | undefined {
     let child: Subject | undefined = this.detachChildren(offset, Infinity);
 
     let json: any = {
@@ -111,6 +111,17 @@ class Branch extends Subject {
     }
     let next = <Branch>createNode(json, nodeMap);
     child && next.attachChildren(child, 0);
+    return next
+  }
+
+  public merge(): Subject | undefined {
+    let next = <Branch>this.getNext()
+    // TODO: throw if next is not a branch
+    if (!next) return undefined
+
+    let child: Subject | undefined = next.detachChildren(0, Infinity)
+    this.attachChildren(child, Infinity)
+
     return next
   }
 }
@@ -187,6 +198,16 @@ class Leaf extends Subject {
       text: clipped
     }
     let next = <Leaf>createNode(json, nodeMap)
+    return next
+  }
+
+  public merge(): Subject | undefined {
+    let next = <Leaf>this.getNext()
+    // TODO: throw if next is not Leaf
+    if (!next) return undefined
+
+    this.insertText(Infinity, next.get('text'));
+
     return next
   }
 }

@@ -96,24 +96,16 @@ class Page extends Graph {
       case 'merge_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
         const prev: Subject | undefined = parent.getIndexedChild(op.path.offset - 1);
-        const curr: Subject | undefined = parent.getIndexedChild(op.path.offset);
-
-        if (prev instanceof Leaf && curr instanceof Leaf) {
-          prev.insertText(Infinity, curr.get('text'));
-        } else if (prev instanceof Branch && curr instanceof Branch) {
-          let child: Subject | undefined = curr.detachChildren(0, Infinity)
-          prev.attachChildren(child, Infinity)
-        } else {
-          throw new Error(`Cannot merge.`);
-        }
+        const curr = prev?.merge();
         parent.detachChildren(op.path.offset, 1)
+        curr && curr.delete()
         break
       }
 
       case 'split_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
         const curr: Subject | undefined = parent.getIndexedChild(op.path.offset);
-        let next = curr?.split(op.position, op.properties, this._nodeMap);
+        const next = curr?.split(op.position, op.properties, this._nodeMap);
         parent.attachChildren(next, op.path.offset + 1);
         break
       }

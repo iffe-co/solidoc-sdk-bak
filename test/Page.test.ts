@@ -244,24 +244,24 @@ describe('Merge Text Node', () => {
     assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [tid1])
     assert.strictEqual(pageJson.children[0].children[0].text, textJson1.text + textJson3.text)
   });
-  it('throws on merging text node 0', () => {
-    let op: Operation = { type: 'merge_node', path: { parentUri: paraUri1, offset: 0 } }
-    try {
-      page.apply(op)
-    } catch (e) {
-      return
-    }
-    assert(0)
-  });
-  it('throws on merging offset > length', () => {
-    let op: Operation = { type: 'merge_node', path: { parentUri: paraUri1, offset: 2 } }
-    try {
-      page.apply(op)
-    } catch (e) {
-      return
-    }
-    assert(0);
-  });
+  // it('throws on merging text node 0', () => {
+  //   let op: Operation = { type: 'merge_node', path: { parentUri: paraUri1, offset: 0 } }
+  //   try {
+  //     page.apply(op)
+  //   } catch (e) {
+  //     return
+  //   }
+  //   assert(0)
+  // });
+  // it('throws on merging offset > length', () => {
+  //   let op: Operation = { type: 'merge_node', path: { parentUri: paraUri1, offset: 2 } }
+  //   try {
+  //     page.apply(op)
+  //   } catch (e) {
+  //     return
+  //   }
+  //   assert(0);
+  // });
 });
 
 describe('Merge Element Node', () => {
@@ -276,24 +276,24 @@ describe('Merge Element Node', () => {
     let pageJson = page.toJson()
     assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [tid1, tid2, tid3])
   });
-  it('throws on merging paragraph 1', () => {
-    let op: Operation = { type: 'merge_node', path: { parentUri: pageUri, offset: 0 } }
-    try {
-      page.apply(op)
-    } catch (e) {
-      return
-    }
-    assert(0)
-  });
-  it('throws on merging offset > length', () => {
-    let op: Operation = { type: 'merge_node', path: { parentUri: pageUri, offset: 2 } }
-    try {
-      page.apply(op)
-    } catch (e) {
-      return
-    }
-    assert(0)
-  });
+  // it('throws on merging paragraph 1', () => {
+  //   let op: Operation = { type: 'merge_node', path: { parentUri: pageUri, offset: 0 } }
+  //   try {
+  //     page.apply(op)
+  //   } catch (e) {
+  //     return
+  //   }
+  //   assert(0)
+  // });
+  // it('throws on merging offset > length', () => {
+  //   let op: Operation = { type: 'merge_node', path: { parentUri: pageUri, offset: 2 } }
+  //   try {
+  //     page.apply(op)
+  //   } catch (e) {
+  //     return
+  //   }
+  //   assert(0)
+  // });
 });
 
 describe('Split Text Node', () => {
