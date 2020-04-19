@@ -16,7 +16,7 @@ describe('Root', () => {
   let root: Root;
 
   beforeEach(() => {
-    root = <Root>createNode(page.uri, page.type);
+    root = <Root>createNode(page.uri, page.type, nodeMap);
     quads.forEach(quad => root.fromQuad(quad, nodeMap));
   });
 

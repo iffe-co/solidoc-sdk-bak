@@ -39,8 +39,7 @@ class Page extends Graph {
     switch (op.type) {
       case 'insert_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        const inserted: Subject[] = Recursive.insert(op.node, parent, op.path.offset)
-        inserted.forEach(this._registerNode)
+        Recursive.insert(op.node, parent, op.path.offset, this._nodeMap)
         break
       }
 
@@ -96,8 +95,7 @@ class Page extends Graph {
             ...op.properties,
             text: clipped
           }
-          let next: Subject[] = Recursive.insert(json, parent, op.path.offset + 1)
-          this._registerNode(next[0])
+          Recursive.insert(json, parent, op.path.offset + 1, this._nodeMap)
         } else {
           let child: Subject | undefined = (<Branch>curr).removeChildren(op.position, Infinity);
           if (!child) {
@@ -108,9 +106,8 @@ class Page extends Graph {
             ...op.properties,
             children: []
           }
-          let next: Subject[] = Recursive.insert(json, parent, op.path.offset + 1);
-          (<Branch>next[0]).insertChildren(child, 0)
-          this._registerNode(next[0])
+          let next: Subject = Recursive.insert(json, parent, op.path.offset + 1, this._nodeMap);
+          (<Branch>next).insertChildren(child, 0)
         }
         break
       }

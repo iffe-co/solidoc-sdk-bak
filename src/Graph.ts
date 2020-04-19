@@ -15,15 +15,13 @@ abstract class Graph {
   }
 
   private _parseTurtle = (uri: string, turtle: string) => {
-    let root = createNode(uri, 'http://www.solidoc.net/ontologies#Root');
-    this._registerNode(root)
+    createNode(uri, 'http://www.solidoc.net/ontologies#Root', this._nodeMap);
 
     const quads: any[] = parser.parse(turtle);
     quads.forEach(quad => {
       if (quad.predicate.id === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type' && quad.subject.id !== uri) {
         // TODO: only create node for known types
-        let node = createNode(quad.subject.id, quad.object.id);
-        this._registerNode(node)
+        createNode(quad.subject.id, quad.object.id, this._nodeMap);
       }
     })
 
@@ -36,9 +34,9 @@ abstract class Graph {
     })
   }
 
-  protected _registerNode = (node: Subject) => {
-    this._nodeMap.set(node.get('uri'), node)
-  }
+  // protected _registerNode = (node: Subject) => {
+  //   this._nodeMap.set(node.get('uri'), node)
+  // }
 
   public getRoot = (): Subject | undefined => {
     return this._nodeMap.get(this._uri)

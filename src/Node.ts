@@ -143,7 +143,7 @@ class Leaf extends Subject {
   }
 }
 
-const createNode = (uri: string, type: string): Subject => {
+const createNode = (uri: string, type: string, nodeMap: Map<string, Subject>): Subject => {
   let node: Subject
   switch (type) {
     case 'http://www.solidoc.net/ontologies#Root':
@@ -157,6 +157,7 @@ const createNode = (uri: string, type: string): Subject => {
       break
   }
   node.set({ type: type })
+  nodeMap.set(uri, node)
   return node
 }
 

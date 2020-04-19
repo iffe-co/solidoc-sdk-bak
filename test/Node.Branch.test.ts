@@ -1,6 +1,9 @@
+import { Subject } from '../src/Subject'
 import { Branch, Leaf, createNode } from '../src/Node';
 import { config } from '../config/test'
 import * as assert from 'power-assert';
+
+const nodeMap = new Map<string, Subject>();
 
 const text0 = config.text[0]
 const text1 = config.text[1]
@@ -18,12 +21,12 @@ describe('Branch', () => {
   let leaf3: Leaf
 
   beforeEach(() => {
-    branch = <Branch>createNode(para0.uri, para0.type);
+    branch = <Branch>createNode(para0.uri, para0.type, nodeMap);
 
-    leaf0 = <Leaf>createNode(text0.uri, text0.type);
-    leaf1 = <Leaf>createNode(text1.uri, text1.type);
-    leaf2 = <Leaf>createNode(text2.uri, text2.type);
-    leaf3 = <Leaf>createNode(text3.uri, text3.type);
+    leaf0 = <Leaf>createNode(text0.uri, text0.type, nodeMap);
+    leaf1 = <Leaf>createNode(text1.uri, text1.type, nodeMap);
+    leaf2 = <Leaf>createNode(text2.uri, text2.type, nodeMap);
+    leaf3 = <Leaf>createNode(text3.uri, text3.type, nodeMap);
   });
 
   describe('Insertion', () => {

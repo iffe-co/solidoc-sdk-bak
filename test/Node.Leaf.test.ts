@@ -16,7 +16,7 @@ describe('Leaf', () => {
   let leaf: Leaf;
 
   beforeEach(() => {
-    leaf = <Leaf>createNode(text.uri, text.type);
+    leaf = <Leaf>createNode(text.uri, text.type, nodeMap);
     quads.forEach(quad => leaf.fromQuad(quad, nodeMap));
   });
 

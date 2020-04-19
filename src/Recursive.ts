@@ -36,21 +36,17 @@ const Recursive = {
     return headJson
   },
 
-  insert: (json: Node, parent: Branch, offset: number): Subject[] => {
-    let result: Subject[] = []
+  insert: (json: Node, parent: Branch, offset: number, nodeMap: Map<string, Subject>): Subject => {
     let currUri: string = idToUri(json.id, parent)
-    let curr: Subject = createNode(currUri, json.type)
-    result.push(curr)
+    let curr: Subject = createNode(currUri, json.type, nodeMap)
 
     curr.set(json);
     parent.insertChildren(curr, offset);
 
     for (let i = 0; curr instanceof Branch && i < json.children.length; i++) {
-      result.push(
-        ...Recursive.insert(json.children[i], curr, i)
-      )
+      Recursive.insert(json.children[i], curr, i, nodeMap)
     }
-    return result
+    return curr
   },
 
   remove: (head: Subject) => {

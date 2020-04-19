@@ -21,8 +21,7 @@ describe('Subject', () => {
   let quads: any[];
 
   beforeEach(() => {
-    branch2 = <Branch>createNode(para2.uri, para2.type);
-    nodeMap.set(para2.uri, branch2)
+    branch2 = <Branch>createNode(para2.uri, para2.type, nodeMap);
     quads = parser.parse(para2.turtle);
     quads.forEach(quad => branch2.fromQuad(quad, nodeMap));
   });
@@ -101,8 +100,7 @@ describe('Subject', () => {
 
   describe('#nextNode property', () => {
     beforeEach(() => {
-      branch1 = <Branch>createNode(para1.uri, para1.type);
-      nodeMap.set(para1.uri, branch1)
+      branch1 = <Branch>createNode(para1.uri, para1.type, nodeMap);
     })
 
     it('setNext() is together with set("next")', () => {
