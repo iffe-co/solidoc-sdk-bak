@@ -1,13 +1,13 @@
-import { Branch, Leaf } from './Node';
+import { Branch, Leaf, createNode } from './Node';
 import { Subject } from './Subject';
 import { Graph } from './Graph';
-import { Path, Operation, Element } from './interface'
-import { Recursive } from './Recursive'
+import { Path, Operation, Node, Element } from './interface'
+
 
 class Page extends Graph {
   constructor(uri: string, turtle: string) {
     super(uri, turtle);
-    Recursive.assembleTree(this.getRoot(), this._nodeMap)
+    this._assembleTree(this.getRoot(), this._nodeMap)
   }
 
   private _getBranchInstance = (uri: string): Branch => {
@@ -32,21 +32,49 @@ class Page extends Graph {
 
   public toJson = (): Element => {
     let head = this.getRoot();
-    return <Element>(Recursive.toJson(head))
+    return head?.toJson()
+    // return <Element>(Recursive.toJson(head))
   }
+
+  private _assembleTree = (head: Subject | undefined, nodeMap: Map<string, Subject>) => {
+    if (!(head instanceof Branch)) return
+
+    let currUri = head.get('firstChild');
+    let curr: Subject | undefined = nodeMap.get(currUri)
+    curr && head.insertChildren(curr, 0)
+
+    while (curr) {
+      this._assembleTree(curr, nodeMap);
+      curr = curr.getNext()
+    }
+  }
+
+  private _insert = (json: Node, parent: Branch, offset: number, nodeMap: Map<string, Subject>): Subject => {
+    let curr: Subject = createNode(json.id, json.type, nodeMap)
+
+    curr.set(json);
+    parent.insertChildren(curr, offset);
+
+    for (let i = 0; curr instanceof Branch && i < json.children.length; i++) {
+      this._insert(json.children[i], curr, i, nodeMap)
+    }
+    return curr
+  }
+
 
   public apply = (op: Operation) => {
     switch (op.type) {
       case 'insert_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        Recursive.insert(op.node, parent, op.path.offset, this._nodeMap)
+        this._insert(op.node, parent, op.path.offset, this._nodeMap)
         break
       }
 
       case 'remove_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
         const curr: Subject | undefined = parent.removeChildren(op.path.offset, 1);
-        curr && Recursive.remove(curr);
+        // const curr = parent.getIndexedChild(op.path.offset)
+        curr && curr.delete();
         break
       }
 
@@ -59,7 +87,7 @@ class Page extends Graph {
           throw new Error('No such node')
         }
 
-        if (Recursive.isAncestor(curr, newParent)) {
+        if (curr instanceof Branch && curr.isAncestor(newParent)) {
           parent.insertChildren(curr, op.path.offset);
           throw new Error('Trying to append the node to itself or its descendent')
         }
@@ -90,23 +118,31 @@ class Page extends Graph {
         const curr: Subject | undefined = parent.getIndexedChild(op.path.offset);
         if (curr instanceof Leaf) {
           let clipped: string = curr.removeText(op.position, Infinity);
-          let json = {
-            ...Recursive.toJson(curr),
+          let json: any = {
+            // ...Recursive.toJson(curr),
+            ...curr.toJson(),
             ...op.properties,
             text: clipped
           }
-          Recursive.insert(json, parent, op.path.offset + 1, this._nodeMap)
+          // Recursive.insert(json, parent, op.path.offset + 1, this._nodeMap)
+          let next: Subject = createNode(json.id, json.type, this._nodeMap)
+          next.set(json);
+          parent.insertChildren(next, op.path.offset + 1);
         } else {
           let child: Subject | undefined = (<Branch>curr).removeChildren(op.position, Infinity);
           if (!child) {
             throw new Error('No such child')
           }
-          let json = {
-            ...Recursive.toJson(curr),
+          let json: any = {
+            // ...Recursive.toJson(curr),
+            ...curr?.toJson(),
             ...op.properties,
             children: []
           }
-          let next: Subject = Recursive.insert(json, parent, op.path.offset + 1, this._nodeMap);
+          // let next: Subject = Recursive.insert(json, parent, op.path.offset + 1, this._nodeMap);
+          let next: Subject = createNode(json.id, json.type, this._nodeMap)
+          next.set(json);
+          parent.insertChildren(next, op.path.offset + 1);
           (<Branch>next).insertChildren(child, 0)
         }
         break

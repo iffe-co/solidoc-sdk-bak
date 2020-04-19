@@ -11,10 +11,15 @@ class Branch extends Subject {
 
   public toJson(): Element {
     let result = super.toJson()
-    return {
-      ...result,
-      children: []
-    }
+    // return {
+    //   ...result,
+    //   children: []
+    // }
+    result.children = []
+    this._children.forEach(child => {
+      result.children.push(child.toJson())
+    })
+    return result
   }
 
   private setFirstChild = (node: Subject | undefined) => {
@@ -75,6 +80,26 @@ class Branch extends Subject {
 
   public getChildrenNum = (): number => {
     return this._children.length
+  }
+
+  public isAncestor = (to: Subject): boolean => {
+    if (this === to) return true
+
+    // TODO: use map??
+    for (let i = 0; i < this.getChildrenNum(); i++) {
+      let curr = this.getIndexedChild(i)
+      if (curr instanceof Branch && curr.isAncestor(to)) return true
+    }
+    return false
+  }
+
+  public delete() {
+    super.delete()
+
+    // TODO: use map??
+    for (let i = 0; i < this.getChildrenNum(); i++) {
+      this._children[i].delete()
+    }
   }
 }
 

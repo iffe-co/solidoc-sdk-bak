@@ -107,7 +107,7 @@ abstract class Subject {
     });
   }
 
-  public delete = () => {
+  public delete() {
     this._isDeleted = true
   }
 
