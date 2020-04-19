@@ -180,7 +180,7 @@ const createNode = (json: Node, nodeMap: Map<string, Subject>): Subject => {
       node = new Branch(json.id)
       break
   }
-  node.set({ type: json.type })
+  node.set(json)
   nodeMap.set(json.id, node)
   return node
 }

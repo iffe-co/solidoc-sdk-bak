@@ -52,7 +52,6 @@ class Page extends Graph {
   private _insert = (json: Node, parent: Branch, offset: number, nodeMap: Map<string, Subject>): Subject => {
     let curr: Subject = createNode(json, nodeMap)
 
-    curr.set(json);
     parent.insertChildren(curr, offset);
 
     for (let i = 0; curr instanceof Branch && i < json.children.length; i++) {
@@ -118,14 +117,11 @@ class Page extends Graph {
         if (curr instanceof Leaf) {
           let clipped: string = curr.removeText(op.position, Infinity);
           let json: any = {
-            // ...Recursive.toJson(curr),
             ...curr.toJson(),
             ...op.properties,
             text: clipped
           }
-          // Recursive.insert(json, parent, op.path.offset + 1, this._nodeMap)
           let next: Subject = createNode(json, this._nodeMap)
-          next.set(json);
           parent.insertChildren(next, op.path.offset + 1);
         } else {
           let child: Subject | undefined = (<Branch>curr).removeChildren(op.position, Infinity);
@@ -133,14 +129,11 @@ class Page extends Graph {
             throw new Error('No such child')
           }
           let json: any = {
-            // ...Recursive.toJson(curr),
             ...curr?.toJson(),
             ...op.properties,
             children: []
           }
-          // let next: Subject = Recursive.insert(json, parent, op.path.offset + 1, this._nodeMap);
           let next: Subject = createNode(json, this._nodeMap)
-          next.set(json);
           parent.insertChildren(next, op.path.offset + 1);
           (<Branch>next).insertChildren(child, 0)
         }
