@@ -100,6 +100,21 @@ class Branch extends Subject {
       this._children[i].delete()
     }
   }
+
+  public split = (offset: number, properties: any, nodeMap: Map<string, Subject>): Branch => {
+    let child: Subject | undefined = this.removeChildren(offset, Infinity);
+    if (!child) {
+      throw new Error('No such child')
+    }
+    let json: any = {
+      ...this.toJson(), // TODO: this step could be expensive
+      ...properties, // TODO: could this override the type?
+      children: []
+    }
+    let next = <Branch>createNode(json, nodeMap);
+    next.insertChildren(child, 0);
+    return next
+  }
 }
 
 class Root extends Branch {

@@ -33,7 +33,6 @@ class Page extends Graph {
   public toJson = (): Element => {
     let head = this.getRoot();
     return head?.toJson()
-    // return <Element>(Recursive.toJson(head))
   }
 
   private _assembleTree = (head: Subject | undefined, nodeMap: Map<string, Subject>) => {
@@ -124,18 +123,8 @@ class Page extends Graph {
           let next: Subject = createNode(json, this._nodeMap)
           parent.insertChildren(next, op.path.offset + 1);
         } else {
-          let child: Subject | undefined = (<Branch>curr).removeChildren(op.position, Infinity);
-          if (!child) {
-            throw new Error('No such child')
-          }
-          let json: any = {
-            ...curr?.toJson(),
-            ...op.properties,
-            children: []
-          }
-          let next: Subject = createNode(json, this._nodeMap)
+          let next = (<Branch>curr).split(op.position, op.properties, this._nodeMap);
           parent.insertChildren(next, op.path.offset + 1);
-          (<Branch>next).insertChildren(child, 0)
         }
         break
       }
