@@ -15,3 +15,5 @@ app/**/*.map
 test/**/*.map
 config/**/*.map
 package-lock.json
+
+report.*.json
