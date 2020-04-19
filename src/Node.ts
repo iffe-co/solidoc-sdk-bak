@@ -101,7 +101,7 @@ class Branch extends Subject {
     }
   }
 
-  public split = (offset: number, properties: any, nodeMap: Map<string, Subject>): Branch => {
+  public split(offset: number, properties: any, nodeMap: Map<string, Subject>): Subject {
     let child: Subject | undefined = this.removeChildren(offset, Infinity);
     if (!child) {
       throw new Error('No such child')
@@ -179,6 +179,17 @@ class Leaf extends Subject {
     const after = this.get('text').slice(offset + length);
     this.set({ text: before + after });
     return removed
+  }
+
+  public split(offset: number, properties: any, nodeMap: Map<string, Subject>): Subject {
+    let clipped: string = this.removeText(offset, Infinity);
+    let json: any = {
+      ...this.toJson(),
+      ...properties,
+      text: clipped
+    }
+    let next = <Leaf>createNode(json, nodeMap)
+    return next
   }
 }
 

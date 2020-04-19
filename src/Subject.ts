@@ -114,6 +114,8 @@ abstract class Subject {
   public isDeleted = (): boolean => {
     return this._isDeleted
   }
+
+  public abstract split(offset: number, properties: any, nodeMap: Map<string, Subject>): Subject
 }
 
 export { Subject }

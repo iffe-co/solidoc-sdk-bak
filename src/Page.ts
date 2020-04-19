@@ -113,19 +113,8 @@ class Page extends Graph {
       case 'split_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
         const curr: Subject | undefined = parent.getIndexedChild(op.path.offset);
-        if (curr instanceof Leaf) {
-          let clipped: string = curr.removeText(op.position, Infinity);
-          let json: any = {
-            ...curr.toJson(),
-            ...op.properties,
-            text: clipped
-          }
-          let next: Subject = createNode(json, this._nodeMap)
-          parent.insertChildren(next, op.path.offset + 1);
-        } else {
-          let next = (<Branch>curr).split(op.position, op.properties, this._nodeMap);
-          parent.insertChildren(next, op.path.offset + 1);
-        }
+        let next = curr?.split(op.position, op.properties, this._nodeMap);
+        parent.insertChildren(next, op.path.offset + 1);
         break
       }
 
