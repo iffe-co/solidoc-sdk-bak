@@ -2,12 +2,6 @@ import { Node } from './interface'
 import { Branch, createNode } from './Node'
 import { Subject } from './Subject'
 
-const idToUri = (id: string, parent: Branch) => {
-  let parentUri: string = parent.get('uri')
-  let pageUri = parentUri.substr(0, parentUri.indexOf('#'))
-  return pageUri + '#' + id
-}
-
 const Recursive = {
   assembleTree: (head: Subject | undefined, nodeMap: Map<string, Subject>) => {
     if (!(head instanceof Branch)) return
@@ -37,8 +31,7 @@ const Recursive = {
   },
 
   insert: (json: Node, parent: Branch, offset: number, nodeMap: Map<string, Subject>): Subject => {
-    let currUri: string = idToUri(json.id, parent)
-    let curr: Subject = createNode(currUri, json.type, nodeMap)
+    let curr: Subject = createNode(json.id, json.type, nodeMap)
 
     curr.set(json);
     parent.insertChildren(curr, offset);

@@ -10,21 +10,22 @@ const paraUri1 = pageUri + '#' + pid1
 
 const tid1 = 'text1'
 const textUri1 = pageUri + '#' + tid1
-const textJson1 = { id: 'text1', type: 'http://www.solidoc.net/ontologies#Leaf', text: 'Paragraph 1' }
+const textJson1 = { id: textUri1, type: 'http://www.solidoc.net/ontologies#Leaf', text: 'Paragraph 1' }
 
 const pid2 = 'tag2'
 const paraUri2 = pageUri + '#' + pid2
 
 const tid2 = 'text2'
 const textUri2 = pageUri + '#' + tid2
-const textJson2 = { id: 'text2', type: 'http://www.solidoc.net/ontologies#Leaf', text: 'Paragraph 2' }
+const textJson2 = { id: textUri2, type: 'http://www.solidoc.net/ontologies#Leaf', text: 'Paragraph 2' }
 
 const pid3 = 'tag3'
 const tid3 = 'text3'
-const textJson3 = { id: 'text3', type: 'http://www.solidoc.net/ontologies#Leaf', text: 'Paragraph 3' }
+const textUri3 = pageUri + '#' + tid3
+const textJson3 = { id: textUri3, type: 'http://www.solidoc.net/ontologies#Leaf', text: 'Paragraph 3' }
 
 let extractChildrenId = (array: any) => {
-  return array.children.map(ele => ele.id)
+  return array.children.map(ele => ele.id.substr(ele.id.indexOf('#') + 1))
 }
 
 let turtle = `<${pageUri}> a <http://www.solidoc.net/ontologies#Root>;`;
@@ -49,8 +50,8 @@ let json: Element = {
   type: 'http://www.solidoc.net/ontologies#Root',
   title: "Alice's Profile",
   children: [
-    { id: 'tag1', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson1] },
-    { id: 'tag2', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson2] },
+    { id: paraUri1, type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson1] },
+    { id: paraUri2, type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson2] },
   ],
 }
 

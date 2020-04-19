@@ -34,7 +34,7 @@ abstract class Subject {
   public toJson(): any {
     let option = JSON.parse(this.get('option'))
     return {
-      id: this._uri.substr(this._uri.indexOf('#') + 1),
+      id: this._uri,
       type: this.get('type'),
       ...option
     };

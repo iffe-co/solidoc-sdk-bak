@@ -1,8 +1,12 @@
 export interface Text {
+  id: string
+  type: string
   text: string
   [key: string]: any
 }
 export interface Element {
+  id: string
+  type: string
   children: Node[]
   [key: string]: any
 }

@@ -17,7 +17,7 @@ for (let i = 0; i < 9; i++) {
   config.text[i].uri = config.page.uri + '#' + config.text[i].id
   config.text[i].type = ont.sdoc.leaf
   config.text[i].json = {
-    id: config.text[i].id,
+    id: config.text[i].uri,
     type: ont.sdoc.leaf,
     text: 'text ' + i,
     bold: true
@@ -29,7 +29,7 @@ for (let i = 0; i < 3; i++) {
   config.para[i].uri = config.page.uri + '#' + config.para[i].id
   config.para[i].type = ont.sdoc.paragraph
   config.para[i].json = {
-    id: config.para[i].id,
+    id: config.para[i].uri,
     type: ont.sdoc.paragraph,
     children: [
       config.text[i * 3],

@@ -34,10 +34,6 @@ abstract class Graph {
     })
   }
 
-  // protected _registerNode = (node: Subject) => {
-  //   this._nodeMap.set(node.get('uri'), node)
-  // }
-
   public getRoot = (): Subject | undefined => {
     return this._nodeMap.get(this._uri)
   }

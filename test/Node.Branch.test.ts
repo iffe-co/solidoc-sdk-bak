@@ -33,7 +33,7 @@ describe('Branch', () => {
 
     it('converts to Json', () => {
       assert.deepStrictEqual(branch.toJson(), {
-        id: para0.id,
+        id: para0.uri,
         type: para0.type,
         children: []
       })
