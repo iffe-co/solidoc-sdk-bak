@@ -37,7 +37,9 @@ class Branch extends Subject {
       throw new Error('Trying to insert a null subject')
     }
 
-    let prev: Subject | undefined = this.getIndexedChild(offset - 1) || this.getLastChild();
+    offset = (offset < 0) ? 0 : offset
+
+    let prev: Subject | undefined = (offset === 0) ? undefined : (this.getIndexedChild(offset - 1) || this.getLastChild());
     if (!prev) {
       this.setFirstChild(curr)
     } else {
@@ -109,7 +111,7 @@ class Branch extends Subject {
       ...properties, // TODO: could this override the type?
       children: []
     }
-    let next = <Branch>createNode(json, nodeMap);
+    let next = <Branch>createNodes(json, nodeMap);
     child && next.attachChildren(child, 0);
     return next
   }
@@ -197,7 +199,7 @@ class Leaf extends Subject {
       ...properties,
       text: clipped
     }
-    let next = <Leaf>createNode(json, nodeMap)
+    let next = <Leaf>createNodes(json, nodeMap)
     return next
   }
 
@@ -212,7 +214,7 @@ class Leaf extends Subject {
   }
 }
 
-const createNode = (json: Node, nodeMap: Map<string, Subject>): Subject => {
+const createNodes = (json: Node, nodeMap: Map<string, Subject>): Subject => {
   let node: Subject
   switch (json.type) {
     case 'http://www.solidoc.net/ontologies#Root':
@@ -227,7 +229,13 @@ const createNode = (json: Node, nodeMap: Map<string, Subject>): Subject => {
   }
   node.set(json)
   nodeMap.set(json.id, node)
+
+  for (let i = 0; node instanceof Branch && i < json.children.length; i++) {
+    let child = createNodes(json.children[i], nodeMap);
+    node.attachChildren(child, i);
+  }
+
   return node
 }
 
-export { Branch, Root, Leaf, createNode }
+export { Branch, Root, Leaf, createNodes }

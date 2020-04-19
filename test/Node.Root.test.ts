@@ -1,5 +1,5 @@
 import { Subject } from '../src/Subject';
-import { Root, createNode } from '../src/Node';
+import { Root, createNodes } from '../src/Node';
 import { ont } from '../config/ontology'
 import { config, turtle } from '../config/test'
 import * as assert from 'power-assert';
@@ -16,7 +16,7 @@ describe('Root', () => {
   let root: Root;
 
   beforeEach(() => {
-    root = <Root>createNode(page, nodeMap);
+    root = <Root>createNodes(page, nodeMap);
     quads.forEach(quad => root.fromQuad(quad, nodeMap));
   });
 
@@ -28,10 +28,7 @@ describe('Root', () => {
   });
 
   it('translates to Json', () => {
-    assert.deepStrictEqual(root.toJson(), {
-      ...page,
-      children: []
-    });
+    assert.deepStrictEqual(root.toJson(), page);
   })
 
   it('sets title', () => {

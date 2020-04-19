@@ -1,5 +1,5 @@
 import { Subject } from './Subject'
-import { createNode } from './Node'
+import { createNodes } from './Node'
 import { Node } from './interface'
 import * as n3 from 'n3';
 
@@ -21,7 +21,7 @@ abstract class Graph {
       type: 'http://www.solidoc.net/ontologies#Root',
       children: []
     }
-    createNode(json, this._nodeMap);
+    createNodes(json, this._nodeMap);
 
     const quads: any[] = parser.parse(turtle);
     quads.forEach(quad => {
@@ -32,7 +32,7 @@ abstract class Graph {
           type: quad.object.id,
           children: [],   // TODO: might be leaf
         }    
-        createNode(json, this._nodeMap);
+        createNodes(json, this._nodeMap);
       }
     })
 

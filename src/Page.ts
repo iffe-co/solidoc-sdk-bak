@@ -1,7 +1,7 @@
-import { Branch, Leaf, createNode } from './Node';
+import { Branch, Leaf, createNodes } from './Node';
 import { Subject } from './Subject';
 import { Graph } from './Graph';
-import { Path, Operation, Node, Element } from './interface'
+import { Path, Operation, Element } from './interface'
 
 
 class Page extends Graph {
@@ -48,23 +48,12 @@ class Page extends Graph {
     }
   }
 
-  private _insert = (json: Node, parent: Branch, offset: number, nodeMap: Map<string, Subject>): Subject => {
-    let curr: Subject = createNode(json, nodeMap)
-
-    parent.attachChildren(curr, offset);
-
-    for (let i = 0; curr instanceof Branch && i < json.children.length; i++) {
-      this._insert(json.children[i], curr, i, nodeMap)
-    }
-    return curr
-  }
-
-
   public apply = (op: Operation) => {
     switch (op.type) {
       case 'insert_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        this._insert(op.node, parent, op.path.offset, this._nodeMap)
+        const curr = createNodes(op.node, this._nodeMap);
+        parent.attachChildren(curr, op.path.offset);
         break
       }
 

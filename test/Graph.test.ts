@@ -1,5 +1,5 @@
 import { Subject } from '../src/Subject'
-import { Root, Branch, Leaf, createNode } from '../src/Node';
+import { Root, Branch, Leaf, createNodes } from '../src/Node';
 import { config as cfg, turtle } from '../config/test'
 import * as assert from 'power-assert';
 
@@ -17,16 +17,16 @@ describe('Branch', () => {
   let leaf: Leaf[] = []
 
   beforeEach(() => {
-    root = <Root>createNode(cfg.page, nodeMap);
+    root = <Root>createNodes(cfg.page, nodeMap);
     let quads = parser.parse(turtle.page)
     quads.forEach(quad => {
       root.fromQuad(quad, nodeMap)
     });
   
 
-    branch[0] = <Branch>createNode(cfg.para[0], nodeMap);
-    branch[1] = <Branch>createNode(cfg.para[1], nodeMap);
-    branch[2] = <Branch>createNode(cfg.para[2], nodeMap);
+    branch[0] = <Branch>createNodes(cfg.para[0], nodeMap);
+    branch[1] = <Branch>createNodes(cfg.para[1], nodeMap);
+    branch[2] = <Branch>createNodes(cfg.para[2], nodeMap);
     for (let i = 0; i < 3; i++) {
       let quads = parser.parse(turtle.para[i])
       quads.forEach(quad => {
@@ -35,7 +35,7 @@ describe('Branch', () => {
     }
 
     for (let i = 0; i < 9; i++) {
-      leaf[i] = <Leaf>createNode(cfg.text[i], nodeMap);
+      leaf[i] = <Leaf>createNodes(cfg.text[i], nodeMap);
     }
     for (let i = 0; i < 9; i++) {
       let quads = parser.parse(turtle.text[i])
