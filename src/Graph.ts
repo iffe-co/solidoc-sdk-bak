@@ -1,5 +1,6 @@
 import { Subject } from './Subject'
 import { createNode } from './Node'
+import { Node } from './interface'
 import * as n3 from 'n3';
 
 const parser = new n3.Parser();
@@ -15,13 +16,23 @@ abstract class Graph {
   }
 
   private _parseTurtle = (uri: string, turtle: string) => {
-    createNode(uri, 'http://www.solidoc.net/ontologies#Root', this._nodeMap);
+    let json: Node = {
+      id: uri,
+      type: 'http://www.solidoc.net/ontologies#Root',
+      children: []
+    }
+    createNode(json, this._nodeMap);
 
     const quads: any[] = parser.parse(turtle);
     quads.forEach(quad => {
       if (quad.predicate.id === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type' && quad.subject.id !== uri) {
         // TODO: only create node for known types
-        createNode(quad.subject.id, quad.object.id, this._nodeMap);
+        let json: Node = {
+          id: quad.subject.id,
+          type: quad.object.id,
+          children: [],   // TODO: might be leaf
+        }    
+        createNode(json, this._nodeMap);
       }
     })
 

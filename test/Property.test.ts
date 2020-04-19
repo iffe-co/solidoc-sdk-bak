@@ -1,6 +1,6 @@
 import { NamedNodeProperty, TextProperty, JsonProperty } from '../src/Property';
 import { ont } from '../config/ontology'
-import { config } from '../config/test'
+import { config, turtle } from '../config/test'
 import * as assert from 'power-assert';
 
 import * as n3 from 'n3';
@@ -9,13 +9,13 @@ const parser = new n3.Parser();
 const node = config.text[8]
 const page = config.page
 
-const quads: any[] = parser.parse(node.turtle);
+const quads: any[] = parser.parse(turtle.text[8]);
 
 describe('Type: a NamedNode Property', () => {
   let type: NamedNodeProperty;
 
-  const deleteClause = `WITH <${page.uri}> DELETE WHERE { <${node.uri}> <${ont.rdf.type}> ?o };\n`;
-  const insertClause = `INSERT DATA { GRAPH <${page.uri}> { <${node.uri}> <${ont.rdf.type}> <${ont.sdoc.paragraph}>} };\n`;
+  const deleteClause = `WITH <${page.id}> DELETE WHERE { <${node.id}> <${ont.rdf.type}> ?o };\n`;
+  const insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.rdf.type}> <${ont.sdoc.paragraph}>} };\n`;
 
   beforeEach(() => {
     type = new NamedNodeProperty(ont.rdf.type, 'type');
@@ -27,19 +27,19 @@ describe('Type: a NamedNode Property', () => {
   });
 
   it('generates null sparql for a new property', () => {
-    const sparql: string = type.getSparqlForUpdate(page.uri, node.uri);
+    const sparql: string = type.getSparqlForUpdate(page.id, node.id);
     assert.strictEqual(sparql, '');
   });
 
   it('generate sparql for updated property', () => {
     type.set(ont.sdoc.paragraph);
-    const sparql: string = type.getSparqlForUpdate(page.uri, node.uri);
+    const sparql: string = type.getSparqlForUpdate(page.id, node.id);
     assert.strictEqual(sparql, deleteClause + insertClause);
   });
 
   it('generate sparql for deleted property', () => {
     type.set('');
-    const sparql: string = type.getSparqlForUpdate(page.uri, node.uri);
+    const sparql: string = type.getSparqlForUpdate(page.id, node.id);
     assert.strictEqual(sparql, deleteClause);
   });
 
@@ -47,7 +47,7 @@ describe('Type: a NamedNode Property', () => {
     type.set('');
     type.commit()
     type.set(ont.sdoc.paragraph);
-    const sparql: string = type.getSparqlForUpdate(page.uri, node.uri);
+    const sparql: string = type.getSparqlForUpdate(page.id, node.id);
     assert.strictEqual(sparql, insertClause);
   });
 
@@ -67,8 +67,8 @@ describe('Type: a NamedNode Property', () => {
 describe('Text Property', () => {
   let text: TextProperty;
 
-  const deleteClause = `WITH <${page.uri}> DELETE WHERE { <${node.uri}> <${ont.sdoc.text}> ?o };\n`;
-  const insertClause = `INSERT DATA { GRAPH <${page.uri}> { <${node.uri}> <${ont.sdoc.text}> "Hello world!"} };\n`;
+  const deleteClause = `WITH <${page.id}> DELETE WHERE { <${node.id}> <${ont.sdoc.text}> ?o };\n`;
+  const insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.text}> "Hello world!"} };\n`;
 
   beforeEach(() => {
     text = new TextProperty(ont.sdoc.text, 'text');
@@ -76,18 +76,18 @@ describe('Text Property', () => {
   });
 
   it('parses quad as text', () => {
-    assert.strictEqual(text.value, node.json.text);
+    assert.strictEqual(text.value, node.text);
   });
 
   it('generates sparql for update', async () => {
     text.set('Hello world!');
-    const sparql: string = text.getSparqlForUpdate(page.uri, node.uri);
+    const sparql: string = text.getSparqlForUpdate(page.id, node.id);
     assert.strictEqual(sparql, deleteClause + insertClause);
   });
 
   it('generates sparql for deletion only', async () => {
     text.set('');
-    const sparql: string = text.getSparqlForUpdate(page.uri, node.uri);
+    const sparql: string = text.getSparqlForUpdate(page.id, node.id);
     assert.strictEqual(sparql, deleteClause);
   });
 
@@ -95,7 +95,7 @@ describe('Text Property', () => {
     text.set('');
     text.commit();
     text.set('Hello world!');
-    const sparql: string = text.getSparqlForUpdate(page.uri, node.uri);
+    const sparql: string = text.getSparqlForUpdate(page.id, node.id);
     assert.strictEqual(sparql, insertClause);
   });
 });
@@ -103,8 +103,8 @@ describe('Text Property', () => {
 describe('Json Property', () => {
   let option: JsonProperty;
 
-  let deleteClause = `WITH <${page.uri}> DELETE WHERE { <${node.uri}> <${ont.sdoc.option}> ?o };\n`;
-  let insertClause = `INSERT DATA { GRAPH <${page.uri}> { <${node.uri}> <${ont.sdoc.option}> "{\\"name\\":\\"alice\\"}"} };\n`;
+  let deleteClause = `WITH <${page.id}> DELETE WHERE { <${node.id}> <${ont.sdoc.option}> ?o };\n`;
+  let insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.option}> "{\\"name\\":\\"alice\\"}"} };\n`;
 
   beforeEach(() => {
     option = new JsonProperty(ont.sdoc.option, 'option');
@@ -116,26 +116,26 @@ describe('Json Property', () => {
 
   it('gets sparql after set from null', () => {
     option.set({ name: 'alice' })
-    const sparql: string = option.getSparqlForUpdate(page.uri, node.uri);
+    const sparql: string = option.getSparqlForUpdate(page.id, node.id);
     assert.strictEqual(sparql, insertClause);
   });
 
   describe('after init', () => {
     beforeEach(() => {
-      insertClause = `INSERT DATA { GRAPH <${page.uri}> { <${node.uri}> <${ont.sdoc.option}> "{\\"bold\\":true,\\"size\\":25}"} };\n`;
+      insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.option}> "{\\"bold\\":true,\\"size\\":25}"} };\n`;
       option.fromQuad(quads[2]);
     })
 
     it('parses quad as json', () => {
       assert.deepStrictEqual(option.json, { bold: true });
-      const sparql: string = option.getSparqlForUpdate(page.uri, node.uri);
+      const sparql: string = option.getSparqlForUpdate(page.id, node.id);
       assert.strictEqual(sparql, '');
     });
 
     it('gets sparql after adding a property', () => {
       option.set({ size: 25 })
       assert.deepStrictEqual(option.json, { size: 25, bold: true });
-      const sparql: string = option.getSparqlForUpdate(page.uri, node.uri);
+      const sparql: string = option.getSparqlForUpdate(page.id, node.id);
       assert.strictEqual(sparql, deleteClause + insertClause);
     });
 

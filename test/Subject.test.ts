@@ -1,7 +1,7 @@
 import { Subject } from '../src/Subject'
 import { Branch, createNode } from '../src/Node';
 import { ont } from '../config/ontology'
-import { config } from '../config/test'
+import { config, turtle } from '../config/test'
 import * as assert from 'power-assert';
 
 import * as n3 from 'n3';
@@ -21,32 +21,32 @@ describe('Subject', () => {
   let quads: any[];
 
   beforeEach(() => {
-    branch2 = <Branch>createNode(para2.uri, para2.type, nodeMap);
-    quads = parser.parse(para2.turtle);
+    branch2 = <Branch>createNode(para2, nodeMap);
+    quads = parser.parse(turtle.para[2]);
     quads.forEach(quad => branch2.fromQuad(quad, nodeMap));
   });
 
   describe('Create Node', () => {
 
     it('parses from quads', () => {
-      assert.equal(branch2.get('uri'), para2.uri)
+      assert.equal(branch2.get('uri'), para2.id)
       assert.equal(branch2.get('type'), para2.type)
       assert.equal(branch2.get('next'), '')
-      assert.equal(branch2.get('firstChild'), para2.json.children[0].uri)
+      assert.equal(branch2.get('firstChild'), para2.children[0].id)
     })
 
     it('translates to Json', () => {
       assert.deepStrictEqual(branch2.toJson(), {
-        ...para2.json,
+        ...para2,
         children: []
       });
     });
 
     it('discards an unknown quad', () => {
-      let turtle = `<${para2.uri}> <${ont.sdoc.text}> "abc".`;
+      let turtle = `<${para2.id}> <${ont.sdoc.text}> "abc".`;
       let quads = parser.parse(turtle)
       branch2.fromQuad(quads[0], nodeMap)
-      let sparql = branch2.getSparqlForUpdate(page.uri);
+      let sparql = branch2.getSparqlForUpdate(page.id);
       assert.strictEqual(sparql, '')
     });
   });
@@ -69,7 +69,7 @@ describe('Subject', () => {
 
     it('ignores id and children properties', () => {
       branch2.set({ id: 'fake id', children: ['something'] });
-      let sparql = branch2.getSparqlForUpdate(page.uri);
+      let sparql = branch2.getSparqlForUpdate(page.id);
       assert.strictEqual(sparql, '')
     })
 
@@ -100,7 +100,7 @@ describe('Subject', () => {
 
   describe('#nextNode property', () => {
     beforeEach(() => {
-      branch1 = <Branch>createNode(para1.uri, para1.type, nodeMap);
+      branch1 = <Branch>createNode(para1, nodeMap);
     })
 
     it('setNext() is together with set("next")', () => {
@@ -118,16 +118,16 @@ describe('Subject', () => {
     });
 
     it('parses #nextNode from quads and synced with getNext()', () => {
-      let quads = parser.parse(para1.turtle)
+      let quads = parser.parse(turtle.para[1])
       // note the index of quads
       branch1.fromQuad(quads[1], nodeMap)
       assert.strictEqual(branch1.getNext(), branch2)
     })
 
     it('throws if #nextNode inconsistent with next', () => {
-      let quads = parser.parse(para1.turtle)
+      let quads = parser.parse(turtle.para[1])
       // note the index of quads
-      quads[1].object.id = para0.uri
+      quads[1].object.id = para0.id
       try {
         branch1.fromQuad(quads[1], nodeMap)
       } catch (e) {
@@ -164,8 +164,8 @@ describe('Subject', () => {
 
     it('generates sparql after deletion', () => {
       branch2.delete();
-      const sparql = branch2.getSparqlForUpdate(page.uri);
-      assert.strictEqual(sparql, `WITH <${page.uri}> DELETE { <${para2.uri}> ?p ?o } WHERE { <${para2.uri}> ?p ?o };\n`);
+      const sparql = branch2.getSparqlForUpdate(page.id);
+      assert.strictEqual(sparql, `WITH <${page.id}> DELETE { <${para2.id}> ?p ?o } WHERE { <${para2.id}> ?p ?o };\n`);
     });
 
     it('disallows committing a deleted node', () => {

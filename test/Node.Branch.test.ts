@@ -21,19 +21,19 @@ describe('Branch', () => {
   let leaf3: Leaf
 
   beforeEach(() => {
-    branch = <Branch>createNode(para0.uri, para0.type, nodeMap);
+    branch = <Branch>createNode(para0, nodeMap);
 
-    leaf0 = <Leaf>createNode(text0.uri, text0.type, nodeMap);
-    leaf1 = <Leaf>createNode(text1.uri, text1.type, nodeMap);
-    leaf2 = <Leaf>createNode(text2.uri, text2.type, nodeMap);
-    leaf3 = <Leaf>createNode(text3.uri, text3.type, nodeMap);
+    leaf0 = <Leaf>createNode(text0, nodeMap);
+    leaf1 = <Leaf>createNode(text1, nodeMap);
+    leaf2 = <Leaf>createNode(text2, nodeMap);
+    leaf3 = <Leaf>createNode(text3, nodeMap);
   });
 
   describe('Insertion', () => {
 
     it('converts to Json', () => {
       assert.deepStrictEqual(branch.toJson(), {
-        id: para0.uri,
+        id: para0.id,
         type: para0.type,
         children: []
       })

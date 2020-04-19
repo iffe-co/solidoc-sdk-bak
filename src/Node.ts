@@ -1,5 +1,6 @@
 import { NamedNodeProperty, TextProperty } from './Property';
 import { Subject } from './Subject';
+import { Node } from './interface'
 
 class Branch extends Subject {
   private _children: Subject[] = [];
@@ -11,14 +12,12 @@ class Branch extends Subject {
 
   public toJson(): Element {
     let result = super.toJson()
-    // return {
-    //   ...result,
-    //   children: []
-    // }
+
     result.children = []
     this._children.forEach(child => {
       result.children.push(child.toJson())
     })
+
     return result
   }
 
@@ -168,21 +167,21 @@ class Leaf extends Subject {
   }
 }
 
-const createNode = (uri: string, type: string, nodeMap: Map<string, Subject>): Subject => {
+const createNode = (json: Node, nodeMap: Map<string, Subject>): Subject => {
   let node: Subject
-  switch (type) {
+  switch (json.type) {
     case 'http://www.solidoc.net/ontologies#Root':
-      node = new Root(uri)
+      node = new Root(json.id)
       break
     case 'http://www.solidoc.net/ontologies#Leaf':
-      node = new Leaf(uri)
+      node = new Leaf(json.id)
       break
     default:
-      node = new Branch(uri)
+      node = new Branch(json.id)
       break
   }
-  node.set({ type: type })
-  nodeMap.set(uri, node)
+  node.set({ type: json.type })
+  nodeMap.set(json.id, node)
   return node
 }
 

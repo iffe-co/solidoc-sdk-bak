@@ -50,7 +50,7 @@ class Page extends Graph {
   }
 
   private _insert = (json: Node, parent: Branch, offset: number, nodeMap: Map<string, Subject>): Subject => {
-    let curr: Subject = createNode(json.id, json.type, nodeMap)
+    let curr: Subject = createNode(json, nodeMap)
 
     curr.set(json);
     parent.insertChildren(curr, offset);
@@ -73,7 +73,6 @@ class Page extends Graph {
       case 'remove_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
         const curr: Subject | undefined = parent.removeChildren(op.path.offset, 1);
-        // const curr = parent.getIndexedChild(op.path.offset)
         curr && curr.delete();
         break
       }
@@ -125,7 +124,7 @@ class Page extends Graph {
             text: clipped
           }
           // Recursive.insert(json, parent, op.path.offset + 1, this._nodeMap)
-          let next: Subject = createNode(json.id, json.type, this._nodeMap)
+          let next: Subject = createNode(json, this._nodeMap)
           next.set(json);
           parent.insertChildren(next, op.path.offset + 1);
         } else {
@@ -140,7 +139,7 @@ class Page extends Graph {
             children: []
           }
           // let next: Subject = Recursive.insert(json, parent, op.path.offset + 1, this._nodeMap);
-          let next: Subject = createNode(json.id, json.type, this._nodeMap)
+          let next: Subject = createNode(json, this._nodeMap)
           next.set(json);
           parent.insertChildren(next, op.path.offset + 1);
           (<Branch>next).insertChildren(child, 0)

@@ -2,7 +2,7 @@ import { ont } from './ontology'
 
 export const config: any = {
   page: {
-    uri: 'http://example.org/alice',
+    id: 'http://example.org/alice',
   },
   para: [{}, {}, {}],
   text: [
@@ -13,23 +13,17 @@ export const config: any = {
 }
 
 for (let i = 0; i < 9; i++) {
-  config.text[i].id = 't' + i
-  config.text[i].uri = config.page.uri + '#' + config.text[i].id
-  config.text[i].type = ont.sdoc.leaf
-  config.text[i].json = {
-    id: config.text[i].uri,
+  config.text[i] = {
+    id: config.page.id + '#t' + i,
     type: ont.sdoc.leaf,
     text: 'text ' + i,
-    bold: true
+    bold: true,
   }
 }
 
 for (let i = 0; i < 3; i++) {
-  config.para[i].id = 'p' + i
-  config.para[i].uri = config.page.uri + '#' + config.para[i].id
-  config.para[i].type = ont.sdoc.paragraph
-  config.para[i].json = {
-    id: config.para[i].uri,
+  config.para[i] = {
+    id: config.page.id + '#p' + i,
     type: ont.sdoc.paragraph,
     children: [
       config.text[i * 3],
@@ -41,42 +35,48 @@ for (let i = 0; i < 3; i++) {
 
 config.page = {
   ...config.page,
-  id: config.page.uri,
   type: ont.sdoc.root,
-  json: {
-    id: config.page.uri,
-    type: ont.sdoc.root,
-    title: 'Homepage',
-    children: [
-      config.para[0],
-      config.para[1],
-      config.para[2],
-    ]
-  }
+  title: 'Homepage',
+  children: [
+    config.para[0],
+    config.para[1],
+    config.para[2],
+  ]
 }
 
-config.page.turtle = `<${config.page.uri}> a <${ont.sdoc.root}>;
-  <${ont.dct.title}> "${config.page.json.title}";
-  <${ont.sdoc.firstChild}> <${config.para[0].uri}>.`
+export const turtle: any = {
+  page: '',
+  para: ['', '', ''],
+  text: [
+    '', '', '',
+    '', '', '',
+    '', '', '',
+  ],
+}
 
-config.para[0].turtle = `<${config.para[0].uri}> a <${ont.sdoc.paragraph}>;
-  <${ont.sdoc.next}> <${config.para[1].uri}>;
-  <${ont.sdoc.firstChild}> <${config.text[0].uri}>.`
 
-config.para[1].turtle = `<${config.para[1].uri}> a <${ont.sdoc.paragraph}>;
-  <${ont.sdoc.next}> <${config.para[2].uri}>;
-  <${ont.sdoc.firstChild}> <${config.text[3].uri}>.`
+turtle.page = `<${config.page.id}> a <${ont.sdoc.root}>;
+  <${ont.dct.title}> "${config.page.title}";
+  <${ont.sdoc.firstChild}> <${config.para[0].id}>.`
 
-config.para[2].turtle = `<${config.para[2].uri}> a <${ont.sdoc.paragraph}>;
-  <${ont.sdoc.firstChild}> <${config.text[6].uri}>.`
+turtle.para[0] = `<${config.para[0].id}> a <${ont.sdoc.paragraph}>;
+  <${ont.sdoc.next}> <${config.para[1].id}>;
+  <${ont.sdoc.firstChild}> <${config.text[0].id}>.`
+
+turtle.para[1] = `<${config.para[1].id}> a <${ont.sdoc.paragraph}>;
+  <${ont.sdoc.next}> <${config.para[2].id}>;
+  <${ont.sdoc.firstChild}> <${config.text[3].id}>.`
+
+turtle.para[2] = `<${config.para[2].id}> a <${ont.sdoc.paragraph}>;
+  <${ont.sdoc.firstChild}> <${config.text[6].id}>.`
 
 for (let i = 0; i < 8; i++) {
-  config.text[i].turtle = `<${config.text[i].uri}> a <${ont.sdoc.leaf}>;`
-  config.text[i].turtle += `  <${ont.sdoc.next}> <${config.text[i+1].uri}>;`
-  config.text[i].turtle += `  <${ont.sdoc.text}> '${config.text[i].json.text}';`
-  config.text[i].turtle += `  <${ont.sdoc.option}> '{"bold":true}'.`
+  turtle.text[i] = `<${config.text[i].id}> a <${ont.sdoc.leaf}>;`
+  turtle.text[i] += `  <${ont.sdoc.next}> <${config.text[i+1].id}>;`
+  turtle.text[i] += `  <${ont.sdoc.text}> '${config.text[i].text}';`
+  turtle.text[i] += `  <${ont.sdoc.option}> '{"bold":true}'.`
 }
 
-config.text[8].turtle = `<${config.text[8].uri}> a <${ont.sdoc.leaf}>;
-  <${ont.sdoc.text}> '${config.text[8].json.text}';
+turtle.text[8] = `<${config.text[8].id}> a <${ont.sdoc.leaf}>;
+  <${ont.sdoc.text}> '${config.text[8].text}';
   <${ont.sdoc.option}> '{"bold":true}'.`
