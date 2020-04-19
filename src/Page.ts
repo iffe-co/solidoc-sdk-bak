@@ -40,7 +40,7 @@ class Page extends Graph {
 
     let currUri = head.get('firstChild');
     let curr: Subject | undefined = nodeMap.get(currUri)
-    curr && head.insertChildren(curr, 0)
+    curr && head.attachChildren(curr, 0)
 
     while (curr) {
       this._assembleTree(curr, nodeMap);
@@ -51,7 +51,7 @@ class Page extends Graph {
   private _insert = (json: Node, parent: Branch, offset: number, nodeMap: Map<string, Subject>): Subject => {
     let curr: Subject = createNode(json, nodeMap)
 
-    parent.insertChildren(curr, offset);
+    parent.attachChildren(curr, offset);
 
     for (let i = 0; curr instanceof Branch && i < json.children.length; i++) {
       this._insert(json.children[i], curr, i, nodeMap)
@@ -70,7 +70,7 @@ class Page extends Graph {
 
       case 'remove_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        const curr: Subject | undefined = parent.removeChildren(op.path.offset, 1);
+        const curr: Subject | undefined = parent.detachChildren(op.path.offset, 1);
         curr && curr.delete();
         break
       }
@@ -79,17 +79,17 @@ class Page extends Graph {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
         const newParent: Branch = this._getBranchInstance(op.newPath.parentUri);
 
-        const curr: Subject | undefined = parent.removeChildren(op.path.offset, 1);
+        const curr: Subject | undefined = parent.detachChildren(op.path.offset, 1);
         if (!curr) {
           throw new Error('No such node')
         }
 
         if (curr instanceof Branch && curr.isAncestor(newParent)) {
-          parent.insertChildren(curr, op.path.offset);
+          parent.attachChildren(curr, op.path.offset);
           throw new Error('Trying to append the node to itself or its descendent')
         }
 
-        newParent.insertChildren(curr, op.newPath.offset);
+        newParent.attachChildren(curr, op.newPath.offset);
         break
       }
 
@@ -101,12 +101,12 @@ class Page extends Graph {
         if (prev instanceof Leaf && curr instanceof Leaf) {
           prev.insertText(Infinity, curr.get('text'));
         } else if (prev instanceof Branch && curr instanceof Branch) {
-          let child: Subject | undefined = curr.removeChildren(0, Infinity)
-          prev.insertChildren(child, Infinity)
+          let child: Subject | undefined = curr.detachChildren(0, Infinity)
+          prev.attachChildren(child, Infinity)
         } else {
           throw new Error(`Cannot merge.`);
         }
-        parent.removeChildren(op.path.offset, 1)
+        parent.detachChildren(op.path.offset, 1)
         break
       }
 
@@ -114,7 +114,7 @@ class Page extends Graph {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
         const curr: Subject | undefined = parent.getIndexedChild(op.path.offset);
         let next = curr?.split(op.position, op.properties, this._nodeMap);
-        parent.insertChildren(next, op.path.offset + 1);
+        parent.attachChildren(next, op.path.offset + 1);
         break
       }
 

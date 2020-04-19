@@ -40,7 +40,7 @@ describe('Branch', () => {
     })
 
     it('inserts one child to a parent without children', () => {
-      branch.insertChildren(leaf0, 0);
+      branch.attachChildren(leaf0, 0);
       assert.strictEqual(branch.getChildrenNum(), 1);
       assert.strictEqual(branch.getIndexedChild(0), leaf0)
       assert.strictEqual(branch.getIndexedChild(1), undefined)
@@ -50,28 +50,28 @@ describe('Branch', () => {
 
     it('inserts a bunch of children to parent without children', () => {
       leaf0.setNext(leaf1)
-      branch.insertChildren(leaf0, 0);
+      branch.attachChildren(leaf0, 0);
       assert.strictEqual(branch.getChildrenNum(), 2);
     })
 
     it('inserts a bunch of children to the tail', () => {
       leaf0.setNext(leaf1)
-      branch.insertChildren(leaf0, Infinity);
+      branch.attachChildren(leaf0, Infinity);
       assert.strictEqual(branch.getChildrenNum(), 2);
     })
 
     it('inserts a bunch of children to parent with existing children', () => {
       leaf0.setNext(leaf1)
-      branch.insertChildren(leaf0, 0);
+      branch.attachChildren(leaf0, 0);
       leaf2.setNext(leaf3)
-      branch.insertChildren(leaf2, 1);
+      branch.attachChildren(leaf2, 1);
       assert.strictEqual(branch.getChildrenNum(), 4);
       assert.strictEqual(branch.getLastChild(), leaf1);
     })
 
     it('throws on inserting an undefined child', () => {
       try {
-        branch.insertChildren(undefined, 0)
+        branch.attachChildren(undefined, 0)
       } catch (e) {
         return
       }
@@ -82,15 +82,15 @@ describe('Branch', () => {
   describe('Deletion', () => {
 
     beforeEach(() => {
-      branch.insertChildren(leaf0, 0);
-      branch.insertChildren(leaf1, 1);
-      branch.insertChildren(leaf2, 2);
-      branch.insertChildren(leaf3, 3);
+      branch.attachChildren(leaf0, 0);
+      branch.attachChildren(leaf1, 1);
+      branch.attachChildren(leaf2, 2);
+      branch.attachChildren(leaf3, 3);
     })
 
     it('throws on deleting if length <= 0', () => {
       try {
-        branch.removeChildren(0, 0)
+        branch.detachChildren(0, 0)
       } catch (e) {
         return
       }
@@ -98,7 +98,7 @@ describe('Branch', () => {
     });
 
     it('deletes at the beginning', () => {
-      branch.removeChildren(0, 1);
+      branch.detachChildren(0, 1);
       assert.strictEqual(branch.getChildrenNum(), 3);
       assert.strictEqual(branch.getIndexedChild(0), leaf1)
       assert.strictEqual(branch.getIndexedChild(1), leaf2)
@@ -106,12 +106,12 @@ describe('Branch', () => {
     })
 
     it('deletes in the middle', () => {
-      branch.removeChildren(1, 2);
+      branch.detachChildren(1, 2);
       assert.strictEqual(branch.getChildrenNum(), 2);
     })
 
     it('deletes all', () => {
-      branch.removeChildren(0, Infinity);
+      branch.detachChildren(0, Infinity);
       assert.strictEqual(branch.getChildrenNum(), 0)
     })
 

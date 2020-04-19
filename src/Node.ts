@@ -32,7 +32,7 @@ class Branch extends Subject {
     return this._children[this._children.length - 1]
   }
 
-  public insertChildren = (curr: Subject | undefined, offset: number) => {
+  public attachChildren = (curr: Subject | undefined, offset: number) => {
     if (!curr) {
       throw new Error('Trying to insert a null subject')
     }
@@ -55,7 +55,7 @@ class Branch extends Subject {
     curr.setNext(next)
   }
 
-  public removeChildren = (offset: number, length: number): Subject | undefined => {
+  public detachChildren = (offset: number, length: number): Subject | undefined => {
     if (length <= 0) {
       // TODO: allow length === 0 ??
       throw new Error(`Remove children: offset = ${offset}, length = ${length}`)
@@ -102,17 +102,15 @@ class Branch extends Subject {
   }
 
   public split(offset: number, properties: any, nodeMap: Map<string, Subject>): Subject {
-    let child: Subject | undefined = this.removeChildren(offset, Infinity);
-    if (!child) {
-      throw new Error('No such child')
-    }
+    let child: Subject | undefined = this.detachChildren(offset, Infinity);
+
     let json: any = {
       ...this.toJson(), // TODO: this step could be expensive
       ...properties, // TODO: could this override the type?
       children: []
     }
     let next = <Branch>createNode(json, nodeMap);
-    next.insertChildren(child, 0);
+    child && next.attachChildren(child, 0);
     return next
   }
 }
