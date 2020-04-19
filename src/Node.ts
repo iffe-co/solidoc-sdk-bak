@@ -93,11 +93,11 @@ class Root extends Branch {
     }
   }
 
-  public fromQuad(quad: any) {
+  public fromQuad(quad: any, nodeMap: Map<string, Subject>) {
     if (quad.predicate.id === 'http://www.solidoc.net/ontologies#nextNode') {
       throw new Error('fromQuad: The root node cannot have syblings: ' + this._uri)
     }
-    super.fromQuad(quad)
+    super.fromQuad(quad, nodeMap)
   }
 
   public setNext(node: Subject | undefined) {

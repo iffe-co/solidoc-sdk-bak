@@ -1,3 +1,4 @@
+import { Subject } from '../src/Subject'
 import { Branch, createNode } from '../src/Node';
 import { ont } from '../config/ontology'
 import { config } from '../config/test'
@@ -6,12 +7,14 @@ import * as assert from 'power-assert';
 import * as n3 from 'n3';
 const parser = new n3.Parser();
 
+const nodeMap = new Map<string, Subject>();
+
 const para0 = config.para[0]
 const para1 = config.para[1]
 const para2 = config.para[2]
 const page = config.page
 
-describe('Paragraph', () => {
+describe('Subject', () => {
   // let para0: Branch;
   let branch1: Branch;
   let branch2: Branch;
@@ -19,8 +22,9 @@ describe('Paragraph', () => {
 
   beforeEach(() => {
     branch2 = <Branch>createNode(para2.uri, para2.type);
+    nodeMap.set(para2.uri, branch2)
     quads = parser.parse(para2.turtle);
-    quads.forEach(quad => branch2.fromQuad(quad));
+    quads.forEach(quad => branch2.fromQuad(quad, nodeMap));
   });
 
   describe('Create Node', () => {
@@ -42,7 +46,7 @@ describe('Paragraph', () => {
     it('discards an unknown quad', () => {
       let turtle = `<${para2.uri}> <${ont.sdoc.text}> "abc".`;
       let quads = parser.parse(turtle)
-      branch2.fromQuad(quads[0])
+      branch2.fromQuad(quads[0], nodeMap)
       let sparql = branch2.getSparqlForUpdate(page.uri);
       assert.strictEqual(sparql, '')
     });
@@ -98,6 +102,7 @@ describe('Paragraph', () => {
   describe('#nextNode property', () => {
     beforeEach(() => {
       branch1 = <Branch>createNode(para1.uri, para1.type);
+      nodeMap.set(para1.uri, branch1)
     })
 
     it('setNext() is together with set("next")', () => {
@@ -117,19 +122,8 @@ describe('Paragraph', () => {
     it('parses #nextNode from quads and synced with getNext()', () => {
       let quads = parser.parse(para1.turtle)
       // note the index of quads
-      branch1.fromQuad(quads[1], branch2)
+      branch1.fromQuad(quads[1], nodeMap)
       assert.strictEqual(branch1.getNext(), branch2)
-    })
-
-    it('throws if #nextNode without next', () => {
-      let quads = parser.parse(para1.turtle)
-      try {
-        // note the index of quads
-        branch1.fromQuad(quads[1])
-      } catch (e) {
-        return
-      }
-      assert(0)
     })
 
     it('throws if #nextNode inconsistent with next', () => {
@@ -137,7 +131,7 @@ describe('Paragraph', () => {
       // note the index of quads
       quads[1].object.id = para0.uri
       try {
-        branch1.fromQuad(quads[1], branch2)
+        branch1.fromQuad(quads[1], nodeMap)
       } catch (e) {
         return
       }

@@ -15,13 +15,14 @@ abstract class Subject {
     this._predicates.option = new JsonProperty('http://www.solidoc.net/ontologies#option', 'option');
   }
 
-  public fromQuad(quad: any, next?: Subject) {
+  public fromQuad(quad: any, nodeMap: Map<string, Subject>) {
     let key = uriToKey[quad.predicate.id];
     if (!key || !this._predicates[key]) {
       console.log('Quad not matched: ' + JSON.stringify(quad));
       return;
     }
-    if (key == 'next' && quad.object.id) {
+    if (key == 'next') {
+      let next = nodeMap.get(quad.object.id)
       if (!next || next._uri != quad.object.id) {
         throw new Error('#nextNode inconsistency: ' + quad.object.id)
       }

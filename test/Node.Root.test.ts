@@ -1,3 +1,4 @@
+import { Subject } from '../src/Subject';
 import { Root, createNode } from '../src/Node';
 import { ont } from '../config/ontology'
 import { config } from '../config/test'
@@ -5,6 +6,8 @@ import * as assert from 'power-assert';
 
 import * as n3 from 'n3';
 const parser = new n3.Parser();
+
+const nodeMap = new Map<string, Subject>();
 
 const page = config.page
 const quads: any[] = parser.parse(page.turtle);
@@ -14,7 +17,7 @@ describe('Root', () => {
 
   beforeEach(() => {
     root = <Root>createNode(page.uri, page.type);
-    quads.forEach(quad => root.fromQuad(quad));
+    quads.forEach(quad => root.fromQuad(quad, nodeMap));
   });
 
   it('parses from quads', () => {
@@ -40,7 +43,7 @@ describe('Root', () => {
     let turtle = `<${page.uri}> <${ont.sdoc.next}> <${config.para[0].uri}>.`;
     let quads = parser.parse(turtle)
     try {
-      root.fromQuad(quads[0])
+      root.fromQuad(quads[0], nodeMap)
     } catch (e) {
       return
     }

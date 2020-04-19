@@ -1,9 +1,12 @@
+import { Subject } from '../src/Subject';
 import { Leaf, createNode } from '../src/Node';
 import { config } from '../config/test'
 import * as assert from 'power-assert';
 
 import * as n3 from 'n3';
 const parser = new n3.Parser();
+const nodeMap = new Map<string, Subject>();
+
 
 const text = config.text[8]
 // const page = config.page
@@ -14,7 +17,7 @@ describe('Leaf', () => {
 
   beforeEach(() => {
     leaf = <Leaf>createNode(text.uri, text.type);
-    quads.forEach(quad => leaf.fromQuad(quad));
+    quads.forEach(quad => leaf.fromQuad(quad, nodeMap));
   });
 
   it('parses from quads', () => {

@@ -32,13 +32,7 @@ abstract class Graph {
       if (!node) {
         throw new Error('Node does not exist: ' + quad.subject.id)
       }
-      // this is to make node.get('next') and node.getNext() always consistent
-      if (quad.predicate.id == 'http://www.solidoc.net/ontologies#nextNode') {
-        let next = this._nodeMap.get(quad.object.id);
-        node.fromQuad(quad, next)
-      } else {
-        node.fromQuad(quad);
-      }
+      node.fromQuad(quad, this._nodeMap)
     })
   }
 

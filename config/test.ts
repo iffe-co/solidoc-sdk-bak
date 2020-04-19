@@ -67,8 +67,15 @@ config.para[1].turtle = `<${config.para[1].uri}> a <${ont.sdoc.paragraph}>;
   <${ont.sdoc.next}> <${config.para[2].uri}>;
   <${ont.sdoc.firstChild}> <${config.text[3].uri}>.`
 
-  config.para[2].turtle = `<${config.para[2].uri}> a <${ont.sdoc.paragraph}>;
+config.para[2].turtle = `<${config.para[2].uri}> a <${ont.sdoc.paragraph}>;
   <${ont.sdoc.firstChild}> <${config.text[6].uri}>.`
+
+for (let i = 0; i < 8; i++) {
+  config.text[i].turtle = `<${config.text[i].uri}> a <${ont.sdoc.leaf}>;`
+  config.text[i].turtle += `  <${ont.sdoc.next}> <${config.text[i+1].uri}>;`
+  config.text[i].turtle += `  <${ont.sdoc.text}> '${config.text[i].json.text}';`
+  config.text[i].turtle += `  <${ont.sdoc.option}> '{"bold":true}'.`
+}
 
 config.text[8].turtle = `<${config.text[8].uri}> a <${ont.sdoc.leaf}>;
   <${ont.sdoc.text}> '${config.text[8].json.text}';
