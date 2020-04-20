@@ -35,10 +35,10 @@ const Exec = {
   insertNode: (json: Node, path: Path, nodeMap: Map<string, Subject>): Subject => {
     const parent: Subject = getParentInstance(path.parentId, nodeMap);
 
-    const node = Exec.createNode(json, nodeMap);
 
-    parent.attachChildren(node, path.offset)
+    const node = <Subject>Exec.insert(parent, json, path.offset, nodeMap);
 
+    // TODO: might not need a return
     return node
   },
 
@@ -48,25 +48,43 @@ const Exec = {
 
     const node = <Leaf>parent.getIndexedChild(path.offset)
 
-    node.attachChildren(text, path.offset)
+    Exec.insert(node, text, path.offset, nodeMap)
+  },
+
+  insert: (parent: Subject, content: Node | string, offset: number, nodeMap: Map<string, Subject>) => {
+
+    const node = (typeof content === 'string') ? content : Exec.createNode(content, nodeMap);
+
+    parent.attachChildren(node, offset)
+
+    return node
+  },
+
+  remove: (parent: Subject, offset: number, length: number): Subject | string | undefined => {
+
+    let node = parent.detachChildren(offset, length);
+
+    (node && typeof node !== 'string' && node.delete());
+
+    return node
   },
 
   removeText: (path: Path, length: number, nodeMap: Map<string, Subject>) => {
 
-    const parent = getParentInstance(path.parentId, nodeMap);
+    const parent: Subject = getParentInstance(path.parentId, nodeMap);
 
     const node = <Leaf>parent.getIndexedChild(path.offset)
 
-    node.detachChildren(path.offset, length)
+    Exec.remove(node, path.offset, length)
   },
 
   removeNode: (path: Path, nodeMap: Map<string, Subject>): Subject | undefined => {
     const parent: Subject = getParentInstance(path.parentId, nodeMap)
 
-    const node = <Subject|undefined>parent.detachChildren(path.offset, 1)
 
-    node?.delete()
+    let node = <Subject | undefined>Exec.remove(parent, path.offset, 1)
 
+    // TODO: might not need a return
     return node
   },
 
