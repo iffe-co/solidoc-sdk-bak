@@ -61,28 +61,6 @@ const Exec = {
     newParent.attachChildren(curr, newOffset);
   },
 
-
-  getBrotherPath: (path: Path, delta: number): Path => {
-    return {
-      ...path,
-      offset: path.offset + delta
-    }
-  },
-
-  getChildPath: (path: Path, childOffset: number, nodeMap: Map<string, Subject>): Path => {
-    const parent = getParentInstance(path.parentId, nodeMap);
-    const curr = parent.getIndexedChild(path.offset);
-
-    if (!curr || !(curr instanceof Subject)) {
-      throw new Error('Cannot get path')
-    }
-
-    return {
-      parentId: curr.get('id'),
-      offset: childOffset,
-    }
-  },
-
   getProperties: (path: Path, newProperties: Partial<Node>, nodeMap: Map<string, Subject>): Node => {
     const parent = getParentInstance(path.parentId, nodeMap);
     const curr = parent.getIndexedChild(path.offset);
