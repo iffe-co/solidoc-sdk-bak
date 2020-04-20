@@ -32,13 +32,9 @@ const Exec = {
     return node
   },
 
-  insertNodeRecursive: (json: Node, path: Path, nodeMap: Map<string, Subject>): Subject => {
+  insertNodeRecursive: (json: Node, path: Path, nodeMap: Map<string, Subject>) => {
 
-    const parent: Subject = getParentInstance(path.parentId, nodeMap);
-
-    const node = Exec.createNode(json, nodeMap);
-
-    (parent instanceof Branch) && parent.attachChildren(node, path.offset)
+    const node = Exec.insertNode(json, path, nodeMap)
 
     for (let i = 0; node instanceof Branch && i < json.children.length; i++) {
       Exec.insertNodeRecursive(json.children[i], {
@@ -47,7 +43,35 @@ const Exec = {
       }, nodeMap);
     }
 
+    return
+  },
+
+  insertNode: (json: Node, path: Path, nodeMap: Map<string, Subject>): Subject => {
+    const parent: Subject = getParentInstance(path.parentId, nodeMap);
+
+    const node = Exec.createNode(json, nodeMap);
+
+    parent.attachChildren(node, path.offset)
+
     return node
+  },
+
+  insertText: (text: string, path: Path, nodeMap: Map<string, Subject>) => {
+
+    const parent: Subject = getParentInstance(path.parentId, nodeMap);
+
+    const node = <Leaf>parent.getIndexedChild(path.offset)
+
+    node.attachChildren(text, path.offset)
+  },
+
+  removeText: (path: Path, length: number, nodeMap: Map<string, Subject>) => {
+
+    const parent = getParentInstance(path.parentId, nodeMap);
+
+    const node = <Leaf>parent.getIndexedChild(path.offset)
+
+    node.detachChildren(path.offset, length)
   },
 
   removeNodeRecursive: (path: Path, nodeMap: Map<string, Subject>) => {

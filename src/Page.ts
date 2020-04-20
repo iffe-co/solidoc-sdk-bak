@@ -1,4 +1,4 @@
-import { Branch, Leaf } from './Node';
+import { Branch } from './Node';
 import { Subject } from './Subject';
 import { Graph } from './Graph';
 import { Exec } from './Exec'
@@ -9,26 +9,6 @@ class Page extends Graph {
   constructor(id: string, turtle: string) {
     super(id, turtle);
     this._assembleTree(this.getRoot(), this._nodeMap)
-  }
-
-  private _getBranchInstance = (id: string): Branch => {
-    let node = this._nodeMap.get(id);
-    if (!node || node.isDeleted()) {
-      throw new Error('The node does not exist: ' + id);
-    } else if (!(node instanceof Branch)) {
-      throw new Error('The request node is not a branch: ' + id)
-    }
-    return node;
-  }
-  private _getLeafInstance = (path: Path): Leaf => {
-    let parent: Branch = this._getBranchInstance(path.parentId);
-    let node = parent.getIndexedChild(path.offset)
-    if (!node || node.isDeleted()) {
-      throw new Error('The node does not exist: ' + path.parentId + ' offset = ' + path.offset);
-    } else if (!(node instanceof Leaf)) {
-      throw new Error('The request node is not a branch: ' + path.parentId + ' offset = ' + path.offset)
-    }
-    return node;
   }
 
   public toJson = (): Element => {
@@ -82,7 +62,7 @@ class Page extends Graph {
         const json = Exec.getProperties(op.path, op.properties, this._nodeMap)
         const nextPath: Path = Exec.getBrotherPath(op.path, +1)
 
-        Exec.insertNodeRecursive(json, nextPath, this._nodeMap);
+        Exec.insertNode(json, nextPath, this._nodeMap);
 
         const srcPath: Path = Exec.getChildPath(op.path, op.position, this._nodeMap);
         const dstPath: Path = Exec.getChildPath(nextPath, 0, this._nodeMap);
@@ -97,14 +77,12 @@ class Page extends Graph {
       }
 
       case 'insert_text': {
-        const leaf = this._getLeafInstance(op.path);
-        leaf.attachChildren(op.text, op.offset)
+        Exec.insertText(op.text, op.path, this._nodeMap)
         break
       }
 
       case 'remove_text': {
-        const leaf = this._getLeafInstance(op.path);
-        leaf.detachChildren(op.offset, op.text.length);
+        Exec.removeText(op.path, op.text.length, this._nodeMap)
         break
       }
 
