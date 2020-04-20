@@ -21,6 +21,13 @@ class Branch extends Subject {
     return result
   }
 
+  public toBlankJson(): Element {
+    return {
+      ...super.toJson(),
+      children: []
+    }
+  }
+
   private setFirstChild = (node: Subject | undefined) => {
     this.set({ firstChild: node ? node.get('id') : '' })
   }
@@ -138,10 +145,16 @@ class Leaf extends Subject {
   }
 
   public toJson = (): Text => {
-    let result = super.toJson();
     return {
-      ...result,
+      ...super.toJson(),
       text: this.get('text')
+    }
+  }
+
+  public toBlankJson(): Element {
+    return {
+      ...super.toJson(),
+      text: ''
     }
   }
 

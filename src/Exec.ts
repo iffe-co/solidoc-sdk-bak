@@ -113,10 +113,8 @@ const Exec = {
     }
 
     return {
-      ...curr.toJson(),
+      ...curr.toBlankJson(),
       ...newProperties,
-      children: [],
-      text: '',
     }
   },
 

@@ -39,6 +39,7 @@ abstract class Subject {
       ...option
     };
   }
+  public abstract toBlankJson(): any
 
   public get = (key: string): string => {
     if (key === 'id') return this._id;
