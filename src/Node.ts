@@ -95,15 +95,6 @@ class Branch extends Subject {
     return false
   }
 
-  public delete() {
-    super.delete()
-
-    // TODO: use map??
-    for (let i = 0; i < this.getChildrenNum(); i++) {
-      this._children[i].delete()
-    }
-  }
-
   public split(offset: number, properties: any, nodeMap: Map<string, Subject>): Subject | undefined {
     let child: Subject | undefined = this.detachChildren(offset, Infinity);
 

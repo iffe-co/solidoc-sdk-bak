@@ -49,6 +49,10 @@ abstract class Graph {
     return this._nodeMap.get(this._uri)
   }
 
+  public getNode = (uri: string): Subject | undefined => {
+    return this._nodeMap.get(uri)
+  }
+
   public getSparqlForUpdate = (): string => {
     let sparql = '';
     for (let node of this._nodeMap.values()) {

@@ -131,28 +131,31 @@ describe('Insert Node', () => {
   });
 })
 
-describe('Delete Node', () => {
+describe('Remove Node', () => {
   beforeEach(() => {
     page = new Page(pageUri, turtle);
   });
 
-  it('deletes a paragraph at the beginning', () => {
+  it('removes a paragraph at the beginning', () => {
     let op: Operation = { type: 'remove_node', path: { parentUri: pageUri, offset: 0 } }
     page.apply(op)
     assert.deepStrictEqual(extractChildrenId(page.toJson()), [pid2])
   });
-  it('deletes a paragraph in the end', () => {
+
+  it('removes a paragraph in the end', () => {
     let op: Operation = { type: 'remove_node', path: { parentUri: pageUri, offset: 1 } }
     page.apply(op)
     assert.deepStrictEqual(extractChildrenId(page.toJson()), [pid1])
   });
-  it('deletes text', () => {
+
+  it('removes text', () => {
     let op: Operation = { type: 'remove_node', path: { parentUri: paraUri1, offset: 0 } }
     page.apply(op)
     let pageJson = page.toJson()
     assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [])
   });
-  it('deletes paragraph after insertion', () => {
+
+  it('removes paragraph after insertion', () => {
     let paraJson3 = { id: 'tag3', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson3] }
     let op1: Operation = { type: 'insert_node', path: { parentUri: pageUri, offset: 1 }, node: paraJson3 }
     let op2: Operation = { type: 'remove_node', path: { parentUri: pageUri, offset: 0 } }
@@ -162,35 +165,26 @@ describe('Delete Node', () => {
     assert.deepStrictEqual(extractChildrenId(pageJson), [pid3, pid2])
     assert.deepStrictEqual(pageJson.children[0].children[0], textJson3)
   });
-  it('removes the deleted paragraph from memory after commit', () => {
+
+  it('the paragraph is marked as deleted', () => {
     let op: Operation = { type: 'remove_node', path: { parentUri: pageUri, offset: 1 } }
     page.apply(op)
-    page.commit();
-    try {
-      let op: Operation = { type: 'remove_node', path: { parentUri: paraUri2, offset: 0 } }
-      page.apply(op)
-    } catch (e) {
-      return
-    }
-    assert(0)
+    let para = page.getNode(paraUri2)
+    assert(para && para.isDeleted())
   });
-  it('does not delete at offset > length', () => {
+
+  it('the children text is also marked deleted', () => {
+    let op: Operation = { type: 'remove_node', path: { parentUri: pageUri, offset: 1 } }
+    page.apply(op)
+    let text = page.getNode(textUri2)
+    assert(text && text.isDeleted())
+  });
+
+  it('does not remove at offset > length', () => {
     let op: Operation = { type: 'remove_node', path: { parentUri: pageUri, offset: 2 } }
     page.apply(op)
     let pageJson = page.toJson()
     assert.deepStrictEqual(extractChildrenId(pageJson), [pid1, pid2])
-  });
-  it('removes the child text from memory after commit', () => {
-    let op: Operation = { type: 'remove_node', path: { parentUri: pageUri, offset: 1 } }
-    page.apply(op)
-    page.commit();
-    try {
-      let op: Operation = { type: 'remove_node', path: { parentUri: paraUri2, offset: 0 } }
-      page.apply(op)
-    } catch (e) {
-      return
-    }
-    assert(0)
   });
 });
 

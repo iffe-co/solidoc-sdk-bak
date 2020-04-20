@@ -22,31 +22,28 @@ const Exec = {
     return node
   },
 
-  insertNodeRecurrsive: (json: Node, nodeMap: Map<string, Subject>, parent: Branch | undefined, offset: number) : Subject => {
+  insertNodeRecursive: (json: Node, nodeMap: Map<string, Subject>, parent: Branch | undefined, offset: number) : Subject => {
 
     const node = Exec.createNode(json, nodeMap)
 
     parent?.attachChildren(node, offset)
 
     for (let i = 0; node instanceof Branch && i < json.children.length; i++ ) {
-      Exec.insertNodeRecurrsive(json.children[i], nodeMap, node, i)
+      Exec.insertNodeRecursive(json.children[i], nodeMap, node, i)
     }
 
     return node
   },
 
-  removeNodeRecurrsive: (parent: Branch, offset: number) => {
+  removeNodeRecursive: (parent: Branch, offset: number) => {
 
     const node = parent.detachChildren(offset, 1)
 
-    if (!node) return;
-
-    node.delete()
-
     for (let i = 0; node instanceof Branch && i < node.getChildrenNum(); i++) {
-      Exec.removeNodeRecurrsive(node, i)
+      Exec.removeNodeRecursive(node, i)
     }
-
+    // deletion should be at last, otherwise will throw    
+    node?.delete()
   },
 
   moveNode: (parent: Branch, offset: number, length: number, newParent: Branch, newOffset: number) => {

@@ -53,15 +53,16 @@ class Page extends Graph {
     switch (op.type) {
       case 'insert_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        Exec.insertNodeRecurrsive(op.node, this._nodeMap, parent, op.path.offset);
+        Exec.insertNodeRecursive(op.node, this._nodeMap, parent, op.path.offset);
         // parent.attachChildren(curr, op.path.offset);
         break
       }
 
       case 'remove_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        const curr: Subject | undefined = parent.detachChildren(op.path.offset, 1);
-        curr && curr.delete();
+        // const curr: Subject | undefined = parent.detachChildren(op.path.offset, 1);
+        // curr && curr.delete();
+        Exec.removeNodeRecursive(parent, op.path.offset)
         break
       }
 

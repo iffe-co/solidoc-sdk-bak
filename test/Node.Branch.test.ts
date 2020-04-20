@@ -18,7 +18,7 @@ describe('Branch', () => {
   let leaf4: Leaf
 
   beforeEach(() => {
-    branch = <Branch>Exec.insertNodeRecurrsive(para0, nodeMap, undefined, 0);
+    branch = <Branch>Exec.insertNodeRecursive(para0, nodeMap, undefined, 0);
 
     leaf0 = <Leaf>branch.getIndexedChild(0)
     leaf1 = <Leaf>branch.getIndexedChild(1)
@@ -73,7 +73,7 @@ describe('Branch', () => {
   describe('Deletion', () => {
 
     beforeEach(() => {
-      branch = <Branch>Exec.insertNodeRecurrsive(para0, nodeMap, undefined, 0);
+      branch = <Branch>Exec.insertNodeRecursive(para0, nodeMap, undefined, 0);
 
       leaf0 = <Leaf>branch.getIndexedChild(0)
       leaf1 = <Leaf>branch.getIndexedChild(1)
