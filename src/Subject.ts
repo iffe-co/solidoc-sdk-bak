@@ -101,11 +101,12 @@ abstract class Subject {
     });
   }
 
-  public undo = () => {
+  public undo(nodeMap: Map<string, Subject>) {
     this._isDeleted = false
     Object.keys(this._predicates).forEach(key => {
       this._predicates[key].undo();
     });
+    this._next = nodeMap.get(this.get('next'))
   }
 
   public delete() {

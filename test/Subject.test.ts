@@ -183,21 +183,28 @@ describe('Subject', () => {
 
     it('undoes deletion', () => {
       branch2.delete();
-      branch2.undo();
+      branch2.undo(nodeMap);
       assert.strictEqual(branch2.isDeleted(), false);
     });
 
     it('undoes attributes', () => {
       branch2.set({ type: ont.sdoc.numberedList })
       branch2.delete()
-      branch2.undo()
+      branch2.undo(nodeMap)
       assert.strictEqual(branch2.get('type'), para2.type)
+    })
+
+    it('undoes next', () => {
+      branch1 = <Branch>Exec.createNode(para1, nodeMap);
+      branch1.setNext(branch2);
+      branch1.undo(nodeMap);
+      assert.strictEqual(branch1.getNext(), undefined)
     })
 
     it('commits attributes', () => {
       branch2.set({ type: ont.sdoc.numberedList })
       branch2.commit()
-      branch2.undo()
+      branch2.undo(nodeMap)
       assert.strictEqual(branch2.get('type'), ont.sdoc.numberedList)
     })
 

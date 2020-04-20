@@ -100,6 +100,12 @@ class Branch extends Subject {
     }
     return false
   }
+
+  public undo(nodeMap: Map<string, Subject>) {
+    super.undo(nodeMap);
+    this._children = []
+  }
+
 }
 
 class Root extends Branch {

@@ -129,6 +129,14 @@ describe('Insert Node', () => {
     assert.deepStrictEqual(extractChildrenId(pageJson), [pid1, pid2, pid3])
     assert.deepStrictEqual(pageJson.children[2].children[0], textJson3)
   });
+
+  it ('undoes', () => {
+    let op: Operation = { type: 'insert_node', path: { parentId: paraId1, offset: 0 }, node: textJson3 }
+    page.apply(op)
+    page.undo()
+    let pageJson = page.toJson()
+    assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [tid1])
+  })
 })
 
 describe('Remove Node', () => {

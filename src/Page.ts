@@ -16,6 +16,11 @@ class Page extends Graph {
     return head?.toJson()
   }
 
+  public undo() {
+    super.undo()
+    this._assembleTree(this.getRoot(), this._nodeMap);
+  }
+
   private _assembleTree = (head: Subject | undefined, nodeMap: Map<string, Subject>) => {
     if (!(head instanceof Branch)) return
 

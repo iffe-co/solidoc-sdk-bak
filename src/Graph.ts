@@ -71,10 +71,11 @@ abstract class Graph {
     }
   }
 
-  public undo = () => {
+  public undo() {
     for (let node of this._nodeMap.values()) {
-      node.undo();
+      node.undo(this._nodeMap);
     }
+    // TODO: delete newly inserted nodes
   }
 }
 
