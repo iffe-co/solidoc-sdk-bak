@@ -52,15 +52,12 @@ class Page extends Graph {
   public apply = (op: Operation) => {
     switch (op.type) {
       case 'insert_node': {
-        Exec.insertNodeRecursive(op.node, this._nodeMap, op.path);
+        Exec.insertNodeRecursive(op.node, op.path, this._nodeMap);
         break
       }
 
       case 'remove_node': {
-        const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        // const curr: Subject | undefined = parent.detachChildren(op.path.offset, 1);
-        // curr && curr.delete();
-        Exec.removeNodeRecursive(parent, op.path.offset)
+        Exec.removeNodeRecursive(op.path, this._nodeMap)
         break
       }
 
