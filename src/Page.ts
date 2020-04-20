@@ -52,9 +52,7 @@ class Page extends Graph {
   public apply = (op: Operation) => {
     switch (op.type) {
       case 'insert_node': {
-        const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        Exec.insertNodeRecursive(op.node, this._nodeMap, parent, op.path.offset);
-        // parent.attachChildren(curr, op.path.offset);
+        Exec.insertNodeRecursive(op.node, this._nodeMap, op.path);
         break
       }
 

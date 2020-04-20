@@ -18,11 +18,15 @@ describe('Branch', () => {
   let leaf4: Leaf
 
   beforeEach(() => {
-    branch = <Branch>Exec.insertNodeRecursive(para0, nodeMap, undefined, 0);
+    branch = <Branch>Exec.createNode(para0, nodeMap);
 
-    leaf0 = <Leaf>branch.getIndexedChild(0)
-    leaf1 = <Leaf>branch.getIndexedChild(1)
-    leaf2 = <Leaf>branch.getIndexedChild(2)
+    leaf0 = <Leaf>Exec.createNode(config.text[0], nodeMap);
+    leaf1 = <Leaf>Exec.createNode(config.text[1], nodeMap);
+    leaf2 = <Leaf>Exec.createNode(config.text[2], nodeMap);
+
+    leaf0.setNext(leaf1);
+    leaf1.setNext(leaf2);
+    branch.attachChildren(leaf0, 0);
 
     leaf3 = <Leaf>Exec.createNode(config.text[3], nodeMap);
     leaf4 = <Leaf>Exec.createNode(config.text[4], nodeMap);
@@ -73,39 +77,43 @@ describe('Branch', () => {
   describe('Deletion', () => {
 
     beforeEach(() => {
-      branch = <Branch>Exec.insertNodeRecursive(para0, nodeMap, undefined, 0);
+      branch = <Branch>Exec.createNode(para0, nodeMap);
 
-      leaf0 = <Leaf>branch.getIndexedChild(0)
-      leaf1 = <Leaf>branch.getIndexedChild(1)
-      leaf2 = <Leaf>branch.getIndexedChild(2)
+      leaf0 = <Leaf>Exec.createNode(config.text[0], nodeMap);
+      leaf1 = <Leaf>Exec.createNode(config.text[1], nodeMap);
+      leaf2 = <Leaf>Exec.createNode(config.text[2], nodeMap);
+
+      leaf0.setNext(leaf1);
+      leaf1.setNext(leaf2);
+      branch.attachChildren(leaf0, 0);
     })
 
-      it('throws on deleting if length <= 0', () => {
-        try {
-          branch.detachChildren(0, 0)
-        } catch (e) {
-          return
-        }
-        assert(0)
-      });
+    it('throws on deleting if length <= 0', () => {
+      try {
+        branch.detachChildren(0, 0)
+      } catch (e) {
+        return
+      }
+      assert(0)
+    });
 
-      it('deletes at the beginning', () => {
-        branch.detachChildren(0, 1);
-        assert.strictEqual(branch.getChildrenNum(), 2);
-        assert.strictEqual(branch.getIndexedChild(0), leaf1)
-        assert.strictEqual(branch.getIndexedChild(1), leaf2)
-      })
+    it('deletes at the beginning', () => {
+      branch.detachChildren(0, 1);
+      assert.strictEqual(branch.getChildrenNum(), 2);
+      assert.strictEqual(branch.getIndexedChild(0), leaf1)
+      assert.strictEqual(branch.getIndexedChild(1), leaf2)
+    })
 
-      it('deletes in the middle', () => {
-        branch.detachChildren(1, 2);
-        assert.strictEqual(branch.getChildrenNum(), 1);
-        assert.strictEqual(branch.getIndexedChild(0), leaf0)
-      })
+    it('deletes in the middle', () => {
+      branch.detachChildren(1, 2);
+      assert.strictEqual(branch.getChildrenNum(), 1);
+      assert.strictEqual(branch.getIndexedChild(0), leaf0)
+    })
 
-      it('deletes all', () => {
-        branch.detachChildren(0, Infinity);
-        assert.strictEqual(branch.getChildrenNum(), 0)
-      })
+    it('deletes all', () => {
+      branch.detachChildren(0, Infinity);
+      assert.strictEqual(branch.getChildrenNum(), 0)
+    })
 
   })
 

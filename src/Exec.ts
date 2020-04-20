@@ -1,6 +1,16 @@
 import { Branch, Leaf, Root } from './Node'
 import { Subject } from './Subject'
-import { Node } from './interface'
+import { Node, Path } from './interface'
+
+const getParentInstance = (uri: string, nodeMap: Map<string, Subject>): Branch => {
+  const parent = nodeMap.get(uri)
+
+  if (!parent || !(parent instanceof Branch)) {
+    throw new Error('Cannot get parent: ' + uri)
+  }
+
+  return parent
+}
 
 const Exec = {
 
@@ -18,18 +28,23 @@ const Exec = {
         break
     }
     node.set(json)
-    nodeMap.set(json.id, node)  
+    nodeMap.set(json.id, node)
     return node
   },
 
-  insertNodeRecursive: (json: Node, nodeMap: Map<string, Subject>, parent: Branch | undefined, offset: number) : Subject => {
+  insertNodeRecursive: (json: Node, nodeMap: Map<string, Subject>, path: Path): Subject => {
+
+    const parent: Branch = getParentInstance(path.parentUri, nodeMap);
 
     const node = Exec.createNode(json, nodeMap)
 
-    parent?.attachChildren(node, offset)
+    parent.attachChildren(node, path.offset)
 
-    for (let i = 0; node instanceof Branch && i < json.children.length; i++ ) {
-      Exec.insertNodeRecursive(json.children[i], nodeMap, node, i)
+    for (let i = 0; node instanceof Branch && i < json.children.length; i++) {
+      Exec.insertNodeRecursive(json.children[i], nodeMap, {
+        parentUri: json.id,
+        offset: i,
+      });
     }
 
     return node
