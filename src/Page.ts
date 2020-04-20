@@ -67,22 +67,12 @@ class Page extends Graph {
       }
 
       case 'merge_node': {
-        const parent: Branch = this._getBranchInstance(op.path.parentId);
-        const prev: Subject | undefined = parent.getIndexedChild(op.path.offset - 1);
-        const curr: Subject | undefined = parent.getIndexedChild(op.path.offset);
-        if (!prev || !curr) {
-          throw new Error('Cannot merge')
-        }
-        let src: Path = {
-          parentId: curr.get('id'),
-          offset: 0
-        }
-        let dst: Path = {
-          parentId: prev.get('id'),
-          offset: Infinity
-        }
+        const prevPath: Path = Exec.getBrotherPath(op.path, -1)
+        
+        const srcPath: Path = Exec.getChildPath(op.path, 0, this._nodeMap)
+        const dstPath: Path = Exec.getChildPath(prevPath, Infinity, this._nodeMap)
 
-        Exec.moveNode(src, Infinity, dst, this._nodeMap)
+        Exec.moveNode(srcPath, Infinity, dstPath, this._nodeMap)
         Exec.removeNodeRecursive(op.path, this._nodeMap)
         break
       }
@@ -99,21 +89,15 @@ class Page extends Graph {
           children: [],
           text: ''
         }
-        
-        const next = Exec.insertNodeRecursive(json, {
-          ...op.path,
-          offset: op.path.offset+1
-        }, this._nodeMap);
 
-        let src: Path = {
-          parentId: curr.get('id'),
-          offset: op.position
-        }
-        let dst: Path = {
-          parentId: next.get('id'),
-          offset: 0
-        }
-        Exec.moveNode(src, Infinity, dst, this._nodeMap)
+        let nextPath: Path = Exec.getBrotherPath(op.path, +1)
+
+        Exec.insertNodeRecursive(json, nextPath, this._nodeMap);
+
+        let srcPath: Path = Exec.getChildPath(op.path, op.position, this._nodeMap);
+        let dstPath: Path = Exec.getChildPath(nextPath, 0, this._nodeMap);
+
+        Exec.moveNode(srcPath, Infinity, dstPath, this._nodeMap)
         break
       }
 

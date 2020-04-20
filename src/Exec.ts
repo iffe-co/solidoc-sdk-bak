@@ -83,6 +83,26 @@ const Exec = {
   },
 
 
+  getBrotherPath: (path: Path, delta: number): Path => {
+    return {
+      ...path,
+      offset: path.offset + delta
+    }
+  },
+
+  getChildPath: (path: Path, childOffset: number, nodeMap: Map<string, Subject>): Path => {
+    const parent = getParentInstance(path.parentId, nodeMap);
+    const curr = parent.getIndexedChild(path.offset);
+
+    if (!curr || !(curr instanceof Subject)) {
+      throw new Error('Cannot get child path')
+    }
+
+    return {
+      parentId: curr.get('id'),
+      offset: childOffset,
+    }
+  },
 }
 
 
