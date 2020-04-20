@@ -1,6 +1,5 @@
 import { NamedNodeProperty, TextProperty } from './Property';
 import { Subject } from './Subject';
-import { Exec } from './Exec'
 import { Element } from './interface'
 
 class Branch extends Subject {
@@ -94,20 +93,6 @@ class Branch extends Subject {
     }
     return false
   }
-
-  public split(offset: number, properties: any, nodeMap: Map<string, Subject>): Subject | undefined {
-    let child: Subject | undefined = this.detachChildren(offset, Infinity);
-
-    let json: any = {
-      ...this.toJson(), // TODO: this step could be expensive
-      ...properties, // TODO: could this override the type?
-      children: []
-    }
-    let next = <Branch>Exec.createNode(json, nodeMap);
-    child && next.attachChildren(child, 0);
-    return next
-  }
-
 }
 
 class Root extends Branch {
@@ -177,18 +162,6 @@ class Leaf extends Subject {
     this.set({ text: before + after });
     return removed
   }
-
-  public split(offset: number, properties: any, nodeMap: Map<string, Subject>): Subject {
-    let clipped: string = this.detachChildren(offset, Infinity);
-    let json: any = {
-      ...this.toJson(),
-      ...properties,
-      text: clipped
-    }
-    let next = <Leaf>Exec.createNode(json, nodeMap)
-    return next
-  }
-
 }
 
 export { Branch, Root, Leaf }

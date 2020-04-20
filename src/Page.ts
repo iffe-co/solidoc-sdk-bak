@@ -90,8 +90,30 @@ class Page extends Graph {
       case 'split_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentId);
         const curr: Subject | undefined = parent.getIndexedChild(op.path.offset);
-        const next = curr?.split(op.position, op.properties, this._nodeMap);
-        parent.attachChildren(next, op.path.offset + 1);
+        if (!curr) {
+          throw new Error('Cannot split')
+        }
+        const json = {
+          ...curr.toJson(),
+          ...op.properties,
+          children: [],
+          text: ''
+        }
+        
+        const next = Exec.insertNodeRecursive(json, {
+          ...op.path,
+          offset: op.path.offset+1
+        }, this._nodeMap);
+
+        let src: Path = {
+          parentId: curr.get('id'),
+          offset: op.position
+        }
+        let dst: Path = {
+          parentId: next.get('id'),
+          offset: 0
+        }
+        Exec.moveNode(src, Infinity, dst, this._nodeMap)
         break
       }
 

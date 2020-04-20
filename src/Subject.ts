@@ -115,8 +115,6 @@ abstract class Subject {
     return this._isDeleted
   }
 
-  public abstract split(offset: number, properties: any, nodeMap: Map<string, Subject>): Subject | undefined
-
   public abstract getIndexedChild(offset: number): Subject | string | undefined
 
   public abstract attachChildren(curr: Subject | string | undefined, offset: number)
