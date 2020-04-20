@@ -32,20 +32,6 @@ const Exec = {
     return node
   },
 
-  insertNodeRecursive: (json: Node, path: Path, nodeMap: Map<string, Subject>) => {
-
-    const node = Exec.insertNode(json, path, nodeMap)
-
-    for (let i = 0; node instanceof Branch && i < json.children.length; i++) {
-      Exec.insertNodeRecursive(json.children[i], {
-        parentId: json.id,
-        offset: i,
-      }, nodeMap);
-    }
-
-    return
-  },
-
   insertNode: (json: Node, path: Path, nodeMap: Map<string, Subject>): Subject => {
     const parent: Subject = getParentInstance(path.parentId, nodeMap);
 
@@ -74,24 +60,17 @@ const Exec = {
     node.detachChildren(path.offset, length)
   },
 
-  removeNodeRecursive: (path: Path, nodeMap: Map<string, Subject>) => {
-
+  removeNode: (path: Path, nodeMap: Map<string, Subject>): Subject | undefined => {
     const parent: Subject = getParentInstance(path.parentId, nodeMap)
 
-    const node = parent.detachChildren(path.offset, 1)
+    const node = <Subject|undefined>parent.detachChildren(path.offset, 1)
 
-    for (let i = 0; node instanceof Branch && i < node.getChildrenNum(); i++) {
-      Exec.removeNodeRecursive({
-        parentId: node.get('id'),
-        offset: i,
-      }, nodeMap)
-    }
+    node?.delete()
 
-    // deletion should be at last, otherwise will throw    
-    (node instanceof Subject) && node.delete()
+    return node
   },
 
-  moveNode: (path: Path, length: number, newPath: Path, nodeMap: Map<string, Subject>) => {
+  moveNodes: (path: Path, length: number, newPath: Path, nodeMap: Map<string, Subject>) => {
 
     const parent = getParentInstance(path.parentId, nodeMap)
     const newParent = getParentInstance(newPath.parentId, nodeMap)

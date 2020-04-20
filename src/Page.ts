@@ -2,7 +2,7 @@ import { Branch } from './Node';
 import { Subject } from './Subject';
 import { Graph } from './Graph';
 import { Exec } from './Exec'
-import { Path, Operation, Element } from './interface'
+import { Path, Operation, Element, Node } from './interface'
 
 
 class Page extends Graph {
@@ -29,20 +29,44 @@ class Page extends Graph {
     }
   }
 
+  private _insertNodeRecursive = (json: Node, path: Path) => {
+
+    const node = Exec.insertNode(json, path, this._nodeMap)
+
+    for (let i = 0; node instanceof Branch && i < json.children.length; i++) {
+      this._insertNodeRecursive(json.children[i], {
+        parentId: json.id,
+        offset: i,
+      });
+    }
+
+    return
+  }
+
+  private _deleteNodeRecursive = (node: Subject) => {
+    for (let i = 0; node instanceof Branch && i < node.getChildrenNum(); i++) {
+      let child = <Subject>node.getIndexedChild(i)
+      this._deleteNodeRecursive(child)
+      child.delete()
+    }
+  }
+
   public apply = (op: Operation) => {
     switch (op.type) {
       case 'insert_node': {
-        Exec.insertNodeRecursive(op.node, op.path, this._nodeMap);
+        this._insertNodeRecursive(op.node, op.path);
         break
       }
 
       case 'remove_node': {
-        Exec.removeNodeRecursive(op.path, this._nodeMap)
+        // Exec.removeNodeRecursive(op.path, this._nodeMap)
+        const node = Exec.removeNode(op.path, this._nodeMap)
+        node && this._deleteNodeRecursive(node)
         break
       }
 
       case 'move_node': {
-        Exec.moveNode(op.path, 1, op.newPath, this._nodeMap)
+        Exec.moveNodes(op.path, 1, op.newPath, this._nodeMap)
         break
       }
 
@@ -52,9 +76,9 @@ class Page extends Graph {
         const srcPath: Path = Exec.getChildPath(op.path, 0, this._nodeMap)
         const dstPath: Path = Exec.getChildPath(prevPath, Infinity, this._nodeMap)
 
-        Exec.moveNode(srcPath, Infinity, dstPath, this._nodeMap)
+        Exec.moveNodes(srcPath, Infinity, dstPath, this._nodeMap)
 
-        Exec.removeNodeRecursive(op.path, this._nodeMap)
+        Exec.removeNode(op.path, this._nodeMap)
         break
       }
 
@@ -67,7 +91,7 @@ class Page extends Graph {
         const srcPath: Path = Exec.getChildPath(op.path, op.position, this._nodeMap);
         const dstPath: Path = Exec.getChildPath(nextPath, 0, this._nodeMap);
 
-        Exec.moveNode(srcPath, Infinity, dstPath, this._nodeMap)
+        Exec.moveNodes(srcPath, Infinity, dstPath, this._nodeMap)
         break
       }
 
