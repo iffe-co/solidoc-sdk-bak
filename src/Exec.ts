@@ -60,32 +60,12 @@ const Exec = {
     return node
   },
 
-  remove: (parent: Subject, offset: number, length: number): Subject | string | undefined => {
+  remove: (parent: Subject, offset: number, length: number) => {
 
     let node = parent.detachChildren(offset, length);
 
     (node && typeof node !== 'string' && node.delete());
 
-    return node
-  },
-
-  removeText: (path: Path, length: number, nodeMap: Map<string, Subject>) => {
-
-    const parent: Subject = getParentInstance(path.parentId, nodeMap);
-
-    const node = <Leaf>parent.getIndexedChild(path.offset)
-
-    Exec.remove(node, path.offset, length)
-  },
-
-  removeNode: (path: Path, nodeMap: Map<string, Subject>): Subject | undefined => {
-    const parent: Subject = getParentInstance(path.parentId, nodeMap)
-
-
-    let node = <Subject | undefined>Exec.remove(parent, path.offset, 1)
-
-    // TODO: might not need a return
-    return node
   },
 
   moveNodes: (path: Path, length: number, newPath: Path, nodeMap: Map<string, Subject>) => {

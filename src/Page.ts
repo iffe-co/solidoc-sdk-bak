@@ -1,4 +1,4 @@
-import { Branch } from './Node';
+import { Branch, Leaf } from './Node';
 import { Subject } from './Subject';
 import { Graph } from './Graph';
 import { Exec } from './Exec'
@@ -27,6 +27,18 @@ class Page extends Graph {
       this._assembleTree(curr, nodeMap);
       curr = curr.getNext()
     }
+  }
+
+  private _getContextOf = (path: Path) => {
+    const parent = this.getNode(path.parentId);
+    if (!parent) {
+      throw new Error('Cannot get parent: ' + path.parentId)
+    }
+    const curr = parent.getIndexedChild(path.offset)
+    const prev = parent.getIndexedChild(path.offset - 1)
+    const next = parent.getIndexedChild(path.offset + 1)
+
+    return { parent, curr, prev, next }
   }
 
   private _insertNodeRecursive = (json: Node, path: Path) => {
@@ -59,9 +71,13 @@ class Page extends Graph {
       }
 
       case 'remove_node': {
-        // Exec.removeNodeRecursive(op.path, this._nodeMap)
-        const node = Exec.removeNode(op.path, this._nodeMap)
-        node && this._deleteNodeRecursive(node)
+        const { parent, curr } = this._getContextOf(op.path)
+        if (!(curr instanceof Subject) && curr !== undefined) {
+          throw new Error('Cannot remove')
+        }
+
+        Exec.remove(parent, op.path.offset, 1)
+        curr && this._deleteNodeRecursive(curr)
         break
       }
 
@@ -78,7 +94,10 @@ class Page extends Graph {
 
         Exec.moveNodes(srcPath, Infinity, dstPath, this._nodeMap)
 
-        Exec.removeNode(op.path, this._nodeMap)
+        const { parent } = this._getContextOf(op.path)
+
+        Exec.remove(parent, op.path.offset, 1)
+
         break
       }
 
@@ -106,7 +125,11 @@ class Page extends Graph {
       }
 
       case 'remove_text': {
-        Exec.removeText(op.path, op.text.length, this._nodeMap)
+        const { curr } = this._getContextOf(op.path);
+        if (!(curr instanceof Leaf)) {
+          throw new Error('Not a Leaf node: ' + JSON.stringify(op.path))
+        }
+        Exec.remove(curr, op.offset, op.text.length)
         break
       }
 
