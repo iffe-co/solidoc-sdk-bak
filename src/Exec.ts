@@ -2,10 +2,10 @@ import { Branch, Leaf, Root } from './Node'
 import { Subject } from './Subject'
 import { Node, Path } from './interface'
 
-const getParentInstance = (id: string, nodeMap: Map<string, Subject>): Branch => {
+const getParentInstance = (id: string, nodeMap: Map<string, Subject>): Subject => {
   const parent = nodeMap.get(id)
 
-  if (!parent || !(parent instanceof Branch)) {
+  if (!parent /* || !(parent instanceof Branch) */) {
     throw new Error('Cannot get parent: ' + id)
   }
 
@@ -34,11 +34,11 @@ const Exec = {
 
   insertNodeRecursive: (json: Node, path: Path, nodeMap: Map<string, Subject>): Subject => {
 
-    const parent: Branch = getParentInstance(path.parentId, nodeMap);
+    const parent: Subject = getParentInstance(path.parentId, nodeMap);
 
-    const node = Exec.createNode(json, nodeMap)
+    const node = Exec.createNode(json, nodeMap);
 
-    parent.attachChildren(node, path.offset)
+    (parent instanceof Branch) && parent.attachChildren(node, path.offset)
 
     for (let i = 0; node instanceof Branch && i < json.children.length; i++) {
       Exec.insertNodeRecursive(json.children[i], {
@@ -52,7 +52,7 @@ const Exec = {
 
   removeNodeRecursive: (path: Path, nodeMap: Map<string, Subject>) => {
 
-    const parent = getParentInstance(path.parentId, nodeMap)
+    const parent: Subject = getParentInstance(path.parentId, nodeMap)
 
     const node = parent.detachChildren(path.offset, 1)
 
@@ -64,20 +64,20 @@ const Exec = {
     }
 
     // deletion should be at last, otherwise will throw    
-    node?.delete()
+    (node instanceof Subject) && node.delete()
   },
 
   moveNode: (path: Path, length: number, newPath: Path, nodeMap: Map<string, Subject>) => {
 
     const parent = getParentInstance(path.parentId, nodeMap)
     const newParent = getParentInstance(newPath.parentId, nodeMap)
-    const curr = parent.getIndexedChild(path.offset)
 
-    if(!curr || (curr instanceof Branch && curr.isAncestor(newParent)) ) {
+    let curr = parent.getIndexedChild(path.offset)
+    if (!curr || (curr instanceof Branch && curr.isAncestor(newParent))) {
       throw new Error('Cannot move')
     }
 
-    parent.detachChildren(path.offset, length);
+    curr = parent.detachChildren(path.offset, length);
 
     newParent.attachChildren(curr, newPath.offset);
   },

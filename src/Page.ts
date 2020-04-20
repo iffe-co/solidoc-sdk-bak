@@ -69,9 +69,21 @@ class Page extends Graph {
       case 'merge_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentId);
         const prev: Subject | undefined = parent.getIndexedChild(op.path.offset - 1);
-        const curr = prev?.merge();
-        parent.detachChildren(op.path.offset, 1)
-        curr && curr.delete()
+        const curr: Subject | undefined = parent.getIndexedChild(op.path.offset);
+        if (!prev || !curr) {
+          throw new Error('Cannot merge')
+        }
+        let src: Path = {
+          parentId: curr.get('id'),
+          offset: 0
+        }
+        let dst: Path = {
+          parentId: prev.get('id'),
+          offset: Infinity
+        }
+
+        Exec.moveNode(src, Infinity, dst, this._nodeMap)
+        Exec.removeNodeRecursive(op.path, this._nodeMap)
         break
       }
 

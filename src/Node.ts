@@ -26,7 +26,7 @@ class Branch extends Subject {
     this.set({ firstChild: node ? node.get('id') : '' })
   }
 
-  public getIndexedChild = (offset: number): Subject | undefined => {
+  public getIndexedChild(offset: number): Subject | undefined {
     return this._children[offset]
   }
   public getLastChild = (): Subject | undefined => {
@@ -108,16 +108,6 @@ class Branch extends Subject {
     return next
   }
 
-  public merge(): Subject | undefined {
-    let next = <Branch>this.getNext()
-    // TODO: throw if next is not a branch
-    if (!next) return undefined
-
-    let child: Subject | undefined = next.detachChildren(0, Infinity)
-    this.attachChildren(child, Infinity)
-
-    return next
-  }
 }
 
 class Root extends Branch {
@@ -170,13 +160,17 @@ class Leaf extends Subject {
     }
   }
 
+  public getIndexedChild(offset: number): string {
+    return this.get('text').charAt(offset)
+  }
+
   public attachChildren(text: string, offset: number) {
     const before = this.get('text').slice(0, offset);
     const after = this.get('text').slice(offset);
     this.set({ text: before + text + after });
   }
 
-  public detachChildren(offset: number, length: number) {
+  public detachChildren(offset: number, length: number): string {
     const before = this.get('text').slice(0, offset);
     const removed = this.get('text').slice(offset, length);
     const after = this.get('text').slice(offset + length);
@@ -195,15 +189,6 @@ class Leaf extends Subject {
     return next
   }
 
-  public merge(): Subject | undefined {
-    let next = <Leaf>this.getNext()
-    // TODO: throw if next is not Leaf
-    if (!next) return undefined
-
-    this.attachChildren(next.get('text'), Infinity);
-
-    return next
-  }
 }
 
 export { Branch, Root, Leaf }
