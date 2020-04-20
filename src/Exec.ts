@@ -48,19 +48,17 @@ const Exec = {
 
   },
 
-  moveNodes: (path: Path, length: number, newPath: Path, nodeMap: Map<string, Subject>) => {
+  move: (parent: Subject, offset: number, length: number, newParent: Subject, newOffset: number) => {
 
-    const parent = getParentInstance(path.parentId, nodeMap)
-    const newParent = getParentInstance(newPath.parentId, nodeMap)
-
-    let curr = parent.getIndexedChild(path.offset)
+    let curr = parent.getIndexedChild(offset)
     if (!curr || (curr instanceof Branch && curr.isAncestor(newParent))) {
       throw new Error('Cannot move')
     }
+    // TODO: parent && newParent type assertion
 
-    curr = parent.detachChildren(path.offset, length);
+    curr = parent.detachChildren(offset, length);
 
-    newParent.attachChildren(curr, newPath.offset);
+    newParent.attachChildren(curr, newOffset);
   },
 
 

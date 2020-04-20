@@ -45,7 +45,7 @@ class Page extends Graph {
 
     const { parent } = this._getContextOf(path)
     Exec.insert(parent, json, path.offset, this._nodeMap)
-    
+
     const node = this.getNode(json.id)
 
     for (let i = 0; node instanceof Branch && i < json.children.length; i++) {
@@ -85,19 +85,21 @@ class Page extends Graph {
       }
 
       case 'move_node': {
-        Exec.moveNodes(op.path, 1, op.newPath, this._nodeMap)
+        const { parent } = this._getContextOf(op.path)
+        const { parent: newParent} = this._getContextOf(op.newPath)
+        Exec.move(parent, op.path.offset, 1, newParent, op.newPath.offset)
+
         break
       }
 
       case 'merge_node': {
-        const prevPath: Path = Exec.getBrotherPath(op.path, -1)
+        const { parent, prev, curr } = this._getContextOf(op.path)
+        if (!(curr instanceof Subject) || !(prev instanceof Subject)) {
+          throw new Error('Cannot merge')
+        }
 
-        const srcPath: Path = Exec.getChildPath(op.path, 0, this._nodeMap)
-        const dstPath: Path = Exec.getChildPath(prevPath, Infinity, this._nodeMap)
+        Exec.move(curr, 0, Infinity, prev, Infinity)
 
-        Exec.moveNodes(srcPath, Infinity, dstPath, this._nodeMap)
-
-        const { parent } = this._getContextOf(op.path)
 
         Exec.remove(parent, op.path.offset, 1)
 
@@ -106,15 +108,15 @@ class Page extends Graph {
 
       case 'split_node': {
         const json = Exec.getProperties(op.path, op.properties, this._nodeMap)
-        const nextPath: Path = Exec.getBrotherPath(op.path, +1)
 
-        const { parent } = this._getContextOf(op.path)
+        const { parent, curr } = this._getContextOf(op.path)
+
+        if (!curr || !(curr instanceof Subject)) {
+          throw new Error('Cannot split')
+        }
+
         Exec.insert(parent, json, op.path.offset + 1, this._nodeMap);
-
-        const srcPath: Path = Exec.getChildPath(op.path, op.position, this._nodeMap);
-        const dstPath: Path = Exec.getChildPath(nextPath, 0, this._nodeMap);
-
-        Exec.moveNodes(srcPath, Infinity, dstPath, this._nodeMap)
+        Exec.move(curr, op.position, Infinity, <Subject>curr.getNext(), 0)
         break
       }
 
