@@ -13,7 +13,7 @@ export interface Element {
 export type Node = Text | Element
 
 export interface Path {
-  parentUri: string,
+  parentId: string,
   offset: number
 }
 

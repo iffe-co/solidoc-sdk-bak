@@ -6,27 +6,27 @@ import { Path, Operation, Element } from './interface'
 
 
 class Page extends Graph {
-  constructor(uri: string, turtle: string) {
-    super(uri, turtle);
+  constructor(id: string, turtle: string) {
+    super(id, turtle);
     this._assembleTree(this.getRoot(), this._nodeMap)
   }
 
-  private _getBranchInstance = (uri: string): Branch => {
-    let node = this._nodeMap.get(uri);
+  private _getBranchInstance = (id: string): Branch => {
+    let node = this._nodeMap.get(id);
     if (!node || node.isDeleted()) {
-      throw new Error('The node does not exist: ' + uri);
+      throw new Error('The node does not exist: ' + id);
     } else if (!(node instanceof Branch)) {
-      throw new Error('The request node is not a branch: ' + uri)
+      throw new Error('The request node is not a branch: ' + id)
     }
     return node;
   }
   private _getLeafInstance = (path: Path): Leaf => {
-    let parent: Branch = this._getBranchInstance(path.parentUri);
+    let parent: Branch = this._getBranchInstance(path.parentId);
     let node = parent.getIndexedChild(path.offset)
     if (!node || node.isDeleted()) {
-      throw new Error('The node does not exist: ' + path.parentUri + ' offset = ' + path.offset);
+      throw new Error('The node does not exist: ' + path.parentId + ' offset = ' + path.offset);
     } else if (!(node instanceof Leaf)) {
-      throw new Error('The request node is not a branch: ' + path.parentUri + ' offset = ' + path.offset)
+      throw new Error('The request node is not a branch: ' + path.parentId + ' offset = ' + path.offset)
     }
     return node;
   }
@@ -39,8 +39,8 @@ class Page extends Graph {
   private _assembleTree = (head: Subject | undefined, nodeMap: Map<string, Subject>) => {
     if (!(head instanceof Branch)) return
 
-    let currUri = head.get('firstChild');
-    let curr: Subject | undefined = nodeMap.get(currUri)
+    let currId = head.get('firstChild');
+    let curr: Subject | undefined = nodeMap.get(currId)
     curr && head.attachChildren(curr, 0)
 
     while (curr) {
@@ -62,8 +62,8 @@ class Page extends Graph {
       }
 
       case 'move_node': {
-        const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        const newParent: Branch = this._getBranchInstance(op.newPath.parentUri);
+        const parent: Branch = this._getBranchInstance(op.path.parentId);
+        const newParent: Branch = this._getBranchInstance(op.newPath.parentId);
 
         const curr: Subject | undefined = parent.detachChildren(op.path.offset, 1);
         if (!curr) {
@@ -80,7 +80,7 @@ class Page extends Graph {
       }
 
       case 'merge_node': {
-        const parent: Branch = this._getBranchInstance(op.path.parentUri);
+        const parent: Branch = this._getBranchInstance(op.path.parentId);
         const prev: Subject | undefined = parent.getIndexedChild(op.path.offset - 1);
         const curr = prev?.merge();
         parent.detachChildren(op.path.offset, 1)
@@ -89,7 +89,7 @@ class Page extends Graph {
       }
 
       case 'split_node': {
-        const parent: Branch = this._getBranchInstance(op.path.parentUri);
+        const parent: Branch = this._getBranchInstance(op.path.parentId);
         const curr: Subject | undefined = parent.getIndexedChild(op.path.offset);
         const next = curr?.split(op.position, op.properties, this._nodeMap);
         parent.attachChildren(next, op.path.offset + 1);
@@ -98,15 +98,15 @@ class Page extends Graph {
 
       case 'set_node': {
         let curr: Subject | undefined
-        if (op.path.parentUri) {
-          const parent: Branch = this._getBranchInstance(op.path.parentUri);
+        if (op.path.parentId) {
+          const parent: Branch = this._getBranchInstance(op.path.parentId);
           curr = parent.getIndexedChild(op.path.offset);
         } else {
           curr = this.getRoot()
         }
         // TODO: disallow setting id/text/children/next/option
         if (!curr) {
-          throw new Error('No such node: ' + op.path.parentUri + op.path.offset)
+          throw new Error('No such node: ' + op.path.parentId + op.path.offset)
         }
 
         curr.set(op.newProperties)

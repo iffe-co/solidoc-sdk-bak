@@ -22,7 +22,7 @@ describe('Root', () => {
   });
 
   it('parses from quads', () => {
-    assert.strictEqual(root.get('uri'), page.id)
+    assert.strictEqual(root.get('id'), page.id)
     assert.strictEqual(root.get('type'), page.type)
     assert.strictEqual(root.get('title'), page.title)
     assert.strictEqual(root.get('firstChild'), page.children[0].id)

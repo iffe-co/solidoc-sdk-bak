@@ -7,17 +7,17 @@ const parser = new n3.Parser();
 
 // a graph could be a page or a database
 abstract class Graph {
-  private _uri: string
+  private _id: string
   protected _nodeMap = new Map<string, Subject>();
 
-  constructor(uri: string, turtle: string) {
-    this._uri = uri;
-    this._parseTurtle(uri, turtle)
+  constructor(id: string, turtle: string) {
+    this._id = id;
+    this._parseTurtle(id, turtle)
   }
 
-  private _parseTurtle = (uri: string, turtle: string) => {
+  private _parseTurtle = (id: string, turtle: string) => {
     let json: Node = {
-      id: uri,
+      id: id,
       type: 'http://www.solidoc.net/ontologies#Root',
       children: []
     }
@@ -25,7 +25,7 @@ abstract class Graph {
 
     const quads: any[] = parser.parse(turtle);
     quads.forEach(quad => {
-      if (quad.predicate.id === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type' && quad.subject.id !== uri) {
+      if (quad.predicate.id === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type' && quad.subject.id !== id) {
         // TODO: only create node for known types
         let json: Node = {
           id: quad.subject.id,
@@ -46,25 +46,25 @@ abstract class Graph {
   }
 
   public getRoot = (): Subject | undefined => {
-    return this._nodeMap.get(this._uri)
+    return this._nodeMap.get(this._id)
   }
 
-  public getNode = (uri: string): Subject | undefined => {
-    return this._nodeMap.get(uri)
+  public getNode = (id: string): Subject | undefined => {
+    return this._nodeMap.get(id)
   }
 
   public getSparqlForUpdate = (): string => {
     let sparql = '';
     for (let node of this._nodeMap.values()) {
-      sparql += node.getSparqlForUpdate(this._uri);
+      sparql += node.getSparqlForUpdate(this._id);
     }
     return sparql;
   }
 
   public commit = () => {
-    for (let [uri, node] of this._nodeMap.entries()) {
+    for (let [id, node] of this._nodeMap.entries()) {
       if (node.isDeleted()) {
-        this._nodeMap.delete(uri);
+        this._nodeMap.delete(id);
       } else {
         node.commit();
       }

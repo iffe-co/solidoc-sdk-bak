@@ -29,7 +29,7 @@ describe('Subject', () => {
   describe('Create Node', () => {
 
     it('parses from quads', () => {
-      assert.equal(branch2.get('uri'), para2.id)
+      assert.equal(branch2.get('id'), para2.id)
       assert.equal(branch2.get('type'), para2.type)
       assert.equal(branch2.get('next'), '')
       assert.equal(branch2.get('firstChild'), para2.children[0].id)
@@ -105,12 +105,12 @@ describe('Subject', () => {
 
     it('setNext() is together with set("next")', () => {
       branch1.setNext(branch2)
-      assert.strictEqual(branch1.get("next"), branch2.get('uri'));
+      assert.strictEqual(branch1.get("next"), branch2.get('id'));
     });
 
     it('disallows set("next")', () => {
       try {
-        branch1.set({ "next": branch2.get('uri') })
+        branch1.set({ "next": branch2.get('id') })
       } catch (e) {
         return
       }

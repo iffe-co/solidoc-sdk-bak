@@ -2,11 +2,11 @@ import { Branch, Leaf, Root } from './Node'
 import { Subject } from './Subject'
 import { Node, Path } from './interface'
 
-const getParentInstance = (uri: string, nodeMap: Map<string, Subject>): Branch => {
-  const parent = nodeMap.get(uri)
+const getParentInstance = (id: string, nodeMap: Map<string, Subject>): Branch => {
+  const parent = nodeMap.get(id)
 
   if (!parent || !(parent instanceof Branch)) {
-    throw new Error('Cannot get parent: ' + uri)
+    throw new Error('Cannot get parent: ' + id)
   }
 
   return parent
@@ -34,7 +34,7 @@ const Exec = {
 
   insertNodeRecursive: (json: Node, path: Path, nodeMap: Map<string, Subject>): Subject => {
 
-    const parent: Branch = getParentInstance(path.parentUri, nodeMap);
+    const parent: Branch = getParentInstance(path.parentId, nodeMap);
 
     const node = Exec.createNode(json, nodeMap)
 
@@ -42,7 +42,7 @@ const Exec = {
 
     for (let i = 0; node instanceof Branch && i < json.children.length; i++) {
       Exec.insertNodeRecursive(json.children[i], {
-        parentUri: json.id,
+        parentId: json.id,
         offset: i,
       }, nodeMap);
     }
@@ -52,13 +52,13 @@ const Exec = {
 
   removeNodeRecursive: (path: Path, nodeMap: Map<string, Subject>) => {
 
-    const parent = getParentInstance(path.parentUri, nodeMap)
+    const parent = getParentInstance(path.parentId, nodeMap)
 
     const node = parent.detachChildren(path.offset, 1)
 
     for (let i = 0; node instanceof Branch && i < node.getChildrenNum(); i++) {
       Exec.removeNodeRecursive({
-        parentUri: node.get('uri'),
+        parentId: node.get('id'),
         offset: i,
       }, nodeMap)
     }

@@ -6,8 +6,8 @@ import { Element } from './interface'
 class Branch extends Subject {
   private _children: Subject[] = [];
 
-  constructor(uri: string) {
-    super(uri);
+  constructor(id: string) {
+    super(id);
     this._predicates.firstChild = new NamedNodeProperty('http://www.solidoc.net/ontologies#firstChild', 'firstChild');
   }
 
@@ -23,7 +23,7 @@ class Branch extends Subject {
   }
 
   private setFirstChild = (node: Subject | undefined) => {
-    this.set({ firstChild: node ? node.get('uri') : '' })
+    this.set({ firstChild: node ? node.get('id') : '' })
   }
 
   public getIndexedChild = (offset: number): Subject | undefined => {
@@ -121,8 +121,8 @@ class Branch extends Subject {
 }
 
 class Root extends Branch {
-  constructor(uri: string) {
-    super(uri);
+  constructor(id: string) {
+    super(id);
     this._predicates.title = new TextProperty('http://purl.org/dc/terms/title', 'title');
   }
 
@@ -137,28 +137,28 @@ class Root extends Branch {
 
   public fromQuad(quad: any, nodeMap: Map<string, Subject>) {
     if (quad.predicate.id === 'http://www.solidoc.net/ontologies#nextNode') {
-      throw new Error('fromQuad: The root node cannot have syblings: ' + this._uri)
+      throw new Error('fromQuad: The root node cannot have syblings: ' + this._id)
     }
     super.fromQuad(quad, nodeMap)
   }
 
   public setNext(node: Subject | undefined) {
     if (node) {
-      throw new Error('setNext: The root node cannot have syblings: ' + this._uri);
+      throw new Error('setNext: The root node cannot have syblings: ' + this._id);
     }
     super.setNext(undefined)
   }
 
   public delete = () => {
-    throw new Error('The root node is not removable :' + this._uri);
+    throw new Error('The root node is not removable :' + this._id);
   }
 
 }
 
 class Leaf extends Subject {
-  constructor(uri: string) {
+  constructor(id: string) {
     // TODO: using blank nodes
-    super(uri);
+    super(id);
     this._predicates.text = new TextProperty('http://www.solidoc.net/ontologies#text', 'text');
   }
 

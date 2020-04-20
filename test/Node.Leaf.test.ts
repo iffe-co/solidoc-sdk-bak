@@ -22,7 +22,7 @@ describe('Leaf', () => {
   });
 
   it('parses from quads', () => {
-    assert.strictEqual(leaf.get('uri'), text.id)
+    assert.strictEqual(leaf.get('id'), text.id)
     assert.strictEqual(leaf.get('type'), text.type)
     assert.strictEqual(leaf.get('text'), text.text)
   });
