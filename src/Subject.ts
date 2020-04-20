@@ -117,6 +117,8 @@ abstract class Subject {
 
   public abstract split(offset: number, properties: any, nodeMap: Map<string, Subject>): Subject | undefined
   public abstract merge(): Subject | undefined
+
+  public abstract attachChildren(curr: Subject | string | undefined, offset: number)
 }
 
 export { Subject }

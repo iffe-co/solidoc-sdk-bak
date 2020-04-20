@@ -33,7 +33,7 @@ class Branch extends Subject {
     return this._children[this._children.length - 1]
   }
 
-  public attachChildren = (curr: Subject | undefined, offset: number) => {
+  public attachChildren(curr: Subject | undefined, offset: number) {
     if (!curr) {
       throw new Error('Trying to insert a null subject')
     }
@@ -170,7 +170,7 @@ class Leaf extends Subject {
     }
   }
 
-  public insertText = (offset: number, text: string) => {
+  public attachChildren(text: string, offset: number) {
     const before = this.get('text').slice(0, offset);
     const after = this.get('text').slice(offset);
     this.set({ text: before + text + after });
@@ -200,7 +200,7 @@ class Leaf extends Subject {
     // TODO: throw if next is not Leaf
     if (!next) return undefined
 
-    this.insertText(Infinity, next.get('text'));
+    this.attachChildren(next.get('text'), Infinity);
 
     return next
   }

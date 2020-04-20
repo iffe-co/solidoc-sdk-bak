@@ -102,7 +102,7 @@ class Page extends Graph {
 
       case 'insert_text': {
         const leaf = this._getLeafInstance(op.path);
-        leaf.insertText(op.offset, op.text)
+        leaf.attachChildren(op.text, op.offset)
         break
       }
 

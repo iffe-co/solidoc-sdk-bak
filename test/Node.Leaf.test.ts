@@ -32,7 +32,7 @@ describe('Leaf', () => {
   })
 
   it('inserts text at offset 0', () => {
-    leaf.insertText(0, 'Insert: ');
+    leaf.attachChildren('Insert: ', 0);
     assert.deepStrictEqual(leaf.toJson(), {
       ...text,
       text: 'Insert: text 8'
@@ -40,7 +40,7 @@ describe('Leaf', () => {
   });
 
   it('inserts text at offset > length', () => {
-    leaf.insertText(Infinity, '!');
+    leaf.attachChildren('!', Infinity);
     assert.deepStrictEqual(leaf.toJson(), {
       ...text,
       text: 'text 8!'
