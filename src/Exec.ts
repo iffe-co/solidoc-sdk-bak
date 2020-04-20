@@ -67,12 +67,19 @@ const Exec = {
     node?.delete()
   },
 
-  moveNode: (parent: Branch, offset: number, length: number, newParent: Branch, newOffset: number) => {
+  moveNode: (path: Path, length: number, newPath: Path, nodeMap: Map<string, Subject>) => {
 
-    const curr: Subject | undefined = parent.detachChildren(offset, length);
+    const parent = getParentInstance(path.parentId, nodeMap)
+    const newParent = getParentInstance(newPath.parentId, nodeMap)
+    const curr = parent.getIndexedChild(path.offset)
 
-    newParent.attachChildren(curr, newOffset);
+    if(!curr || (curr instanceof Branch && curr.isAncestor(newParent)) ) {
+      throw new Error('Cannot move')
+    }
 
+    parent.detachChildren(path.offset, length);
+
+    newParent.attachChildren(curr, newPath.offset);
   },
 
 

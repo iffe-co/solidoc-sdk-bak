@@ -62,20 +62,7 @@ class Page extends Graph {
       }
 
       case 'move_node': {
-        const parent: Branch = this._getBranchInstance(op.path.parentId);
-        const newParent: Branch = this._getBranchInstance(op.newPath.parentId);
-
-        const curr: Subject | undefined = parent.detachChildren(op.path.offset, 1);
-        if (!curr) {
-          throw new Error('No such node')
-        }
-
-        if (curr instanceof Branch && curr.isAncestor(newParent)) {
-          parent.attachChildren(curr, op.path.offset);
-          throw new Error('Trying to append the node to itself or its descendent')
-        }
-
-        newParent.attachChildren(curr, op.newPath.offset);
+        Exec.moveNode(op.path, 1, op.newPath, this._nodeMap)
         break
       }
 
