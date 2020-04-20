@@ -58,7 +58,7 @@ class Branch extends Subject {
     curr.setNext(next)
   }
 
-  public detachChildren = (offset: number, length: number): Subject | undefined => {
+  public detachChildren(offset: number, length: number): Subject | undefined {
     if (length <= 0) {
       // TODO: allow length === 0 ??
       throw new Error(`Remove children: offset = ${offset}, length = ${length}`)
@@ -176,7 +176,7 @@ class Leaf extends Subject {
     this.set({ text: before + text + after });
   }
 
-  public removeText = (offset: number, length: number) => {
+  public detachChildren(offset: number, length: number) {
     const before = this.get('text').slice(0, offset);
     const removed = this.get('text').slice(offset, length);
     const after = this.get('text').slice(offset + length);
@@ -185,7 +185,7 @@ class Leaf extends Subject {
   }
 
   public split(offset: number, properties: any, nodeMap: Map<string, Subject>): Subject {
-    let clipped: string = this.removeText(offset, Infinity);
+    let clipped: string = this.detachChildren(offset, Infinity);
     let json: any = {
       ...this.toJson(),
       ...properties,

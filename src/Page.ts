@@ -108,7 +108,7 @@ class Page extends Graph {
 
       case 'remove_text': {
         const leaf = this._getLeafInstance(op.path);
-        leaf.removeText(op.offset, op.text.length);
+        leaf.detachChildren(op.offset, op.text.length);
         break
       }
 

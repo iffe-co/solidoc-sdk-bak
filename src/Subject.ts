@@ -119,6 +119,7 @@ abstract class Subject {
   public abstract merge(): Subject | undefined
 
   public abstract attachChildren(curr: Subject | string | undefined, offset: number)
+  public abstract detachChildren(offset: number, length: number): Subject | string | undefined
 }
 
 export { Subject }

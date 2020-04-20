@@ -48,7 +48,7 @@ describe('Leaf', () => {
   });
 
   it('removes text head', () => {
-    let removed: string = leaf.removeText(0, 1);
+    let removed: string = leaf.detachChildren(0, 1);
     assert.deepStrictEqual(leaf.toJson(), {
       ...text,
       text: 'ext 8'
@@ -57,7 +57,7 @@ describe('Leaf', () => {
   });
 
   it('removes text tail', () => {
-    let removed: string = leaf.removeText(1, Infinity);
+    let removed: string = leaf.detachChildren(1, Infinity);
     assert.deepStrictEqual(leaf.toJson(), {
       ...text,
       text: 't'
@@ -66,7 +66,7 @@ describe('Leaf', () => {
   });
 
   it('leaves it unchanged if there is no overlap', () => {
-    let removed: string = leaf.removeText(100, 10);
+    let removed: string = leaf.detachChildren(100, 10);
     assert.deepStrictEqual(leaf.toJson(), text);
     assert.strictEqual(removed, '')
   });
