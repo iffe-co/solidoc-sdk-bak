@@ -95,13 +95,40 @@ const Exec = {
     const curr = parent.getIndexedChild(path.offset);
 
     if (!curr || !(curr instanceof Subject)) {
-      throw new Error('Cannot get child path')
+      throw new Error('Cannot get path')
     }
 
     return {
       parentId: curr.get('id'),
       offset: childOffset,
     }
+  },
+
+  getProperties: (path: Path, newProperties: Partial<Node>, nodeMap: Map<string, Subject>): Node => {
+    const parent = getParentInstance(path.parentId, nodeMap);
+    const curr = parent.getIndexedChild(path.offset);
+
+    if (!curr || !(curr instanceof Subject)) {
+      throw new Error('Cannot get path')
+    }
+
+    return {
+      ...curr.toJson(),
+      ...newProperties,
+      children: [],
+      text: '',
+    }
+  },
+
+  setProperties: (path: Path, newProperties: Partial<Node>, nodeMap: Map<string, Subject>) => {
+    const parent = getParentInstance(path.parentId, nodeMap);
+    const curr = parent.getIndexedChild(path.offset);
+
+    if (!curr || !(curr instanceof Subject)) {
+      throw new Error('Cannot get path')
+    }
+
+    curr.set(newProperties)
   },
 }
 

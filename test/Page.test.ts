@@ -325,12 +325,12 @@ describe('Set Node', () => {
     page = new Page(pageId, turtle);
   });
 
-  it('sets page title', () => {
-    let op: Operation = { type: 'set_node', path: { parentId: '', offset: 0 }, newProperties: { title: 'Welcome' } }
-    page.apply(op)
-    let pageJson: any = page.toJson()
-    assert.strictEqual(pageJson.title, 'Welcome')
-  })
+  // it('sets page title', () => {
+  //   let op: Operation = { type: 'set_node', path: { parentId: '', offset: 0 }, newProperties: { title: 'Welcome' } }
+  //   page.apply(op)
+  //   let pageJson: any = page.toJson()
+  //   assert.strictEqual(pageJson.title, 'Welcome')
+  // })
 
   it('sets a paragraph by adding a property', () => {
     let op: Operation = { type: 'set_node', path: { parentId: pageId, offset: 0 }, newProperties: { name: 'alice' } }

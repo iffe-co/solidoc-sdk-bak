@@ -68,53 +68,31 @@ class Page extends Graph {
 
       case 'merge_node': {
         const prevPath: Path = Exec.getBrotherPath(op.path, -1)
-        
+
         const srcPath: Path = Exec.getChildPath(op.path, 0, this._nodeMap)
         const dstPath: Path = Exec.getChildPath(prevPath, Infinity, this._nodeMap)
 
         Exec.moveNode(srcPath, Infinity, dstPath, this._nodeMap)
+
         Exec.removeNodeRecursive(op.path, this._nodeMap)
         break
       }
 
       case 'split_node': {
-        const parent: Branch = this._getBranchInstance(op.path.parentId);
-        const curr: Subject | undefined = parent.getIndexedChild(op.path.offset);
-        if (!curr) {
-          throw new Error('Cannot split')
-        }
-        const json = {
-          ...curr.toJson(),
-          ...op.properties,
-          children: [],
-          text: ''
-        }
-
-        let nextPath: Path = Exec.getBrotherPath(op.path, +1)
+        const json = Exec.getProperties(op.path, op.properties, this._nodeMap)
+        const nextPath: Path = Exec.getBrotherPath(op.path, +1)
 
         Exec.insertNodeRecursive(json, nextPath, this._nodeMap);
 
-        let srcPath: Path = Exec.getChildPath(op.path, op.position, this._nodeMap);
-        let dstPath: Path = Exec.getChildPath(nextPath, 0, this._nodeMap);
+        const srcPath: Path = Exec.getChildPath(op.path, op.position, this._nodeMap);
+        const dstPath: Path = Exec.getChildPath(nextPath, 0, this._nodeMap);
 
         Exec.moveNode(srcPath, Infinity, dstPath, this._nodeMap)
         break
       }
 
       case 'set_node': {
-        let curr: Subject | undefined
-        if (op.path.parentId) {
-          const parent: Branch = this._getBranchInstance(op.path.parentId);
-          curr = parent.getIndexedChild(op.path.offset);
-        } else {
-          curr = this.getRoot()
-        }
-        // TODO: disallow setting id/text/children/next/option
-        if (!curr) {
-          throw new Error('No such node: ' + op.path.parentId + op.path.offset)
-        }
-
-        curr.set(op.newProperties)
+        Exec.setProperties(op.path, op.newProperties, this._nodeMap)
         break
       }
 
