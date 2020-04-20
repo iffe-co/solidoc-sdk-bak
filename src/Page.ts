@@ -1,6 +1,7 @@
-import { Branch, Leaf, createNodes } from './Node';
+import { Branch, Leaf } from './Node';
 import { Subject } from './Subject';
 import { Graph } from './Graph';
+import { Exec } from './Exec'
 import { Path, Operation, Element } from './interface'
 
 
@@ -52,8 +53,8 @@ class Page extends Graph {
     switch (op.type) {
       case 'insert_node': {
         const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        const curr = createNodes(op.node, this._nodeMap);
-        parent.attachChildren(curr, op.path.offset);
+        Exec.insertNodeRecurrsive(op.node, this._nodeMap, parent, op.path.offset);
+        // parent.attachChildren(curr, op.path.offset);
         break
       }
 

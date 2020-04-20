@@ -1,5 +1,6 @@
 import { Subject } from '../src/Subject'
-import { Branch, Leaf, createNodes } from '../src/Node';
+import { Branch, Leaf } from '../src/Node';
+import { Exec } from '../src/Exec'
 import { config } from '../config/test'
 import * as assert from 'power-assert';
 
@@ -17,14 +18,14 @@ describe('Branch', () => {
   let leaf4: Leaf
 
   beforeEach(() => {
-    branch = <Branch>createNodes(para0, nodeMap);
+    branch = <Branch>Exec.insertNodeRecurrsive(para0, nodeMap, undefined, 0);
 
     leaf0 = <Leaf>branch.getIndexedChild(0)
     leaf1 = <Leaf>branch.getIndexedChild(1)
     leaf2 = <Leaf>branch.getIndexedChild(2)
 
-    leaf3 = <Leaf>createNodes(config.text[3], nodeMap);
-    leaf4 = <Leaf>createNodes(config.text[4], nodeMap);
+    leaf3 = <Leaf>Exec.createNode(config.text[3], nodeMap);
+    leaf4 = <Leaf>Exec.createNode(config.text[4], nodeMap);
     leaf3.setNext(leaf4)
   });
 
@@ -72,7 +73,7 @@ describe('Branch', () => {
   describe('Deletion', () => {
 
     beforeEach(() => {
-      branch = <Branch>createNodes(para0, nodeMap);
+      branch = <Branch>Exec.insertNodeRecurrsive(para0, nodeMap, undefined, 0);
 
       leaf0 = <Leaf>branch.getIndexedChild(0)
       leaf1 = <Leaf>branch.getIndexedChild(1)

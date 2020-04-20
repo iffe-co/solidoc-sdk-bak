@@ -1,5 +1,6 @@
 import { Subject } from '../src/Subject'
-import { Branch, createNodes } from '../src/Node';
+import { Branch } from '../src/Node';
+import { Exec } from '../src/Exec'
 import { ont } from '../config/ontology'
 import { config, turtle } from '../config/test'
 import * as assert from 'power-assert';
@@ -15,13 +16,12 @@ const para2 = config.para[2]
 const page = config.page
 
 describe('Subject', () => {
-  // let para0: Branch;
   let branch1: Branch;
   let branch2: Branch;
   let quads: any[];
 
   beforeEach(() => {
-    branch2 = <Branch>createNodes(para2, nodeMap);
+    branch2 = <Branch>Exec.createNode(para2, nodeMap);
     quads = parser.parse(turtle.para[2]);
     quads.forEach(quad => branch2.fromQuad(quad, nodeMap));
   });
@@ -36,7 +36,10 @@ describe('Subject', () => {
     })
 
     it('translates to Json', () => {
-      assert.deepStrictEqual(branch2.toJson(), para2);
+      assert.deepStrictEqual(branch2.toJson(), {
+        ...para2,
+        children: [],
+      });
     });
 
     it('discards an unknown quad', () => {
@@ -97,7 +100,7 @@ describe('Subject', () => {
 
   describe('#nextNode property', () => {
     beforeEach(() => {
-      branch1 = <Branch>createNodes(para1, nodeMap);
+      branch1 = <Branch>Exec.createNode(para1, nodeMap);
     })
 
     it('setNext() is together with set("next")', () => {

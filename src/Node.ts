@@ -1,6 +1,7 @@
 import { NamedNodeProperty, TextProperty } from './Property';
 import { Subject } from './Subject';
-import { Node } from './interface'
+import { Exec } from './Exec'
+import { Element } from './interface'
 
 class Branch extends Subject {
   private _children: Subject[] = [];
@@ -111,7 +112,7 @@ class Branch extends Subject {
       ...properties, // TODO: could this override the type?
       children: []
     }
-    let next = <Branch>createNodes(json, nodeMap);
+    let next = <Branch>Exec.createNode(json, nodeMap);
     child && next.attachChildren(child, 0);
     return next
   }
@@ -199,7 +200,7 @@ class Leaf extends Subject {
       ...properties,
       text: clipped
     }
-    let next = <Leaf>createNodes(json, nodeMap)
+    let next = <Leaf>Exec.createNode(json, nodeMap)
     return next
   }
 
@@ -214,28 +215,4 @@ class Leaf extends Subject {
   }
 }
 
-const createNodes = (json: Node, nodeMap: Map<string, Subject>): Subject => {
-  let node: Subject
-  switch (json.type) {
-    case 'http://www.solidoc.net/ontologies#Root':
-      node = new Root(json.id)
-      break
-    case 'http://www.solidoc.net/ontologies#Leaf':
-      node = new Leaf(json.id)
-      break
-    default:
-      node = new Branch(json.id)
-      break
-  }
-  node.set(json)
-  nodeMap.set(json.id, node)
-
-  for (let i = 0; node instanceof Branch && i < json.children.length; i++) {
-    let child = createNodes(json.children[i], nodeMap);
-    node.attachChildren(child, i);
-  }
-
-  return node
-}
-
-export { Branch, Root, Leaf, createNodes }
+export { Branch, Root, Leaf }
