@@ -43,7 +43,10 @@ class Page extends Graph {
 
   private _insertNodeRecursive = (json: Node, path: Path) => {
 
-    const node = Exec.insertNode(json, path, this._nodeMap)
+    const { parent } = this._getContextOf(path)
+    Exec.insert(parent, json, path.offset, this._nodeMap)
+    
+    const node = this.getNode(json.id)
 
     for (let i = 0; node instanceof Branch && i < json.children.length; i++) {
       this._insertNodeRecursive(json.children[i], {
@@ -105,7 +108,8 @@ class Page extends Graph {
         const json = Exec.getProperties(op.path, op.properties, this._nodeMap)
         const nextPath: Path = Exec.getBrotherPath(op.path, +1)
 
-        Exec.insertNode(json, nextPath, this._nodeMap);
+        const { parent } = this._getContextOf(op.path)
+        Exec.insert(parent, json, op.path.offset + 1, this._nodeMap);
 
         const srcPath: Path = Exec.getChildPath(op.path, op.position, this._nodeMap);
         const dstPath: Path = Exec.getChildPath(nextPath, 0, this._nodeMap);
@@ -120,7 +124,11 @@ class Page extends Graph {
       }
 
       case 'insert_text': {
-        Exec.insertText(op.text, op.path, this._nodeMap)
+        const { curr } = this._getContextOf(op.path);
+        if (!(curr instanceof Leaf)) {
+          throw new Error('Not a Leaf node: ' + JSON.stringify(op.path))
+        }
+        Exec.insert(curr, op.text, op.offset)
         break
       }
 

@@ -32,32 +32,12 @@ const Exec = {
     return node
   },
 
-  insertNode: (json: Node, path: Path, nodeMap: Map<string, Subject>): Subject => {
-    const parent: Subject = getParentInstance(path.parentId, nodeMap);
+  insert: (parent: Subject, content: Node | string, offset: number, nodeMap?: Map<string, Subject>) => {
 
-
-    const node = <Subject>Exec.insert(parent, json, path.offset, nodeMap);
-
-    // TODO: might not need a return
-    return node
-  },
-
-  insertText: (text: string, path: Path, nodeMap: Map<string, Subject>) => {
-
-    const parent: Subject = getParentInstance(path.parentId, nodeMap);
-
-    const node = <Leaf>parent.getIndexedChild(path.offset)
-
-    Exec.insert(node, text, path.offset, nodeMap)
-  },
-
-  insert: (parent: Subject, content: Node | string, offset: number, nodeMap: Map<string, Subject>) => {
-
-    const node = (typeof content === 'string') ? content : Exec.createNode(content, nodeMap);
+    const node = (nodeMap) ? Exec.createNode(<Node>content, nodeMap) : <string>content;
 
     parent.attachChildren(node, offset)
 
-    return node
   },
 
   remove: (parent: Subject, offset: number, length: number) => {
