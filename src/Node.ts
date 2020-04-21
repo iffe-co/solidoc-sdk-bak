@@ -1,6 +1,6 @@
 import { NamedNodeProperty, TextProperty } from './Property';
 import { Subject } from './Subject';
-import { Element, Node } from './interface'
+import { Element, Text, Node } from './interface'
 
 class Branch extends Subject {
   private _children: Subject[] = [];
@@ -95,8 +95,8 @@ class Branch extends Subject {
 
     // TODO: use map??
     for (let i = 0; i < this.getChildrenNum(); i++) {
-      let curr = this.getIndexedChild(i)
-      if (curr instanceof Branch && curr.isAncestor(to)) return true
+      let child = this.getIndexedChild(i)
+      if (child instanceof Branch && child.isAncestor(to)) return true
     }
     return false
   }
@@ -107,13 +107,13 @@ class Branch extends Subject {
   }
 
   public assembleChlildren = (nodeMap: Map<string, Subject>) => {
-    let currId = this.get('firstChild');
-    let curr: Subject | undefined = nodeMap.get(currId)
-    curr && this.attachChildren(curr, 0)
+    let childId = this.get('firstChild');
+    let child: Subject | undefined = nodeMap.get(childId)
+    child && this.attachChildren(child, 0)
 
-    while (curr) {
-      (curr instanceof Branch) && curr.assembleChlildren(nodeMap);
-      curr = curr.getNext()
+    while (child) {
+      (child instanceof Branch) && child.assembleChlildren(nodeMap);
+      child = child.getNext()
     }
   }
 }
@@ -167,15 +167,11 @@ class Leaf extends Subject {
     }
   }
 
-  public toBlankJson(): Element {
+  public toBlankJson(): Text {
     return {
       ...super.toJson(),
       text: ''
     }
-  }
-
-  public getIndexedChild(offset: number): string {
-    return this.get('text').charAt(offset)
   }
 
   public attachChildren(text: string, offset: number) {

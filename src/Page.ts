@@ -25,9 +25,9 @@ class Page extends Graph {
     if (!parent) {
       throw new Error('Cannot get parent: ' + path.parentId)
     }
-    const curr = parent.getIndexedChild(path.offset)
-    const prev = parent.getIndexedChild(path.offset - 1)
-    const next = parent.getIndexedChild(path.offset + 1)
+    const curr = (parent instanceof Branch) ? parent.getIndexedChild(path.offset) : undefined
+    const prev = (parent instanceof Branch) ? parent.getIndexedChild(path.offset - 1) : undefined
+    const next = (parent instanceof Branch) ? parent.getIndexedChild(path.offset + 1) : undefined
 
     return { parent, curr, prev, next }
   }

@@ -117,8 +117,6 @@ abstract class Subject {
     return this._isDeleted
   }
 
-  public abstract getIndexedChild(offset: number): Subject | string | undefined
-
   public abstract attachChildren(curr: Subject | string | undefined, offset: number)
   public abstract detachChildren(offset: number, length: number): Subject | string | undefined
 }
