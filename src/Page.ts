@@ -1,4 +1,4 @@
-import { Branch, Leaf, createNode } from './Node';
+import { Root, Branch, Leaf, createNode } from './Node';
 import { Subject } from './Subject';
 import { Graph } from './Graph';
 import { Path, Operation, Element, Node } from './interface'
@@ -7,7 +7,7 @@ import { Path, Operation, Element, Node } from './interface'
 class Page extends Graph {
   constructor(id: string, turtle: string) {
     super(id, turtle);
-    this._assembleTree(this.getRoot(), this._nodeMap)
+    (<Root>this.getRoot()).assembleChlildren(this._nodeMap)
   }
 
   public toJson = (): Element => {
@@ -16,21 +16,8 @@ class Page extends Graph {
   }
 
   public undo() {
-    super.undo()
-    this._assembleTree(this.getRoot(), this._nodeMap);
-  }
-
-  private _assembleTree = (head: Subject | undefined, nodeMap: Map<string, Subject>) => {
-    if (!(head instanceof Branch)) return
-
-    let currId = head.get('firstChild');
-    let curr: Subject | undefined = nodeMap.get(currId)
-    curr && head.attachChildren(curr, 0)
-
-    while (curr) {
-      this._assembleTree(curr, nodeMap);
-      curr = curr.getNext()
-    }
+    super.undo();
+    (<Root>this.getRoot()).assembleChlildren(this._nodeMap)
   }
 
   private _getContextOf = (path: Path) => {

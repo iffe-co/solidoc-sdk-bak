@@ -106,6 +106,16 @@ class Branch extends Subject {
     this._children = []
   }
 
+  public assembleChlildren = (nodeMap: Map<string, Subject>) => {
+    let currId = this.get('firstChild');
+    let curr: Subject | undefined = nodeMap.get(currId)
+    curr && this.attachChildren(curr, 0)
+
+    while (curr) {
+      (curr instanceof Branch) && curr.assembleChlildren(nodeMap);
+      curr = curr.getNext()
+    }
+  }
 }
 
 class Root extends Branch {
