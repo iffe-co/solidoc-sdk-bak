@@ -123,13 +123,13 @@ class Page extends Graph {
           ...op.properties,
         }
 
-        const node = createNode(json, this._nodeMap);
+        const newNext = createNode(json, this._nodeMap);
 
-        parent.attachChildren(node, op.path.offset + 1)
+        parent.attachChildren(newNext, op.path.offset + 1)
 
-        const child = curr.detachChildren(op.position, Infinity);
+        const children = curr.detachChildren(op.position, Infinity);
 
-        node.attachChildren(child, 0);
+        newNext.attachChildren(children, 0);
 
         break
       }

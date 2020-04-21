@@ -96,7 +96,7 @@ class Branch extends Subject {
     // TODO: use map??
     for (let i = 0; i < this.getChildrenNum(); i++) {
       let child = this.getIndexedChild(i)
-      if (child instanceof Branch && child.isAncestor(to)) return true
+      if (child === to || (child instanceof Branch && child.isAncestor(to))) return true
     }
     return false
   }

@@ -17,6 +17,8 @@ describe('Branch', () => {
   let leaf4: Leaf
 
   beforeEach(() => {
+    nodeMap.clear()
+
     branch = <Branch>createNode(para0, nodeMap);
 
     leaf0 = <Leaf>createNode(config.text[0], nodeMap);
@@ -25,18 +27,38 @@ describe('Branch', () => {
 
     leaf0.setNext(leaf1);
     leaf1.setNext(leaf2);
-    branch.attachChildren(leaf0, 0);
+    branch.set({'firstChild': leaf0.get('id')})
+    branch.assembleChlildren(nodeMap);
 
     leaf3 = <Leaf>createNode(config.text[3], nodeMap);
     leaf4 = <Leaf>createNode(config.text[4], nodeMap);
     leaf3.setNext(leaf4)
   });
 
-  describe('Insertion', () => {
+  it('converts to Json', () => {
+    assert.deepStrictEqual(branch.toJson(), para0)
+  });
+  
+  it('converts to blank Json', () => {
+    assert.deepStrictEqual(branch.toBlankJson(), {
+      ...para0,
+      children: []
+    })
+  })
 
-    it('converts to Json', () => {
-      assert.deepStrictEqual(branch.toJson(), para0)
-    });
+  it('is ancestor of its child', () => {
+    assert(branch.isAncestor(leaf0))
+  })
+
+  it('is not ancestor of itself', () => {
+    assert(branch.isAncestor(branch))
+  })
+
+  it('is not ancestor of others', () => {
+    assert(!branch.isAncestor(leaf4))
+  })
+
+  describe('Insertion', () => {
 
     it('inserts children to the beginning', () => {
       branch.attachChildren(leaf3, 0);

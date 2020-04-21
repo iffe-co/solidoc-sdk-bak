@@ -30,6 +30,10 @@ describe('Leaf', () => {
     assert.deepStrictEqual(leaf.toJson(), text);
   })
 
+  it('translate to blank Json', () => {
+    assert.deepStrictEqual(leaf.toBlankJson().text, '');
+  })
+
   it('inserts text at offset 0', () => {
     leaf.attachChildren('Insert: ', 0);
     assert.deepStrictEqual(leaf.toJson(), {
