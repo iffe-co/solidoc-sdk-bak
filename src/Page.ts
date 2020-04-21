@@ -32,15 +32,6 @@ class Page extends Graph {
     return { parent, curr, prev, next }
   }
 
-  private _deleteNodeRecursive = (node: Subject) => {
-    node.delete();
-
-    for (let i = 0; node instanceof Branch && i < node.getChildrenNum(); i++) {
-      let child = <Subject>node.getIndexedChild(i)
-      this._deleteNodeRecursive(child)
-    }
-  }
-
   public apply = (op: Operation) => {
     switch (op.type) {
       case 'insert_node': {
@@ -60,7 +51,7 @@ class Page extends Graph {
 
         parent.detachChildren(op.path.offset, 1);
 
-        curr && this._deleteNodeRecursive(curr)
+        curr && curr.delete()
 
         break
       }

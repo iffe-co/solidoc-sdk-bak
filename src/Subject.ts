@@ -85,6 +85,7 @@ abstract class Subject {
 
   public getSparqlForUpdate = (graph: string): string => {
     if (this._isDeleted) {
+      // TODO: for non-persisted nodes, this clause could be empty
       return `WITH <${graph}> DELETE { <${this._id}> ?p ?o } WHERE { <${this._id}> ?p ?o };\n`;
     } else {
       let sparql = '';

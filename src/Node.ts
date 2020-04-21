@@ -107,11 +107,11 @@ class Branch extends Subject {
   }
 
   public assembleChlildren = (nodeMap: Map<string, Subject>) => {
-    let childId = this.get('firstChild');
+    let childId = this.get('firstChild'); // Cannot get from children[] as it's not establish
     let child: Subject | undefined = nodeMap.get(childId)
     child && this.attachChildren(child, 0)
 
-    while (child) {
+    while (child) { // Cannot iterate over children[]
       (child instanceof Branch) && child.assembleChlildren(nodeMap);
       child = child.getNext()
     }
@@ -128,6 +128,14 @@ class Branch extends Subject {
     }
 
     return
+  }
+
+  public delete() {
+    super.delete()
+    for (let i = 0; i < this.getChildrenNum(); i++) {
+      let child = this.getIndexedChild(i)
+      child?.delete()
+    }
   }
 }
 
