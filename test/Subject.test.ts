@@ -1,6 +1,5 @@
 import { Subject } from '../src/Subject'
-import { Branch } from '../src/Node';
-import { Exec } from '../src/Exec'
+import { Branch, createNode } from '../src/Node';
 import { ont } from '../config/ontology'
 import { config, turtle } from '../config/test'
 import * as assert from 'power-assert';
@@ -21,7 +20,7 @@ describe('Subject', () => {
   let quads: any[];
 
   beforeEach(() => {
-    branch2 = <Branch>Exec.createNode(para2, nodeMap);
+    branch2 = <Branch>createNode(para2, nodeMap);
     quads = parser.parse(turtle.para[2]);
     quads.forEach(quad => branch2.fromQuad(quad, nodeMap));
   });
@@ -100,7 +99,7 @@ describe('Subject', () => {
 
   describe('#nextNode property', () => {
     beforeEach(() => {
-      branch1 = <Branch>Exec.createNode(para1, nodeMap);
+      branch1 = <Branch>createNode(para1, nodeMap);
     })
 
     it('setNext() is together with set("next")', () => {
@@ -195,7 +194,7 @@ describe('Subject', () => {
     })
 
     it('undoes next', () => {
-      branch1 = <Branch>Exec.createNode(para1, nodeMap);
+      branch1 = <Branch>createNode(para1, nodeMap);
       branch1.setNext(branch2);
       branch1.undo(nodeMap);
       assert.strictEqual(branch1.getNext(), undefined)

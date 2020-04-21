@@ -1,6 +1,5 @@
 import { Subject } from '../src/Subject'
-import { Branch, Leaf } from '../src/Node';
-import { Exec } from '../src/Exec'
+import { Branch, Leaf, createNode } from '../src/Node';
 import { config } from '../config/test'
 import * as assert from 'power-assert';
 
@@ -18,18 +17,18 @@ describe('Branch', () => {
   let leaf4: Leaf
 
   beforeEach(() => {
-    branch = <Branch>Exec.createNode(para0, nodeMap);
+    branch = <Branch>createNode(para0, nodeMap);
 
-    leaf0 = <Leaf>Exec.createNode(config.text[0], nodeMap);
-    leaf1 = <Leaf>Exec.createNode(config.text[1], nodeMap);
-    leaf2 = <Leaf>Exec.createNode(config.text[2], nodeMap);
+    leaf0 = <Leaf>createNode(config.text[0], nodeMap);
+    leaf1 = <Leaf>createNode(config.text[1], nodeMap);
+    leaf2 = <Leaf>createNode(config.text[2], nodeMap);
 
     leaf0.setNext(leaf1);
     leaf1.setNext(leaf2);
     branch.attachChildren(leaf0, 0);
 
-    leaf3 = <Leaf>Exec.createNode(config.text[3], nodeMap);
-    leaf4 = <Leaf>Exec.createNode(config.text[4], nodeMap);
+    leaf3 = <Leaf>createNode(config.text[3], nodeMap);
+    leaf4 = <Leaf>createNode(config.text[4], nodeMap);
     leaf3.setNext(leaf4)
   });
 
@@ -77,11 +76,11 @@ describe('Branch', () => {
   describe('Deletion', () => {
 
     beforeEach(() => {
-      branch = <Branch>Exec.createNode(para0, nodeMap);
+      branch = <Branch>createNode(para0, nodeMap);
 
-      leaf0 = <Leaf>Exec.createNode(config.text[0], nodeMap);
-      leaf1 = <Leaf>Exec.createNode(config.text[1], nodeMap);
-      leaf2 = <Leaf>Exec.createNode(config.text[2], nodeMap);
+      leaf0 = <Leaf>createNode(config.text[0], nodeMap);
+      leaf1 = <Leaf>createNode(config.text[1], nodeMap);
+      leaf2 = <Leaf>createNode(config.text[2], nodeMap);
 
       leaf0.setNext(leaf1);
       leaf1.setNext(leaf2);

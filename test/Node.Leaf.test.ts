@@ -1,6 +1,5 @@
 import { Subject } from '../src/Subject';
-import { Leaf } from '../src/Node';
-import { Exec } from '../src/Exec'
+import { Leaf, createNode } from '../src/Node';
 import { config, turtle } from '../config/test'
 import * as assert from 'power-assert';
 
@@ -17,7 +16,7 @@ describe('Leaf', () => {
   let leaf: Leaf;
 
   beforeEach(() => {
-    leaf = <Leaf>Exec.createNode(text, nodeMap);
+    leaf = <Leaf>createNode(text, nodeMap);
     quads.forEach(quad => leaf.fromQuad(quad, nodeMap));
   });
 

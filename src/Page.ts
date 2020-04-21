@@ -1,7 +1,6 @@
-import { Branch, Leaf } from './Node';
+import { Branch, Leaf, createNode } from './Node';
 import { Subject } from './Subject';
 import { Graph } from './Graph';
-import { Exec } from './Exec'
 import { Path, Operation, Element, Node } from './interface'
 
 
@@ -49,9 +48,10 @@ class Page extends Graph {
   private _insertNodeRecursive = (json: Node, path: Path) => {
 
     const { parent } = this._getContextOf(path)
-    Exec.insert(parent, json, path.offset, this._nodeMap)
 
-    const node = this.getNode(json.id)
+    const node = createNode(json, this._nodeMap);
+
+    parent.attachChildren(node, path.offset)
 
     for (let i = 0; node instanceof Branch && i < json.children.length; i++) {
       this._insertNodeRecursive(json.children[i], {
@@ -64,10 +64,11 @@ class Page extends Graph {
   }
 
   private _deleteNodeRecursive = (node: Subject) => {
+    node.delete();
+
     for (let i = 0; node instanceof Branch && i < node.getChildrenNum(); i++) {
       let child = <Subject>node.getIndexedChild(i)
       this._deleteNodeRecursive(child)
-      child.delete()
     }
   }
 
@@ -84,15 +85,24 @@ class Page extends Graph {
           throw new Error('Cannot remove')
         }
 
-        Exec.remove(parent, op.path.offset, 1)
+        parent.detachChildren(op.path.offset, 1);
+
         curr && this._deleteNodeRecursive(curr)
+
         break
       }
 
       case 'move_node': {
-        const { parent } = this._getContextOf(op.path)
-        const { parent: newParent} = this._getContextOf(op.newPath)
-        Exec.move(parent, op.path.offset, 1, newParent, op.newPath.offset)
+        const { parent, curr } = this._getContextOf(op.path)
+        const { parent: newParent } = this._getContextOf(op.newPath)
+
+        if (!curr || (curr instanceof Branch && curr.isAncestor(newParent))) {
+          throw new Error('Cannot move')
+        }
+
+        parent.detachChildren(op.path.offset, 1);
+
+        newParent.attachChildren(curr, op.newPath.offset);
 
         break
       }
@@ -103,30 +113,49 @@ class Page extends Graph {
           throw new Error('Cannot merge')
         }
 
-        Exec.move(curr, 0, Infinity, prev, Infinity)
+        const child = curr.detachChildren(0, Infinity);
 
+        prev.attachChildren(child, Infinity);
 
-        Exec.remove(parent, op.path.offset, 1)
+        parent.detachChildren(op.path.offset, 1);
+
+        curr.delete()
 
         break
       }
 
       case 'split_node': {
-        const json = Exec.getProperties(op.path, op.properties, this._nodeMap)
-
         const { parent, curr } = this._getContextOf(op.path)
 
         if (!curr || !(curr instanceof Subject)) {
           throw new Error('Cannot split')
         }
 
-        Exec.insert(parent, json, op.path.offset + 1, this._nodeMap);
-        Exec.move(curr, op.position, Infinity, <Subject>curr.getNext(), 0)
+        const json = {
+          ...curr.toBlankJson(),
+          ...op.properties,
+        }
+
+        const node = createNode(json, this._nodeMap);
+
+        parent.attachChildren(node, op.path.offset + 1)
+
+        const child = curr.detachChildren(op.position, Infinity);
+
+        node.attachChildren(child, 0);
+
         break
       }
 
       case 'set_node': {
-        Exec.setProperties(op.path, op.newProperties, this._nodeMap)
+        const { curr } = this._getContextOf(op.path)
+
+        if (!curr || !(curr instanceof Subject)) {
+          throw new Error('Cannot get path')
+        }
+
+        curr.set(op.newProperties)
+
         break
       }
 
@@ -135,7 +164,7 @@ class Page extends Graph {
         if (!(curr instanceof Leaf)) {
           throw new Error('Not a Leaf node: ' + JSON.stringify(op.path))
         }
-        Exec.insert(curr, op.text, op.offset)
+        curr.attachChildren(op.text, op.offset)
         break
       }
 
@@ -144,7 +173,7 @@ class Page extends Graph {
         if (!(curr instanceof Leaf)) {
           throw new Error('Not a Leaf node: ' + JSON.stringify(op.path))
         }
-        Exec.remove(curr, op.offset, op.text.length)
+        curr.detachChildren(op.offset, op.text.length);
         break
       }
 

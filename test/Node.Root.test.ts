@@ -1,6 +1,5 @@
 import { Subject } from '../src/Subject';
-import { Root } from '../src/Node';
-import { Exec } from '../src/Exec'
+import { Root, createNode } from '../src/Node';
 import { ont } from '../config/ontology'
 import { config, turtle } from '../config/test'
 import * as assert from 'power-assert';
@@ -17,7 +16,7 @@ describe('Root', () => {
   let root: Root;
 
   beforeEach(() => {
-    root = <Root>Exec.createNode(page, nodeMap);
+    root = <Root>createNode(page, nodeMap);
     quads.forEach(quad => root.fromQuad(quad, nodeMap));
   });
 
