@@ -1,7 +1,7 @@
 import { Root, Branch, Leaf, createNode } from './Node';
 import { Subject } from './Subject';
 import { Graph } from './Graph';
-import { Path, Operation, Element, Node } from './interface'
+import { Path, Operation, Element } from './interface'
 
 
 class Page extends Graph {
@@ -32,24 +32,6 @@ class Page extends Graph {
     return { parent, curr, prev, next }
   }
 
-  private _insertNodeRecursive = (json: Node, path: Path) => {
-
-    const { parent } = this._getContextOf(path)
-
-    const node = createNode(json, this._nodeMap);
-
-    parent.attachChildren(node, path.offset)
-
-    for (let i = 0; node instanceof Branch && i < json.children.length; i++) {
-      this._insertNodeRecursive(json.children[i], {
-        parentId: json.id,
-        offset: i,
-      });
-    }
-
-    return
-  }
-
   private _deleteNodeRecursive = (node: Subject) => {
     node.delete();
 
@@ -62,7 +44,11 @@ class Page extends Graph {
   public apply = (op: Operation) => {
     switch (op.type) {
       case 'insert_node': {
-        this._insertNodeRecursive(op.node, op.path);
+        const { parent } = this._getContextOf(op.path);
+        if (!(parent instanceof Branch)) {
+          throw new Error('Cannot insert')
+        }
+        parent.insertRecursive(op.node, op.path.offset, this._nodeMap)
         break
       }
 

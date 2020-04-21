@@ -116,6 +116,19 @@ class Branch extends Subject {
       child = child.getNext()
     }
   }
+
+  public insertRecursive = (json: Node, offset: number, nodeMap: Map<string, Subject>) => {
+
+    const node = createNode(json, nodeMap);
+
+    this.attachChildren(node, offset)
+
+    for (let i = 0; node instanceof Branch && i < json.children.length; i++) {
+      node.insertRecursive(json.children[i], i, nodeMap);
+    }
+
+    return
+  }
 }
 
 class Root extends Branch {

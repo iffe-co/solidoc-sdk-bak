@@ -9,30 +9,25 @@ const para0 = config.para[0]
 
 describe('Branch', () => {
   let branch: Branch
-  let leaf0: Leaf
-  let leaf1: Leaf
-  let leaf2: Leaf
-
-  let leaf3: Leaf
-  let leaf4: Leaf
+  let leaf: Leaf[] = []
 
   beforeEach(() => {
     nodeMap.clear()
 
     branch = <Branch>createNode(para0, nodeMap);
 
-    leaf0 = <Leaf>createNode(config.text[0], nodeMap);
-    leaf1 = <Leaf>createNode(config.text[1], nodeMap);
-    leaf2 = <Leaf>createNode(config.text[2], nodeMap);
+    leaf[0] = <Leaf>createNode(config.text[0], nodeMap);
+    leaf[1] = <Leaf>createNode(config.text[1], nodeMap);
+    leaf[2] = <Leaf>createNode(config.text[2], nodeMap);
 
-    leaf0.setNext(leaf1);
-    leaf1.setNext(leaf2);
-    branch.set({'firstChild': leaf0.get('id')})
+    leaf[0].setNext(leaf[1]);
+    leaf[1].setNext(leaf[2]);
+    branch.set({'firstChild': leaf[0].get('id')})
     branch.assembleChlildren(nodeMap);
 
-    leaf3 = <Leaf>createNode(config.text[3], nodeMap);
-    leaf4 = <Leaf>createNode(config.text[4], nodeMap);
-    leaf3.setNext(leaf4)
+    leaf[3] = <Leaf>createNode(config.text[3], nodeMap);
+    leaf[4] = <Leaf>createNode(config.text[4], nodeMap);
+    leaf[3].setNext(leaf[4])
   });
 
   it('converts to Json', () => {
@@ -47,7 +42,7 @@ describe('Branch', () => {
   })
 
   it('is ancestor of its child', () => {
-    assert(branch.isAncestor(leaf0))
+    assert(branch.isAncestor(leaf[0]))
   })
 
   it('is not ancestor of itself', () => {
@@ -55,34 +50,34 @@ describe('Branch', () => {
   })
 
   it('is not ancestor of others', () => {
-    assert(!branch.isAncestor(leaf4))
+    assert(!branch.isAncestor(leaf[4]))
   })
 
   describe('Insertion', () => {
 
     it('inserts children to the beginning', () => {
-      branch.attachChildren(leaf3, 0);
+      branch.attachChildren(leaf[3], 0);
       assert.strictEqual(branch.getChildrenNum(), 5);
-      assert.strictEqual(branch.getIndexedChild(0), leaf3)
-      assert.strictEqual(branch.getLastChild(), leaf2)
+      assert.strictEqual(branch.getIndexedChild(0), leaf[3])
+      assert.strictEqual(branch.getLastChild(), leaf[2])
     })
 
     it('inserts children to the middle', () => {
-      branch.attachChildren(leaf3, 1);
+      branch.attachChildren(leaf[3], 1);
       assert.strictEqual(branch.getChildrenNum(), 5);
-      assert.strictEqual(branch.getIndexedChild(2), leaf4)
+      assert.strictEqual(branch.getIndexedChild(2), leaf[4])
     })
 
     it('inserts children to the tail', () => {
-      branch.attachChildren(leaf3, Infinity);
+      branch.attachChildren(leaf[3], Infinity);
       assert.strictEqual(branch.getChildrenNum(), 5);
-      assert.strictEqual(branch.getLastChild(), leaf4)
+      assert.strictEqual(branch.getLastChild(), leaf[4])
     })
 
     it('inserts children to offset < 0', () => {
-      branch.attachChildren(leaf3, -1);
+      branch.attachChildren(leaf[3], -1);
       assert.strictEqual(branch.getChildrenNum(), 5);
-      assert.strictEqual(branch.getIndexedChild(0), leaf3);
+      assert.strictEqual(branch.getIndexedChild(0), leaf[3]);
     })
 
     it('throws on inserting an undefined child', () => {
@@ -100,13 +95,13 @@ describe('Branch', () => {
     beforeEach(() => {
       branch = <Branch>createNode(para0, nodeMap);
 
-      leaf0 = <Leaf>createNode(config.text[0], nodeMap);
-      leaf1 = <Leaf>createNode(config.text[1], nodeMap);
-      leaf2 = <Leaf>createNode(config.text[2], nodeMap);
+      leaf[0] = <Leaf>createNode(config.text[0], nodeMap);
+      leaf[1] = <Leaf>createNode(config.text[1], nodeMap);
+      leaf[2] = <Leaf>createNode(config.text[2], nodeMap);
 
-      leaf0.setNext(leaf1);
-      leaf1.setNext(leaf2);
-      branch.attachChildren(leaf0, 0);
+      leaf[0].setNext(leaf[1]);
+      leaf[1].setNext(leaf[2]);
+      branch.attachChildren(leaf[0], 0);
     })
 
     it('throws on deleting if length <= 0', () => {
@@ -121,14 +116,14 @@ describe('Branch', () => {
     it('deletes at the beginning', () => {
       branch.detachChildren(0, 1);
       assert.strictEqual(branch.getChildrenNum(), 2);
-      assert.strictEqual(branch.getIndexedChild(0), leaf1)
-      assert.strictEqual(branch.getIndexedChild(1), leaf2)
+      assert.strictEqual(branch.getIndexedChild(0), leaf[1])
+      assert.strictEqual(branch.getIndexedChild(1), leaf[2])
     })
 
     it('deletes in the middle', () => {
       branch.detachChildren(1, 2);
       assert.strictEqual(branch.getChildrenNum(), 1);
-      assert.strictEqual(branch.getIndexedChild(0), leaf0)
+      assert.strictEqual(branch.getIndexedChild(0), leaf[0])
     })
 
     it('deletes all', () => {

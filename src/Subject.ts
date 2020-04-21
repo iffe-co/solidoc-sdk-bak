@@ -5,11 +5,13 @@ abstract class Subject {
   protected _id: string
   protected _predicates: { [key: string]: Property } = {}
   private _isDeleted: boolean
+  private _isPersisted: boolean
   private _next: Subject | undefined
 
   constructor(id: string) {
     this._id = id;
     this._isDeleted = false
+    this._isPersisted = false
     this._predicates.type = new NamedNodeProperty('http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'type');
     this._predicates.next = new NamedNodeProperty('http://www.solidoc.net/ontologies#nextNode', 'next');
     this._predicates.option = new JsonProperty('http://www.solidoc.net/ontologies#option', 'option');
@@ -29,6 +31,7 @@ abstract class Subject {
       this.setNext(next)
     }
     this._predicates[key].fromQuad(quad)
+    this._isPersisted = true
   }
 
   public toJson(): any {
@@ -99,9 +102,13 @@ abstract class Subject {
     Object.keys(this._predicates).forEach(key => {
       this._predicates[key].commit();
     });
+    this._isPersisted = true
   }
 
   public undo(nodeMap: Map<string, Subject>) {
+    if (!this._isPersisted) {
+      throw new Error('A non-persisted subject should not be undone')
+    }
     this._isDeleted = false
     Object.keys(this._predicates).forEach(key => {
       this._predicates[key].undo();
@@ -115,6 +122,10 @@ abstract class Subject {
 
   public isDeleted = (): boolean => {
     return this._isDeleted
+  }
+
+  public isPersisted = (): boolean => {
+    return this._isPersisted
   }
 
   public abstract attachChildren(curr: Subject | string | undefined, offset: number)

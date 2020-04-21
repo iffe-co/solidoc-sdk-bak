@@ -39,39 +39,40 @@ describe('Root', () => {
     assert.strictEqual(root.get('title'), 'Welcome')
   })
 
-  it('throws on parsing #nextNode predicate', () => {
-    let turtle = `<${page.id}> <${ont.sdoc.next}> <${config.para[0].id}>.`;
-    let quads = parser.parse(turtle)
-    try {
-      root.fromQuad(quads[0], nodeMap)
-    } catch (e) {
-      return
-    }
-    assert(0)
+  describe('about #nextNode & delete', () => {
+    it('throws on parsing #nextNode predicate', () => {
+      let turtle = `<${page.id}> <${ont.sdoc.next}> <${config.para[0].id}>.`;
+      let quads = parser.parse(turtle)
+      try {
+        root.fromQuad(quads[0], nodeMap)
+      } catch (e) {
+        return
+      }
+      assert(0)
+    })
+  
+    it('throws on setNext(node)', () => {
+      let next = new Root(config.para[0].id)
+      try {
+        root.setNext(next)
+      } catch (e) {
+        return
+      }
+      assert(0)
+    })
+  
+    it('is ok to setNext(undefined)', () => {
+      root.setNext(undefined)
+      assert.strictEqual(root.getNext(), undefined)
+    })
+  
+    it('disallows deletion', () => {
+      try {
+        root.delete();
+      } catch (e) {
+        return
+      }
+      assert(0)
+    })  
   })
-
-  it('throws on setNext(node)', () => {
-    let next = new Root(config.para[0].id)
-    try {
-      root.setNext(next)
-    } catch (e) {
-      return
-    }
-    assert(0)
-  })
-
-  it('is ok to setNext(undefined)', () => {
-    root.setNext(undefined)
-    assert.strictEqual(root.getNext(), undefined)
-  })
-
-  it('disallows deletion', () => {
-    try {
-      root.delete();
-    } catch (e) {
-      return
-    }
-    assert(0)
-  })
-
 });

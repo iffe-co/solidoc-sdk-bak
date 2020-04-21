@@ -12,20 +12,14 @@ abstract class Graph {
 
   constructor(id: string, turtle: string) {
     this._id = id;
-    this._parseTurtle(id, turtle)
+    turtle = `<${id}> a <http://www.solidoc.net/ontologies#Root>.\n` + turtle
+    this._parseTurtle(turtle)
   }
 
-  private _parseTurtle = (id: string, turtle: string) => {
-    let json: Node = {
-      id: id,
-      type: 'http://www.solidoc.net/ontologies#Root',
-      children: []
-    }
-    createNode(json, this._nodeMap);
-
+  private _parseTurtle = (turtle: string) => {
     const quads: any[] = parser.parse(turtle);
     quads.forEach(quad => {
-      if (quad.predicate.id === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type' && quad.subject.id !== id) {
+      if (quad.predicate.id === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type') {
         // TODO: only create node for known types
         let json: Node = {
           id: quad.subject.id,
@@ -72,10 +66,13 @@ abstract class Graph {
   }
 
   public undo() {
-    for (let node of this._nodeMap.values()) {
-      node.undo(this._nodeMap);
+    for (let [id, node] of this._nodeMap.entries()) {
+      if (!node.isPersisted()) {
+        this._nodeMap.delete(id)
+      } else {
+        node.undo(this._nodeMap);
+      }
     }
-    // TODO: delete newly inserted nodes
   }
 }
 

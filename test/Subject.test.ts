@@ -195,6 +195,7 @@ describe('Subject', () => {
 
     it('undoes next', () => {
       branch1 = <Branch>createNode(para1, nodeMap);
+      branch1.commit();
       branch1.setNext(branch2);
       branch1.undo(nodeMap);
       assert.strictEqual(branch1.getNext(), undefined)
