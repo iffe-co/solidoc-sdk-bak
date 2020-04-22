@@ -14,7 +14,7 @@ const quads: any[] = parser.parse(turtle.text[8]);
 describe('Type: a NamedNode Property', () => {
   let type: NamedNodeProperty;
 
-  const deleteClause = `WITH <${page.id}> DELETE WHERE { <${node.id}> <${ont.rdf.type}> ?o };\n`;
+  const deleteClause = `DELETE WHERE { GRAPH <${page.id}> { <${node.id}> <${ont.rdf.type}> ?o } };\n`;
   const insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.rdf.type}> <${ont.sdoc.paragraph}>} };\n`;
 
   beforeEach(() => {
@@ -67,7 +67,7 @@ describe('Type: a NamedNode Property', () => {
 describe('Text Property', () => {
   let text: TextProperty;
 
-  const deleteClause = `WITH <${page.id}> DELETE WHERE { <${node.id}> <${ont.sdoc.text}> ?o };\n`;
+  const deleteClause = `DELETE WHERE { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.text}> ?o } };\n`;
   const insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.text}> "Hello world!"} };\n`;
 
   beforeEach(() => {
@@ -103,7 +103,7 @@ describe('Text Property', () => {
 describe('Json Property', () => {
   let option: JsonProperty;
 
-  let deleteClause = `WITH <${page.id}> DELETE WHERE { <${node.id}> <${ont.sdoc.option}> ?o };\n`;
+  let deleteClause = `DELETE WHERE { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.option}> ?o } };\n`;
   let insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.option}> "{\\"name\\":\\"alice\\"}"} };\n`;
 
   beforeEach(() => {

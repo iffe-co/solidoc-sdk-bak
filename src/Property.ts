@@ -21,7 +21,7 @@ abstract class Property {
   protected _getSparqlForDeletion = (graph: string, subject: string): string => {
     let sparql: string = ''
     if (this.uncommitted !== this.value && this.value) {
-      sparql = `WITH <${graph}> DELETE WHERE { <${subject}> <${this.id}> ?o };\n`;
+      sparql = `DELETE WHERE { GRAPH <${graph}> { <${subject}> <${this.id}> ?o } };\n`;
     }
     return sparql
   }
@@ -104,7 +104,7 @@ class JsonProperty extends TextProperty {
     let sparql: string = ''
     // TODO: could same object values be stringified to different strings?
     if (this.uncommitted !== this.value && this.value !== '{}') {
-      sparql = `WITH <${graph}> DELETE WHERE { <${subject}> <${this.id}> ?o };\n`;
+      sparql = `DELETE WHERE { GRAPH <${graph}> { <${subject}> <${this.id}> ?o } };\n`;
     }
     return sparql
   }

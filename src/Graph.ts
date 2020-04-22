@@ -1,6 +1,5 @@
 import { Subject } from './Subject'
 import { createNode } from './Node'
-import { Node } from './interface'
 import * as n3 from 'n3';
 
 const parser = new n3.Parser();
@@ -20,23 +19,19 @@ abstract class Graph {
     const quads: any[] = parser.parse(turtle);
     quads.forEach(quad => {
       if (quad.predicate.id === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type') {
-        // TODO: only create node for known types
-        let json: Node = {
+        
+        let node = createNode({
           id: quad.subject.id,
-          type: quad.object.id,
-          children: [],   // TODO: might be leaf
-        }    
-        let node = createNode(json, this._nodeMap);
+          type: quad.object.id, // TODO: should only create node for known types
+          children: [], // TODO: this is a workaround to deceive the type check
+        }, this._nodeMap);
         node.setFromPod();
       }
     })
 
     quads.forEach(quad => {
       let node = this._nodeMap.get(quad.subject.id)
-      if (!node) {
-        throw new Error('Node does not exist: ' + quad.subject.id)
-      }
-      node.fromQuad(quad, this._nodeMap)
+      node?.fromQuad(quad, this._nodeMap)
     })
   }
 
