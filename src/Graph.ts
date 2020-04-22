@@ -67,7 +67,7 @@ abstract class Graph {
 
   public undo() {
     for (let [id, node] of this._nodeMap.entries()) {
-      if (!node.isPersisted()) {
+      if (!node.isFromPod()) {
         this._nodeMap.delete(id)
       } else {
         node.undo(this._nodeMap);

@@ -28,7 +28,7 @@ class Branch extends Subject {
     }
   }
 
-  private setFirstChild = (node: Subject | undefined) => {
+  private _setFirstChild = (node: Subject | undefined) => {
     this.set({ firstChild: node ? node.get('id') : '' })
   }
 
@@ -48,7 +48,7 @@ class Branch extends Subject {
 
     let prev: Subject | undefined = (offset === 0) ? undefined : (this.getIndexedChild(offset - 1) || this.getLastChild());
     if (!prev) {
-      this.setFirstChild(curr)
+      this._setFirstChild(curr)
     } else {
       prev.setNext(curr)
     }
@@ -65,7 +65,7 @@ class Branch extends Subject {
   }
 
   public detachChildren(offset: number, length: number): Subject | undefined {
-    if (length <= 0) {
+    if (offset < 0 || length <= 0) {
       // TODO: allow length === 0 ??
       throw new Error(`Remove children: offset = ${offset}, length = ${length}`)
     }
@@ -73,7 +73,7 @@ class Branch extends Subject {
     let next: Subject | undefined = this.getIndexedChild(offset + length);
     let prev: Subject | undefined = this.getIndexedChild(offset - 1);
     if (!prev) {
-      this.setFirstChild(next);
+      this._setFirstChild(next);
     } else {
       prev.setNext(next)
     }
@@ -133,8 +133,8 @@ class Branch extends Subject {
   public delete() {
     super.delete()
     for (let i = 0; i < this.getChildrenNum(); i++) {
-      let child = this.getIndexedChild(i)
-      child?.delete()
+      let child = <Subject>this.getIndexedChild(i)
+      child.delete();
     }
   }
 }

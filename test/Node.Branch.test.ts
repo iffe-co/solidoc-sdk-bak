@@ -41,19 +41,14 @@ describe('Branch', () => {
     })
   })
 
-  it('is ancestor of its child', () => {
-    assert(branch.isAncestor(leaf[0]))
+  it('deletes iteratively', () => {
+    branch.delete();
+
+    assert(branch.isDeleted())
+    assert(leaf[0].isDeleted())
   })
 
-  it('is not ancestor of itself', () => {
-    assert(branch.isAncestor(branch))
-  })
-
-  it('is not ancestor of others', () => {
-    assert(!branch.isAncestor(leaf[4]))
-  })
-
-  describe('Insertion', () => {
+  describe('Attach', () => {
 
     it('inserts children to the beginning', () => {
       branch.attachChildren(leaf[3], 0);
@@ -90,7 +85,7 @@ describe('Branch', () => {
     })
   })
 
-  describe('Deletion', () => {
+  describe('Detach', () => {
 
     beforeEach(() => {
       branch = <Branch>createNode(para0, nodeMap);
