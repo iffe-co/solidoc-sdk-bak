@@ -1,137 +1,143 @@
-import { Branch, Leaf } from './Node';
+import { Root, Branch, Leaf, createNode } from './Node';
 import { Subject } from './Subject';
 import { Graph } from './Graph';
 import { Path, Operation, Element } from './interface'
-import { Process, nodes } from './Process'
+
 
 class Page extends Graph {
-  constructor(uri: string, turtle: string) {
-    super(uri, turtle);
-    Process.assembleTree(nodes.get(uri), this)
-  }
-
-  private _getBranchInstance = (uri: string): Branch => {
-    let node = nodes.get(uri);
-    if (!node || node.isDeleted()) {
-      throw new Error('The node does not exist: ' + uri);
-    } else if (!(node instanceof Branch)) {
-      throw new Error('The request node is not a branch: ' + uri)
-    }
-    return node;
-  }
-  private _getLeafInstance = (path: Path): Leaf => {
-    let parent: Branch = this._getBranchInstance(path.parentUri);
-    let node = parent.getChildFromChildren(path.offset)
-    if (!node || node.isDeleted()) {
-      throw new Error('The node does not exist: ' + path.parentUri + ' offset = ' + path.offset);
-    } else if (!(node instanceof Leaf)) {
-      throw new Error('The request node is not a branch: ' + path.parentUri + ' offset = ' + path.offset)
-    }
-    return node;
+  constructor(id: string, turtle: string) {
+    super(id, turtle);
+    (<Root>this.getRoot()).assembleChlildren(this._nodeMap)
   }
 
   public toJson = (): Element => {
-    let head = nodes.get(this.getUri());
-    return <Element>(Process.toJson(head))
+    let head = this.getRoot();
+    return head?.toJson()
+  }
+
+  public undo() {
+    super.undo();
+    (<Root>this.getRoot()).assembleChlildren(this._nodeMap)
+  }
+
+  private _getContextOf = (path: Path) => {
+    const parent = this.getNode(path.parentId);
+    if (!parent) {
+      throw new Error('Cannot get parent: ' + path.parentId)
+    }
+    const curr = (parent instanceof Branch) ? parent.getIndexedChild(path.offset) : undefined
+    const prev = (parent instanceof Branch) ? parent.getIndexedChild(path.offset - 1) : undefined
+    const next = (parent instanceof Branch) ? parent.getIndexedChild(path.offset + 1) : undefined
+
+    return { parent, curr, prev, next }
   }
 
   public apply = (op: Operation) => {
     switch (op.type) {
       case 'insert_node': {
-        const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        Process.insertRecursive(op.node, this, parent, op.path.offset)
+        const { parent } = this._getContextOf(op.path);
+        if (!(parent instanceof Branch)) {
+          throw new Error('Cannot insert')
+        }
+        parent.insertRecursive(op.node, op.path.offset, this._nodeMap)
         break
       }
 
       case 'remove_node': {
-        const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        const curr: Subject = parent.removeChild(op.path.offset);
-        curr && Process.removeRecursive(curr);
+        const { parent, curr } = this._getContextOf(op.path)
+        if (!(curr instanceof Subject) && curr !== undefined) {
+          throw new Error('Cannot remove')
+        }
+
+        parent.detachChildren(op.path.offset, 1);
+
+        curr && curr.delete()
+
         break
       }
 
       case 'move_node': {
-        const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        const newParent: Branch = this._getBranchInstance(op.newPath.parentUri);
+        const { parent, curr } = this._getContextOf(op.path)
+        const { parent: newParent } = this._getContextOf(op.newPath)
 
-        const curr: Subject = parent.removeChild(op.path.offset);
-
-        if (Process.isAncestor(curr, newParent)) {
-          parent.insertChild(curr, op.path.offset);
-          throw new Error('Trying to append the node to itself or its descendent')
+        if (!curr || (curr instanceof Branch && curr.isAncestor(newParent))) {
+          throw new Error('Cannot move')
         }
 
-        newParent.insertChild(curr, op.newPath.offset);
+        parent.detachChildren(op.path.offset, 1);
+
+        newParent.attachChildren(curr, op.newPath.offset);
+
         break
       }
 
       case 'merge_node': {
-        const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        const prev: Subject = parent.getChildFromChildren(op.path.offset - 1);
-        const curr: Subject = parent.getChildFromChildren(op.path.offset);
-
-        if (prev instanceof Leaf && curr instanceof Leaf) {
-          prev.insertText(Infinity, curr.get('text'));
-        } else if (prev instanceof Branch && curr instanceof Branch) {
-          let child: Subject = curr.detachChildren(0);
-          prev.appendChildren(child)
-        } else {
-          throw new Error(`Cannot merge.`);
+        const { parent, prev, curr } = this._getContextOf(op.path)
+        if (!(curr instanceof Subject) || !(prev instanceof Subject)) {
+          throw new Error('Cannot merge')
         }
-        parent.removeChild(op.path.offset)
+
+        const child = curr.detachChildren(0, Infinity);
+
+        prev.attachChildren(child, Infinity);
+
+        parent.detachChildren(op.path.offset, 1);
+
+        curr.delete()
+
         break
       }
 
       case 'split_node': {
-        const parent: Branch = this._getBranchInstance(op.path.parentUri);
-        const curr: Subject = parent.getChildFromChildren(op.path.offset);
-        if (curr instanceof Leaf) {
-          let clipped: string = curr.removeText(op.position, Infinity);
-          let json = {
-            ...Process.toJson(curr),
-            ...op.properties,
-            text: clipped
-          }
-          Process.insertRecursive(json, this, parent, op.path.offset + 1)
-        } else {
-          let child: Subject = (<Branch>curr).detachChildren(op.position);
-          let json = {
-            ...Process.toJson(curr),
-            ...op.properties,
-            children: []
-          }
-          let next: Subject = Process.insertRecursive(json, this, parent, op.path.offset + 1);
-          (<Branch>next).appendChildren(child)
+        const { parent, curr } = this._getContextOf(op.path)
+
+        if (!curr || !(curr instanceof Subject)) {
+          throw new Error('Cannot split')
         }
+
+        const json = {
+          ...curr.toBlankJson(),
+          ...op.properties,
+        }
+
+        const newNext = createNode(json, this._nodeMap);
+
+        parent.attachChildren(newNext, op.path.offset + 1)
+
+        const children = curr.detachChildren(op.position, Infinity);
+
+        newNext.attachChildren(children, 0);
+
         break
       }
 
       case 'set_node': {
-        let curr: Subject | undefined
-        if (op.path.parentUri) {
-          const parent: Branch = this._getBranchInstance(op.path.parentUri);
-          curr = parent.getChildFromChildren(op.path.offset);
-        } else {
-          curr = nodes.get(this.getUri())
-        }
-        // TODO: disallow setting id/text/children/next/option
-        if (!curr) {
-          throw new Error('No such node: ' + op.path.parentUri + op.path.offset)
+        const { curr } = this._getContextOf(op.path)
+
+        if (!curr || !(curr instanceof Subject)) {
+          throw new Error('Cannot get path')
         }
 
         curr.set(op.newProperties)
+
         break
       }
 
       case 'insert_text': {
-        const leaf = this._getLeafInstance(op.path);
-        leaf.insertText(op.offset, op.text)
+        const { curr } = this._getContextOf(op.path);
+        if (!(curr instanceof Leaf)) {
+          throw new Error('Not a Leaf node: ' + JSON.stringify(op.path))
+        }
+        curr.attachChildren(op.text, op.offset)
         break
       }
 
       case 'remove_text': {
-        const leaf = this._getLeafInstance(op.path);
-        leaf.removeText(op.offset, op.text.length);
+        const { curr } = this._getContextOf(op.path);
+        if (!(curr instanceof Leaf)) {
+          throw new Error('Not a Leaf node: ' + JSON.stringify(op.path))
+        }
+        curr.detachChildren(op.offset, op.text.length);
         break
       }
 

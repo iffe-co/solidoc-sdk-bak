@@ -1,156 +1,152 @@
-import { TextProperty, NamedNodeProperty, JsonProperty } from '../src/Property';
-import * as n3 from 'n3';
+import { NamedNodeProperty, TextProperty, JsonProperty } from '../src/Property';
+import { ont } from '../config/ontology'
+import { config, turtle } from '../config/test'
 import * as assert from 'power-assert';
 
+import * as n3 from 'n3';
 const parser = new n3.Parser();
 
-describe('Named Node Property', () => {
-  let prop: NamedNodeProperty;
-  const turtle = '<http://example.org/alice> a <http://xmlns.com/foaf/0.1/Person> .';
-  const quads: any[] = parser.parse(turtle);
+const node = config.text[8]
+const page = config.page
 
-  const deleteClause = 'WITH <http://example.org/test> DELETE WHERE { <http://example.org/alice> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?o };\n';
-  const insertClause = 'INSERT DATA { GRAPH <http://example.org/test> { <http://example.org/alice> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/homepage>} };\n';
+const quads: any[] = parser.parse(turtle.text[8]);
+
+describe('Type: a NamedNode Property', () => {
+  let type: NamedNodeProperty;
+
+  const deleteClause = `WITH <${page.id}> DELETE WHERE { <${node.id}> <${ont.rdf.type}> ?o };\n`;
+  const insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.rdf.type}> <${ont.sdoc.paragraph}>} };\n`;
 
   beforeEach(() => {
-    prop = new NamedNodeProperty('http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'type');
+    type = new NamedNodeProperty(ont.rdf.type, 'type');
+    type.fromQuad(quads[0]);
   });
+
   it('parses quad as a named node', () => {
-    prop.fromQuad(quads[0]);
-    assert.strictEqual(prop.get(), 'http://xmlns.com/foaf/0.1/Person');
+    assert.strictEqual(type.get(), node.type);
   });
+
   it('generates null sparql for a new property', () => {
-    const sparql: string = prop.getSparqlForUpdate('http://example.org/test', 'http://example.org/alice');
+    const sparql: string = type.getSparqlForUpdate(page.id, node.id);
     assert.strictEqual(sparql, '');
   });
-  it('generate sparql for updated property', () => {
-    prop.fromQuad(quads[0]);
-    prop.set('http://xmlns.com/foaf/0.1/homepage');
 
-    const sparql: string = prop.getSparqlForUpdate('http://example.org/test', 'http://example.org/alice');
+  it('generate sparql for updated property', () => {
+    type.set(ont.sdoc.paragraph);
+    const sparql: string = type.getSparqlForUpdate(page.id, node.id);
     assert.strictEqual(sparql, deleteClause + insertClause);
   });
-  it('generate sparql for deleted property', () => {
-    prop.fromQuad(quads[0]);
-    prop.set('');
 
-    const sparql: string = prop.getSparqlForUpdate('http://example.org/test', 'http://example.org/alice');
+  it('generate sparql for deleted property', () => {
+    type.set('');
+    const sparql: string = type.getSparqlForUpdate(page.id, node.id);
     assert.strictEqual(sparql, deleteClause);
   });
-  it('generate sparql for a just-set property', () => {
-    prop.set('http://xmlns.com/foaf/0.1/homepage');
 
-    const sparql: string = prop.getSparqlForUpdate('http://example.org/test', 'http://example.org/alice');
+  it('generate sparql for a just-set property', () => {
+    type.set('');
+    type.commit()
+    type.set(ont.sdoc.paragraph);
+    const sparql: string = type.getSparqlForUpdate(page.id, node.id);
     assert.strictEqual(sparql, insertClause);
   });
-  it('commits correctly', () => {
-    prop.fromQuad(quads[0]);
-    prop.set('http://xmlns.com/foaf/0.1/homepage');
-    prop.commit();
-    assert.strictEqual(prop.get(), 'http://xmlns.com/foaf/0.1/homepage');
-  });
-  it('undoes correctly', () => {
-    prop.fromQuad(quads[0]);
-    prop.set('http://xmlns.com/foaf/0.1/homepage');
-    prop.undo();
-    assert.strictEqual(prop.get(), 'http://xmlns.com/foaf/0.1/Person');
 
+  it('commits correctly', () => {
+    type.set(ont.sdoc.paragraph);
+    type.commit();
+    assert.strictEqual(type.get(), ont.sdoc.paragraph);
+  });
+
+  it('undoes correctly', () => {
+    type.set(ont.sdoc.paragraph);
+    type.undo();
+    assert.strictEqual(type.get(), node.type);
   });
 });
 
 describe('Text Property', () => {
-  let prop: TextProperty;
-  const turtle = `<http://example.org/alice> <http://www.solidoc.net/ontologies#option> "{\\"name\\":\\"alice\\"}" .`;
-  const quads: any[] = parser.parse(turtle);
+  let text: TextProperty;
 
-  const deleteClause = `WITH <http://example.org/test> DELETE WHERE { <http://example.org/alice> <http://www.solidoc.net/ontologies#option> ?o };\n`;
-  const insertClause = `INSERT DATA { GRAPH <http://example.org/test> { <http://example.org/alice> <http://www.solidoc.net/ontologies#option> "{\\"name\\":\\"alice\\",\\"age\\":25}"} };\n`;
+  const deleteClause = `WITH <${page.id}> DELETE WHERE { <${node.id}> <${ont.sdoc.text}> ?o };\n`;
+  const insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.text}> "Hello world!"} };\n`;
 
   beforeEach(() => {
-    prop = new TextProperty('http://www.solidoc.net/ontologies#option', 'option');
+    text = new TextProperty(ont.sdoc.text, 'text');
+    text.fromQuad(quads[1]);
   });
 
   it('parses quad as text', () => {
-    prop.fromQuad(quads[0]);
-    assert.strictEqual(prop.value, '{"name":"alice"}');
+    assert.strictEqual(text.value, node.text);
   });
 
   it('generates sparql for update', async () => {
-    prop.fromQuad(quads[0]);
-    prop.set('{"name":"alice","age":25}');
-    const sparql: string = prop.getSparqlForUpdate('http://example.org/test', 'http://example.org/alice');
+    text.set('Hello world!');
+    const sparql: string = text.getSparqlForUpdate(page.id, node.id);
     assert.strictEqual(sparql, deleteClause + insertClause);
   });
 
   it('generates sparql for deletion only', async () => {
-    prop.fromQuad(quads[0]);
-    prop.set('');
-    const sparql: string = prop.getSparqlForUpdate('http://example.org/test', 'http://example.org/alice');
+    text.set('');
+    const sparql: string = text.getSparqlForUpdate(page.id, node.id);
     assert.strictEqual(sparql, deleteClause);
   });
 
   it('generates sparql for insertion only', async () => {
-    prop.fromQuad(quads[0]);
-    prop.set('');
-    prop.commit();
-    prop.set('{"name":"alice","age":25}');
-    const sparql: string = prop.getSparqlForUpdate('http://example.org/test', 'http://example.org/alice');
+    text.set('');
+    text.commit();
+    text.set('Hello world!');
+    const sparql: string = text.getSparqlForUpdate(page.id, node.id);
     assert.strictEqual(sparql, insertClause);
   });
 });
 
 describe('Json Property', () => {
-  let prop: JsonProperty;
-  const turtle = `<http://example.org/alice> <http://www.solidoc.net/ontologies#option> "{\\"name\\":\\"alice\\"}" .`;
-  const quads: any[] = parser.parse(turtle);
+  let option: JsonProperty;
 
-  const deleteClause = `WITH <http://example.org/test> DELETE WHERE { <http://example.org/alice> <http://www.solidoc.net/ontologies#option> ?o };\n`;
-  const insertClause = `INSERT DATA { GRAPH <http://example.org/test> { <http://example.org/alice> <http://www.solidoc.net/ontologies#option> "{\\"name\\":\\"alice\\"}"} };\n`;
+  let deleteClause = `WITH <${page.id}> DELETE WHERE { <${node.id}> <${ont.sdoc.option}> ?o };\n`;
+  let insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.option}> "{\\"name\\":\\"alice\\"}"} };\n`;
 
   beforeEach(() => {
-    prop = new JsonProperty('http://www.solidoc.net/ontologies#option', 'option');
+    option = new JsonProperty(ont.sdoc.option, 'option');
   });
 
-  it('initial value', () => {
-    assert.strictEqual(prop.value, '{}')
-    let sparql = prop.getSparqlForUpdate('http://example.org/test', 'http://example.org/alice')
-    assert.strictEqual(sparql, '');
-  });
-
-  it('parses quad as json', () => {
-    prop.fromQuad(quads[0]);
-    assert.deepStrictEqual(prop.options, { name: 'alice' });
-    let sparql = prop.getSparqlForUpdate('http://example.org/test', 'http://example.org/alice')
-    assert.strictEqual(sparql, '');
+  it('before init', () => {
+    assert.strictEqual(option.value, '{}')
   });
 
   it('gets sparql after set from null', () => {
-    prop.set({ name: 'alice' })
-    let sparql = prop.getSparqlForUpdate('http://example.org/test', 'http://example.org/alice')
+    option.set({ name: 'alice' })
+    const sparql: string = option.getSparqlForUpdate(page.id, node.id);
     assert.strictEqual(sparql, insertClause);
   });
 
-  it('gets sparql after adding a property', () => {
-    prop.fromQuad(quads[0]);
-    prop.set({ age: 25 })
-    let sparql = prop.getSparqlForUpdate('http://example.org/test', 'http://example.org/alice')
-    let insertClause = `INSERT DATA { GRAPH <http://example.org/test> { <http://example.org/alice> <http://www.solidoc.net/ontologies#option> "{\\"name\\":\\"alice\\",\\"age\\":25}"} };\n`;
-    assert.strictEqual(sparql, deleteClause + insertClause);
-  });
+  describe('after init', () => {
+    beforeEach(() => {
+      insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.option}> "{\\"bold\\":true,\\"size\\":25}"} };\n`;
+      option.fromQuad(quads[2]);
+    })
 
-  it('gets sparql after removing a property', () => {
-    prop.fromQuad(quads[0]);
-    prop.set({ name: null })
-    let sparql = prop.getSparqlForUpdate('http://example.org/test', 'http://example.org/alice')
-    let insertClause = `INSERT DATA { GRAPH <http://example.org/test> { <http://example.org/alice> <http://www.solidoc.net/ontologies#option> "{}"} };\n`;
-    assert.strictEqual(sparql, deleteClause + insertClause);
-  });
+    it('parses quad as json', () => {
+      assert.deepStrictEqual(option.json, { bold: true });
+      const sparql: string = option.getSparqlForUpdate(page.id, node.id);
+      assert.strictEqual(sparql, '');
+    });
 
-  it('gets sparql after reseting a property', () => {
-    prop.fromQuad(quads[0]);
-    prop.set({ name: 'Alice' })
-    let sparql = prop.getSparqlForUpdate('http://example.org/test', 'http://example.org/alice')
-    let insertClause = `INSERT DATA { GRAPH <http://example.org/test> { <http://example.org/alice> <http://www.solidoc.net/ontologies#option> "{\\"name\\":\\"Alice\\"}"} };\n`;
-    assert.strictEqual(sparql, deleteClause + insertClause);
-  });
+    it('gets sparql after adding a property', () => {
+      option.set({ size: 25 })
+      assert.deepStrictEqual(option.json, { size: 25, bold: true });
+      const sparql: string = option.getSparqlForUpdate(page.id, node.id);
+      assert.strictEqual(sparql, deleteClause + insertClause);
+    });
+
+    it('gets sparql after removing a property', () => {
+      option.set({ bold: null })
+      assert.deepStrictEqual(JSON.parse(option.get()), {})
+    });
+
+    it('gets sparql after reseting a property', () => {
+      option.set({ bold: false })
+      assert.deepStrictEqual(JSON.parse(option.get()), { bold: false })
+    });
+  })
 });
