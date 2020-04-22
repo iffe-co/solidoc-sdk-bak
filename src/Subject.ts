@@ -31,7 +31,6 @@ abstract class Subject {
       this.setNext(next)
     }
     this._predicates[key].fromQuad(quad)
-    this._isFromPod = true
   }
 
   public toJson(): any {
@@ -127,6 +126,10 @@ abstract class Subject {
 
   public isFromPod = (): boolean => {
     return this._isFromPod
+  }
+
+  public setFromPod = () => {
+    this._isFromPod = true
   }
 
   public abstract attachChildren(curr: Subject | string | undefined, offset: number)

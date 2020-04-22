@@ -26,7 +26,8 @@ abstract class Graph {
           type: quad.object.id,
           children: [],   // TODO: might be leaf
         }    
-        createNode(json, this._nodeMap);
+        let node = createNode(json, this._nodeMap);
+        node.setFromPod();
       }
     })
 

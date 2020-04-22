@@ -44,7 +44,6 @@ describe('src/Subject.ts', () => {
       quads.forEach(quad => branch2.fromQuad(quad, nodeMap));
 
       assert.equal(branch2.get('firstChild'), config.para[2].children[0].id);
-      assert(branch2.isFromPod())
     })
 
     it('discards an unknown quad', () => {
@@ -66,12 +65,9 @@ describe('src/Subject.ts', () => {
     });
 
     it('throws on getting an unkown property', () => {
-      try {
+      assert.throws(() => {
         branch2.get('unknown')
-      } catch (e) {
-        return
-      }
-      assert(0)
+      })
     })
 
     it('ignores id and children properties', () => {
@@ -143,12 +139,9 @@ describe('src/Subject.ts', () => {
       // note the index of quads
       quads[1].object.id = config.para[0].id
 
-      try {
+      assert.throws(() => {
         branch1.fromQuad(quads[1], nodeMap)
-      } catch (e) {
-        return
-      }
-      assert(0)
+      })
     })
 
     it('unsets next', () => {
@@ -170,12 +163,9 @@ describe('src/Subject.ts', () => {
     });
 
     it('throws on setting a deleted node', () => {
-      try {
+      assert.throws(() => {
         branch2.set({ type: ont.sdoc.numberedList });
-      } catch (e) {
-        return
-      }
-      assert(0)
+      })
     })
 
     it('generates sparql after deletion', () => {
@@ -200,12 +190,9 @@ describe('src/Subject.ts', () => {
     it('disallows committing a deleted node', () => {
       branch2.delete();
 
-      try {
+      assert.throws(() => {
         branch2.commit();
-      } catch (e) {
-        return;
-      }
-      assert(0)
+      })
     })
 
   })
@@ -216,16 +203,13 @@ describe('src/Subject.ts', () => {
     })
 
     it('disallows undoing a non-existOnPod node', () => {
-      try {
+      assert.throws(() => {
         branch2.undo(nodeMap)
-      } catch(e) {
-        return
-      }
-      assert(0)
+      });
     })
 
     it('undoes deletion', () => {
-      branch2.commit() // let it existOnPod
+      branch2.setFromPod()  // otherwise it disallows undo
       branch2.delete();
       branch2.undo(nodeMap);
 
@@ -233,7 +217,7 @@ describe('src/Subject.ts', () => {
     });
 
     it('undoes attributes', () => {
-      branch2.commit() // let it existOnPod
+      branch2.commit() // so {type: Paragraph} becomes value
       branch2.set({ type: ont.sdoc.numberedList })
       branch2.delete()
       branch2.undo(nodeMap)
@@ -242,7 +226,7 @@ describe('src/Subject.ts', () => {
     })
 
     it('undoes next', () => {
-      branch2.commit() // let it existOnPod
+      branch2.setFromPod()  // otherwise it disallows undo
       branch2.setNext(branch1);
       branch2.undo(nodeMap);
 
