@@ -43,7 +43,7 @@ class Branch extends Subject {
     if (!curr) {
       throw new Error('Trying to insert a null subject')
     }
-    
+
     if (offset < 0) {
       throw new Error(`Attach children at: offset = ${offset}`)
     }
@@ -212,6 +212,9 @@ class Leaf extends Subject {
 }
 
 const createNode = (json: Node, nodeMap: Map<string, Subject>): Subject => {
+  if (nodeMap.get(json.id)) {
+    throw new Error('duplicated node creation: ' + json.id)
+  }
   let node: Subject
   switch (json.type) {
     case 'http://www.solidoc.net/ontologies#Root':

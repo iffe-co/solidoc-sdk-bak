@@ -18,6 +18,7 @@ describe('Root', () => {
   let leaf: Leaf[] = []
 
   beforeEach(() => {
+    nodeMap.clear()
     root = <Root>createNode(page, nodeMap);
     quads.forEach(quad => root.fromQuad(quad, nodeMap));
     for (let i = 0; i < 3; i++) {

@@ -12,7 +12,6 @@ class Graph {
 
   constructor(id: string, turtle: string) {
     this._id = id;
-    turtle = `<${id}> a <http://www.solidoc.net/ontologies#Root>.\n` + turtle
     this._parseTurtle(turtle)
   }
 
@@ -20,7 +19,6 @@ class Graph {
     const quads: any[] = parser.parse(turtle);
     quads.forEach(quad => {
       if (quad.predicate.id === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type') {
-        
         let node = this.createNode({
           id: quad.subject.id,
           type: quad.object.id, // TODO: should only create node for known types
@@ -29,6 +27,16 @@ class Graph {
         node.setFromPod();
       }
     })
+
+    // Should always create the root
+    if (!this.getRoot()) {
+      let root = this.createNode({
+        id: this._id,
+        type: 'http://www.solidoc.net/ontologies#Root',
+        children: [],
+      });
+      root.setFromPod()
+    }
 
     quads.forEach(quad => {
       let node = this._nodeMap.get(quad.subject.id)

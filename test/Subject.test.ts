@@ -17,6 +17,7 @@ describe('src/Subject.ts', () => {
   let quads: any[];
 
   beforeEach(() => {
+    nodeMap.clear()
     branch2 = <Branch>createNode(config.para[2], nodeMap);
   });
 
@@ -54,6 +55,11 @@ describe('src/Subject.ts', () => {
       assert(!branch2.isFromPod())
     });
 
+    it('disallows creating node with a duplicated id', () => {
+      assert.throws(() => {
+        createNode(config.para[2], nodeMap);
+      })
+    })
   })
 
   describe('Sets and gets', () => {

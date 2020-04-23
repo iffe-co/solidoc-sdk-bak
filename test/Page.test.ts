@@ -150,8 +150,12 @@ describe('Page', () => {
       })
     })
 
-    it('disallows inserting with a duplicated id')
-    it('unless it was deleted')
+    it('disallows inserting with a duplicated node', () => {
+      page.apply(insertNodeOp0)
+      assert.throws(() => {
+        page.apply(insertNodeOp0)
+      })
+    })
 
     it('undoes', () => {
       page.apply(insertNodeOp0)
