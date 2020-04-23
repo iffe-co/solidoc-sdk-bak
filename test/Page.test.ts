@@ -1,5 +1,5 @@
 import { Page } from '../src/Page';
-import { config, turtle } from '../config/test'
+import { config as cfg, turtle } from '../config/test'
 import { Operation } from '../src/interface'
 import * as assert from 'power-assert';
 
@@ -17,273 +17,344 @@ turtleAll += turtle.text.join('\n') + '\n'
 describe('Create Page', () => {
 
   it('parses from quads', () => {
-    page = new Page(config.page.id, turtleAll);
-    assert.deepStrictEqual(page.toJson(), config.page);
+    page = new Page(cfg.page.id, turtleAll);
+    assert.deepStrictEqual(page.toJson(), cfg.page);
   });
 
   it('parses from an empty string', () => {
-    page = new Page(config.page.id, '');
+    page = new Page(cfg.page.id, '');
     assert.deepStrictEqual(page.toJson(), page.getRoot()?.toJson());
   });
 
 });
 
 describe('Operations', () => {
-  let insertNodeOp0: Operation;
-  let insertNodeOp1: Operation;
-  let insertNodeOp2: Operation;
-  let insertNodeOp3: Operation;
-
-  let removeNodeOp0: Operation;
-  let removeNodeOp1: Operation;
-  let removeNodeOp2: Operation;
-  let removeNodeOp3: Operation;
+  let op0: Operation;
+  let op1: Operation;
+  let op2: Operation;
+  let op3: Operation;
 
   beforeEach(() => {
-    insertNodeOp0 = {
+    op0 = {
       type: 'insert_node',
-      path: { parentId: config.page.id, offset: 0 },
-      node: config.para[0]
+      path: { parentId: cfg.page.id, offset: 0 },
+      node: cfg.para[0]
     }
-    insertNodeOp1 = {
+    op1 = {
       type: 'insert_node',
-      path: { parentId: config.page.id, offset: 1 },
-      node: config.para[1]
+      path: { parentId: cfg.page.id, offset: 1 },
+      node: cfg.para[1]
     }
-    insertNodeOp2 = {
+    op2 = {
       type: 'insert_node',
-      path: { parentId: config.page.id, offset: 2 },
-      node: config.para[2]
+      path: { parentId: cfg.page.id, offset: 2 },
+      node: cfg.para[2]
     }
-    insertNodeOp3 = {
+    op3 = {
       type: 'insert_node',
-      path: { parentId: config.para[0].id, offset: 1 },
-      node: config.text[3]
+      path: { parentId: cfg.para[0].id, offset: 1 },
+      node: cfg.text[3]
     }
-    removeNodeOp0 = {
-      type: 'remove_node',
-      path: { parentId: config.page.id, offset: 0 }
-    }
-    removeNodeOp1 = {
-      type: 'remove_node',
-      path: { parentId: config.page.id, offset: 1 }
-    }
-    removeNodeOp2 = {
-      type: 'remove_node',
-      path: { parentId: config.page.id, offset: 2 }
-    }
-    removeNodeOp3 = {
-      type: 'remove_node',
-      path: { parentId: config.para[0].id, offset: 1 }
-    }
-
   });
 
   describe('Insert Node', () => {
 
     beforeEach(() => {
-      page = new Page(config.page.id, '');
-      page.getRoot()?.set(config.page)
+      page = new Page(cfg.page.id, '');
+      page.getRoot()?.set(cfg.page)
     })
 
     it('inserts a paragraph', () => {
-      page.apply(insertNodeOp0)
+      page.apply(op0)
 
-      assert.deepStrictEqual(page.toJson().children[0], config.para[0])
-      assert(!page.getNode(config.para[0].id)?.isFromPod())
-      assert(!page.getNode(config.text[0].id)?.isFromPod())
+      assert.deepStrictEqual(page.toJson().children[0], cfg.para[0])
+      assert(!page.getNode(cfg.para[0].id)?.isFromPod())
+      assert(!page.getNode(cfg.text[0].id)?.isFromPod())
     })
 
     it('inserts a second paragraph', () => {
-      page.apply(insertNodeOp0)
-      page.apply(insertNodeOp1)
+      page.apply(op0)
+      page.apply(op1)
 
-      assert.deepStrictEqual(page.toJson().children[1], config.para[1])
-      assert(!page.getNode(config.para[1].id)?.isFromPod())
-      assert(!page.getNode(config.text[4].id)?.isFromPod())
+      assert.deepStrictEqual(page.toJson().children[1], cfg.para[1])
+      assert(!page.getNode(cfg.para[1].id)?.isFromPod())
+      assert(!page.getNode(cfg.text[4].id)?.isFromPod())
     })
 
     it('inserts a third paragraph', () => {
-      page.apply(insertNodeOp0)
-      page.apply(insertNodeOp1)
-      page.apply(insertNodeOp2)
+      page.apply(op0)
+      page.apply(op1)
+      page.apply(op2)
 
-      assert.deepStrictEqual(page.toJson(), config.page)
-      assert(!page.getNode(config.para[2].id)?.isFromPod())
-      assert(!page.getNode(config.text[8].id)?.isFromPod())
+      assert.deepStrictEqual(page.toJson(), cfg.page)
+      assert(!page.getNode(cfg.para[2].id)?.isFromPod())
+      assert(!page.getNode(cfg.text[8].id)?.isFromPod())
     })
 
     it('throws if parent is not found', () => {
-      insertNodeOp0.path.parentId = config.page.id + '#fake';
+      op0.path.parentId = cfg.page.id + '#fake';
       assert.throws(() => {
-        page.apply(insertNodeOp0)
+        page.apply(op0)
       })
     })
 
     it('inserts a text node', () => {
-      page.apply(insertNodeOp0);
-      page.apply(insertNodeOp3);
+      page.apply(op0);
+      page.apply(op3);
 
-      assert.deepStrictEqual(page.toJson().children[0].children, [config.text[0], config.text[3], config.text[1], config.text[2]])
+      assert.deepStrictEqual(page.toJson().children[0].children, [cfg.text[0], cfg.text[3], cfg.text[1], cfg.text[2]])
     })
 
     it('throws if parent is a leaf node', () => {
-      page.apply(insertNodeOp0)
-      insertNodeOp3.path.parentId = config.text[0].id;
+      page.apply(op0)
+      op3.path.parentId = cfg.text[0].id;
       assert.throws(() => {
-        page.apply(insertNodeOp3)
+        page.apply(op3)
       })
     })
 
     it('inserts to the tail if offset > length', () => {
-      page.apply(insertNodeOp0);
-      insertNodeOp1.path.offset = 100
-      page.apply(insertNodeOp1);
+      page.apply(op0);
+      op1.path.offset = 100
+      page.apply(op1);
 
-      assert(page.toJson().children[1], config.para[1])
+      assert(page.toJson().children[1], cfg.para[1])
     })
 
     it('disallows inserting to offset < 0', () => {
-      insertNodeOp0.path.offset = -1;
+      op0.path.offset = -1;
       assert.throws(() => {
-        page.apply(insertNodeOp0)
+        page.apply(op0)
       })
     })
 
     it('disallows inserting with a duplicated node', () => {
-      page.apply(insertNodeOp0)
+      page.apply(op0)
       assert.throws(() => {
-        page.apply(insertNodeOp0)
+        page.apply(op0)
       })
     })
 
     it('undoes', () => {
-      page.apply(insertNodeOp0)
-      page.apply(insertNodeOp1)
-      page.apply(insertNodeOp2)
+      page.apply(op0)
+      page.apply(op1)
+      page.apply(op2)
       page.undo()
 
       assert.deepStrictEqual(page.toJson(), page.getRoot()?.toBlankJson())
-      assert.strictEqual(page.getNode(config.para[0].id), undefined)
-      assert.strictEqual(page.getNode(config.text[0].id), undefined)
+      assert.strictEqual(page.getNode(cfg.para[0].id), undefined)
+      assert.strictEqual(page.getNode(cfg.text[0].id), undefined)
     });
   });
 
   describe('Remove Node', () => {
     beforeEach(() => {
-      page = new Page(config.page.id, turtleAll);
+      page = new Page(cfg.page.id, turtleAll);
+      op0 = {
+        type: 'remove_node',
+        path: { parentId: cfg.page.id, offset: 0 }
+      }
+      op1 = {
+        type: 'remove_node',
+        path: { parentId: cfg.page.id, offset: 1 }
+      }
+      op2 = {
+        type: 'remove_node',
+        path: { parentId: cfg.page.id, offset: 2 }
+      }
+      op3 = {
+        type: 'remove_node',
+        path: { parentId: cfg.para[0].id, offset: 1 }
+      }
+
     });
 
     it('removes a paragraph in the beginning', () => {
-      page.apply(removeNodeOp0)
+      page.apply(op0)
 
-      assert.deepStrictEqual(page.toJson().children, [config.para[1], config.para[2]])
-      assert(page.getNode(config.para[0].id)?.isDeleted())
-      assert(page.getNode(config.text[0].id)?.isDeleted())
+      assert.deepStrictEqual(page.toJson().children, [cfg.para[1], cfg.para[2]])
+      assert(page.getNode(cfg.para[0].id)?.isDeleted())
+      assert(page.getNode(cfg.text[0].id)?.isDeleted())
     });
 
     it('removes a paragraph in the middle', () => {
-      page.apply(removeNodeOp1)
+      page.apply(op1)
 
-      assert.deepStrictEqual(page.toJson().children, [config.para[0], config.para[2]])
-      assert(page.getNode(config.para[1].id)?.isDeleted())
-      assert(page.getNode(config.text[4].id)?.isDeleted())
+      assert.deepStrictEqual(page.toJson().children, [cfg.para[0], cfg.para[2]])
+      assert(page.getNode(cfg.para[1].id)?.isDeleted())
+      assert(page.getNode(cfg.text[4].id)?.isDeleted())
     });
 
     it('removes a paragraph in the end', () => {
-      page.apply(removeNodeOp2)
+      page.apply(op2)
 
-      assert.deepStrictEqual(page.toJson().children, [config.para[0], config.para[1]])
-      assert(page.getNode(config.para[2].id)?.isDeleted())
-      assert(page.getNode(config.text[8].id)?.isDeleted())
+      assert.deepStrictEqual(page.toJson().children, [cfg.para[0], cfg.para[1]])
+      assert(page.getNode(cfg.para[2].id)?.isDeleted())
+      assert(page.getNode(cfg.text[8].id)?.isDeleted())
     });
 
     it('does nothing to remove at offset > length', () => {
-      removeNodeOp0.path.offset = 100
-      page.apply(removeNodeOp0)
+      op0.path.offset = 100
+      page.apply(op0)
 
-      assert.deepStrictEqual(page.toJson(), config.page)
+      assert.deepStrictEqual(page.toJson(), cfg.page)
     });
 
     it('removes a text node', () => {
-      page.apply(removeNodeOp3);
+      page.apply(op3);
 
-      assert.deepStrictEqual(page.toJson().children[0].children, [config.text[0], config.text[2]])
+      assert.deepStrictEqual(page.toJson().children[0].children, [cfg.text[0], cfg.text[2]])
     });
 
     it('throws if parent is not found', () => {
-      removeNodeOp0.path.parentId = config.page.id + '#fake';
+      op0.path.parentId = cfg.page.id + '#fake';
       assert.throws(() => {
-        page.apply(removeNodeOp0)
+        page.apply(op0)
       })
     });
 
     it('throws if parent is a leaf node', () => {
-      removeNodeOp3.path.parentId = config.text[0].id;
+      op3.path.parentId = cfg.text[0].id;
       assert.throws(() => {
-        page.apply(removeNodeOp3)
+        page.apply(op3)
       })
     })
 
     it('throws on offset < 0', () => {
-      removeNodeOp3.path.offset = -1;
+      op3.path.offset = -1;
       assert.throws(() => {
-        page.apply(removeNodeOp3)
+        page.apply(op3)
       })
     })
 
     it('undoes to the original state after a bunch of operations', () => {
-      page.apply(removeNodeOp2);
-      page.apply(removeNodeOp1);
+      page.apply(op2);
+      page.apply(op1);
       page.undo();
 
-      assert.deepStrictEqual(page.toJson(), config.page);
+      assert.deepStrictEqual(page.toJson(), cfg.page);
       assert.deepStrictEqual(page.getSparqlForUpdate(), '')
     })
 
   });
 
+  describe('Move Node', () => {
+    beforeEach(() => {
+      page = new Page(cfg.page.id, turtleAll);
+      op0 = {
+        type: 'move_node',
+        path: { parentId: cfg.page.id, offset: 0 },
+        newPath: { parentId: cfg.page.id, offset: 1 },
+      }
+      op1 = {
+        type: 'move_node',
+        path: { parentId: cfg.page.id, offset: 1 },
+        newPath: { parentId: cfg.para[0].id, offset: 1 },
+      }
+      op2 = {
+        type: 'move_node',
+        path: { parentId: cfg.para[0].id, offset: 0 },
+        newPath: { parentId: cfg.para[1].id, offset: 2 },
+      }
+      op3 = {
+        type: 'move_node',
+        path: { parentId: cfg.para[0].id, offset: 2 },
+        newPath: { parentId: cfg.page.id, offset: 3 },
+      }
+    });
 
-  
+    it('moves a branch to the same level', () => {
+      page.apply(op0)
+
+      assert.deepStrictEqual(page.toJson().children, [cfg.para[1], cfg.para[0], cfg.para[2]])
+    });
+
+    it('moves a branch to a lower level', () => {
+      page.apply(op1)
+
+      assert.deepStrictEqual(page.toJson().children[0].children, [cfg.text[0], cfg.para[1], cfg.text[1], cfg.text[2]])
+      assert.deepStrictEqual(page.toJson().children[1], cfg.para[2])
+    })
+
+    it('moves a leaf across branches', () => {
+      page.apply(op2)
+
+      assert.deepStrictEqual(page.toJson().children[0].children, [cfg.text[1], cfg.text[2]])
+      assert.deepStrictEqual(page.toJson().children[1].children, [cfg.text[3], cfg.text[4], cfg.text[0], cfg.text[5]])
+    })
+
+    it('moves a leaf to an upper level', () => {
+      page.apply(op3)
+
+      assert.deepStrictEqual(page.toJson().children[0].children, [cfg.text[0], cfg.text[1]])
+      assert.deepStrictEqual(page.toJson().children[3], cfg.text[2])
+    })
+
+    it('disallows moving below a child', () => {
+      page.apply(op1)
+      op0.newPath.parentId = cfg.para[1].id
+
+      assert.throws(() => {
+        page.apply(op0)
+      })
+    });
+
+    it('disallows moving below itself', () => {
+      op0.newPath.parentId = cfg.para[0].id
+
+      assert.throws(() => {
+        page.apply(op0)
+      })
+    });
+
+    it('throws if the parent is not found', () => {
+      op0.path.parentId = cfg.page.id + '#fake';
+      assert.throws(() => {
+        page.apply(op0)
+      })
+    })
+
+    it('throws if the newParent is not found', () => {
+      op0.newPath.parentId = cfg.page.id + '#fake';
+      assert.throws(() => {
+        page.apply(op0)
+      })
+    })
+
+    it('throws if the parent is a leaf', () => {
+      op0.path.parentId = cfg.text[0].id;
+      assert.throws(() => {
+        page.apply(op0)
+      })
+    })
+
+    it('throws if the newParent is a leaf', () => {
+      op0.newPath.parentId = cfg.text[4].id;
+      assert.throws(() => {
+        page.apply(op0)
+      })
+    })
+
+    it('throws if the moving node is not found', () => {
+      op0.path.offset = 10;
+      assert.throws(() => {
+        page.apply(op0)
+      })
+    })
+
+    it('is ok to move a node to offset > length', () => {
+      op3.newPath.offset = 10
+      page.apply(op3)
+
+      assert.deepStrictEqual(page.toJson().children[0].children, [cfg.text[0], cfg.text[1]])
+    })
+
+  });
+
+
 });
 
 
-// describe('Move Node', () => {
-//   beforeEach(() => {
-//     page = new Page(pageId, turtle);
-//   });
-
-//   it('moves paragraph 2 to the beginning', () => {
-//     let op: Operation = { type: 'move_node', path: { parentId: pageId, offset: 1 }, newPath: { parentId: pageId, offset: 0 } }
-//     page.apply(op)
-//     let pageJson = page.toJson()
-//     assert.deepStrictEqual(extractChildrenId(pageJson), [pid2, pid1])
-//     assert.deepStrictEqual(pageJson.children[0].children[0], textJson2)
-//   });
-//   it('moves paragraph 1 to the end', () => {
-//     let op: Operation = { type: 'move_node', path: { parentId: pageId, offset: 0 }, newPath: { parentId: pageId, offset: 1 } }
-//     page.apply(op)
-//     let pageJson = page.toJson()
-//     assert.deepStrictEqual(extractChildrenId(pageJson), [pid2, pid1])
-//     assert.deepStrictEqual(pageJson.children[1].children[0], textJson1)
-//   });
-//   it('moves text', () => {
-//     let op: Operation = { type: 'move_node', path: { parentId: paraId1, offset: 0 }, newPath: { parentId: paraId2, offset: 1 } }
-//     page.apply(op)
-//     let pageJson = page.toJson()
-//     assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [])
-//     assert.deepStrictEqual(extractChildrenId(pageJson.children[1]), [tid2, tid1])
-//   });
-//   it('disallows moving below a child', () => {
-//     let op: Operation = { type: 'move_node', path: { parentId: pageId, offset: 0 }, newPath: { parentId: paraId1, offset: 0 } }
-//     try {
-//       page.apply(op)
-//     } catch (e) {
-//       return
-//     }
-//     assert(0)
-//   });
-// });
 
 // describe('Merge Text Node', () => {
 //   beforeEach(() => {
@@ -400,10 +471,10 @@ describe('Operations', () => {
 //     // TODO: sparql
 //   });
 //   it('sets a paragraph by adding and removing', () => {
-//     let insertNodeOp1: Operation = { type: 'set_node', path: { parentId: pageId, offset: 0 }, newProperties: { name: 'alice' } }
-//     let insertNodeOp2: Operation = { type: 'set_node', path: { parentId: pageId, offset: 0 }, newProperties: { name: null, age: 25 } }
-//     page.apply(insertNodeOp1)
-//     page.apply(insertNodeOp2)
+//     let op1: Operation = { type: 'set_node', path: { parentId: pageId, offset: 0 }, newProperties: { name: 'alice' } }
+//     let op2: Operation = { type: 'set_node', path: { parentId: pageId, offset: 0 }, newProperties: { name: null, age: 25 } }
+//     page.apply(op1)
+//     page.apply(op2)
 //     let pageJson = page.toJson()
 //     assert.strictEqual(pageJson.children[0].name, undefined)
 //     assert.strictEqual(pageJson.children[0].age, 25)

@@ -60,6 +60,9 @@ class Page extends Graph {
         const { parent, curr } = this._getContextOf(op.path)
         const { parent: newParent } = this._getContextOf(op.newPath)
 
+        if (!(parent instanceof Branch) || !(newParent instanceof Branch)) {
+          throw new Error('Cannot move')
+        }
         if (!curr || (curr instanceof Branch && curr.isAncestor(newParent))) {
           throw new Error('Cannot move')
         }
