@@ -69,10 +69,10 @@ describe('Branch', () => {
       assert.strictEqual(branch.getLastChild(), leaf[4])
     })
 
-    it('inserts children to offset < 0', () => {
-      branch.attachChildren(leaf[3], -1);
-      assert.strictEqual(branch.getChildrenNum(), 5);
-      assert.strictEqual(branch.getIndexedChild(0), leaf[3]);
+    it('disallows inserting children to offset < 0', () => {
+      assert.throws(() => {
+        branch.attachChildren(leaf[3], -1);
+      })
     })
 
     it('throws on inserting an undefined child', () => {

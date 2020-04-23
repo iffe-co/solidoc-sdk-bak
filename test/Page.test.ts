@@ -1,367 +1,403 @@
 import { Page } from '../src/Page';
-import { Operation, Element } from '../src/interface'
+import { config, turtle } from '../config/test'
+import { Operation } from '../src/interface'
 import * as assert from 'power-assert';
 
-const pageId = 'http://example.org/alice/a';
-// const pageJson = { id: pageId, title: "Alice's Profile", children: [] };
+// let extractChildrenId = (array: any) => {
+//   return array.children.map(ele => ele.id.substr(ele.id.indexOf('#') + 1))
+// }
 
-const pid1 = 'tag1'
-const paraId1 = pageId + '#' + pid1
-
-const tid1 = 'text1'
-const textId1 = pageId + '#' + tid1
-const textJson1 = { id: textId1, type: 'http://www.solidoc.net/ontologies#Leaf', text: 'Paragraph 1' }
-
-const pid2 = 'tag2'
-const paraId2 = pageId + '#' + pid2
-
-const tid2 = 'text2'
-const textId2 = pageId + '#' + tid2
-const textJson2 = { id: textId2, type: 'http://www.solidoc.net/ontologies#Leaf', text: 'Paragraph 2' }
-
-const pid3 = 'tag3'
-const tid3 = 'text3'
-const textId3 = pageId + '#' + tid3
-const textJson3 = { id: textId3, type: 'http://www.solidoc.net/ontologies#Leaf', text: 'Paragraph 3' }
-
-let extractChildrenId = (array: any) => {
-  return array.children.map(ele => ele.id.substr(ele.id.indexOf('#') + 1))
-}
-
-let turtle = `<${pageId}> a <http://www.solidoc.net/ontologies#Root>;`;
-turtle += ` <http://purl.org/dc/terms/title> "Alice\'s Profile";`;
-turtle += ` <http://www.solidoc.net/ontologies#firstChild> <${paraId1}>.`;
-
-turtle += `<${paraId1}> a <http://www.solidoc.net/ontologies#Paragraph>;`;
-turtle += ` <http://www.solidoc.net/ontologies#firstChild> <${textId1}>;`;
-turtle += ` <http://www.solidoc.net/ontologies#nextNode> <${paraId2}>.`;
-
-turtle += `<${textId1}> a <http://www.solidoc.net/ontologies#Leaf>;`;
-turtle += ` <http://www.solidoc.net/ontologies#text> "Paragraph 1".`;
-
-turtle += `<${paraId2}> a <http://www.solidoc.net/ontologies#Paragraph>;`;
-turtle += ` <http://www.solidoc.net/ontologies#firstChild> <${textId2}>.`;
-
-turtle += `<${textId2}> a <http://www.solidoc.net/ontologies#Leaf>;`;
-turtle += ` <http://www.solidoc.net/ontologies#text> "Paragraph 2".`;
-
-let json: Element = {
-  id: pageId,
-  type: 'http://www.solidoc.net/ontologies#Root',
-  title: "Alice's Profile",
-  children: [
-    { id: paraId1, type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson1] },
-    { id: paraId2, type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson2] },
-  ],
-}
 
 let page: Page;
+let turtleAll = '';
+turtleAll += turtle.page + '\n';
+turtleAll += turtle.para.join('\n') + '\n'
+turtleAll += turtle.text.join('\n') + '\n'
 
 describe('Create Page', () => {
+
   it('parses from quads', () => {
-    page = new Page(pageId, turtle);
-    assert.deepStrictEqual(page.toJson(), json);
+    page = new Page(config.page.id, turtleAll);
+    assert.deepStrictEqual(page.toJson(), config.page);
   });
-  it('parses from empty string', () => {
-    page = new Page(pageId, '');
-    assert.deepStrictEqual(page.toJson(), {
-      id: pageId,
-      type: 'http://www.solidoc.net/ontologies#Root',
-      title: '',
-      children: [],
+
+  it('parses from an empty string', () => {
+    page = new Page(config.page.id, '');
+    assert.deepStrictEqual(page.toJson(), page.getRoot()?.toJson());
+  });
+
+});
+
+describe('Page', () => {
+  let insertNodeOp0: Operation;
+  let insertNodeOp1: Operation;
+  let insertNodeOp2: Operation;
+  let insertNodeOp3: Operation;
+
+  let removeNodeOp0: Operation;
+  let removeNodeOp1: Operation;
+  let removeNodeOp2: Operation;
+  let removeNodeOp3: Operation;
+
+  beforeEach(() => {
+    insertNodeOp0 = {
+      type: 'insert_node',
+      path: { parentId: config.page.id, offset: 0 },
+      node: config.para[0]
+    }
+    insertNodeOp1 = {
+      type: 'insert_node',
+      path: { parentId: config.page.id, offset: 1 },
+      node: config.para[1]
+    }
+    insertNodeOp2 = {
+      type: 'insert_node',
+      path: { parentId: config.page.id, offset: 2 },
+      node: config.para[2]
+    }
+    insertNodeOp3 = {
+      type: 'insert_node',
+      path: { parentId: config.para[0].id, offset: 1 },
+      node: config.text[3]
+    }
+    removeNodeOp0 = {
+      type: 'remove_node',
+      path: { parentId: config.page.id, offset: 0 }
+    }
+    removeNodeOp1 = {
+      type: 'remove_node',
+      path: { parentId: config.page.id, offset: 1 }
+    }
+    removeNodeOp2 = {
+      type: 'remove_node',
+      path: { parentId: config.page.id, offset: 2 }
+    }
+    removeNodeOp3 = {
+      type: 'remove_node',
+      path: { parentId: config.para[0].id, offset: 1 }
+    }
+
+  });
+
+  describe('Insert Node', () => {
+
+    beforeEach(() => {
+      page = new Page(config.page.id, '');
+      page.getRoot()?.set(config.page)
+    })
+
+    it('inserts a paragraph', () => {
+      page.apply(insertNodeOp0)
+
+      assert.deepStrictEqual(page.toJson().children[0], config.para[0])
+      assert(!page.getNode(config.para[0].id)?.isFromPod())
+      assert(!page.getNode(config.text[0].id)?.isFromPod())
+    })
+
+    it('inserts a second paragraph', () => {
+      page.apply(insertNodeOp0)
+      page.apply(insertNodeOp1)
+
+      assert.deepStrictEqual(page.toJson().children[1], config.para[1])
+      assert(!page.getNode(config.para[1].id)?.isFromPod())
+      assert(!page.getNode(config.text[4].id)?.isFromPod())
+    })
+
+    it('inserts a third paragraph', () => {
+      page.apply(insertNodeOp0)
+      page.apply(insertNodeOp1)
+      page.apply(insertNodeOp2)
+
+      assert.deepStrictEqual(page.toJson(), config.page)
+      assert(!page.getNode(config.para[2].id)?.isFromPod())
+      assert(!page.getNode(config.text[8].id)?.isFromPod())
+    })
+
+    it('throws if parent is not found', () => {
+      insertNodeOp0.path.parentId = config.page.id + '#fake';
+      assert.throws(() => {
+        page.apply(insertNodeOp0)
+      })
+    })
+
+    it('inserts a text node', () => {
+      page.apply(insertNodeOp0);
+      page.apply(insertNodeOp3);
+
+      assert.deepStrictEqual(page.toJson().children[0].children, [config.text[0], config.text[3], config.text[1], config.text[2]])
+    })
+
+    it('throws if parent is a leaf node', () => {
+      page.apply(insertNodeOp0)
+      insertNodeOp3.path.parentId = config.text[0].id;
+      assert.throws(() => {
+        page.apply(insertNodeOp3)
+      })
+    })
+
+    it('inserts to the tail if offset > length', () => {
+      page.apply(insertNodeOp0);
+      insertNodeOp1.path.offset = 100
+      page.apply(insertNodeOp1);
+
+      assert(page.toJson().children[1], config.para[1])
+    })
+
+    it('disallows inserting to offset < 0', () => {
+      insertNodeOp0.path.offset = -1;
+      assert.throws(()=>{
+        page.apply(insertNodeOp0)
+      })
+    })
+
+    it('disallows inserting with a duplicated id')
+    it('unless it was deleted')
+
+    it('undoes', () => {
+      page.apply(insertNodeOp0)
+      page.apply(insertNodeOp1)
+      page.apply(insertNodeOp2)
+      page.undo()
+
+      assert.deepStrictEqual(page.toJson(), page.getRoot()?.toBlankJson())
+      assert.strictEqual(page.getNode(config.para[0].id), undefined)
+      assert.strictEqual(page.getNode(config.text[0].id), undefined)
     });
   });
-});
 
-describe('Insert Node', () => {
-  beforeEach(() => {
-    page = new Page(pageId, turtle);
-  });
+  describe('Remove Node', () => {
+    beforeEach(() => {
+      page = new Page(config.page.id, turtleAll);
+    });
 
-  it('inserts a text node at paragraph beginning', () => {
-    let op: Operation = { type: 'insert_node', path: { parentId: paraId1, offset: 0 }, node: textJson3 }
-    page.apply(op)
-    let pageJson = page.toJson()
-    assert.deepStrictEqual(extractChildrenId(pageJson), [pid1, pid2])
-    assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [tid3, tid1])
-    assert.deepStrictEqual(extractChildrenId(pageJson.children[1]), [tid2])
-    assert.deepStrictEqual(pageJson.children[0].children[0], textJson3)
-  });
-  it('inserts a text node at paragraph end', () => {
-    let op: Operation = { type: 'insert_node', path: { parentId: paraId1, offset: 1 }, node: textJson3 }
-    page.apply(op)
-    let pageJson = page.toJson()
-    assert.deepStrictEqual(extractChildrenId(pageJson), [pid1, pid2])
-    assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [tid1, tid3])
-    assert.deepStrictEqual(extractChildrenId(pageJson.children[1]), [tid2])
-    assert.deepStrictEqual(pageJson.children[0].children[1], textJson3)
-  });
-  it('inserts a text node at offset > length', () => {
-    let op: Operation = { type: 'insert_node', path: { parentId: paraId1, offset: 2 }, node: textJson3 }
-    page.apply(op)
-    let pageJson = page.toJson()
-    assert.deepStrictEqual(extractChildrenId(pageJson), [pid1, pid2])
-    assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [tid1, tid3])
-    assert.deepStrictEqual(extractChildrenId(pageJson.children[1]), [tid2])
-    assert.deepStrictEqual(pageJson.children[0].children[1], textJson3)
-  });
-  it('inserts a paragraph at the beginning', () => {
-    let paraJson3 = { id: 'tag3', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson3] }
-    let op: Operation = { type: 'insert_node', path: { parentId: pageId, offset: 0 }, node: paraJson3 }
-    page.apply(op)
-    let pageJson = page.toJson()
-    assert.deepStrictEqual(extractChildrenId(pageJson), [pid3, pid1, pid2])
-    assert.deepStrictEqual(pageJson.children[0].children[0], textJson3)
-  });
-  it('inserts a paragraph in the middle', () => {
-    let paraJson3 = { id: 'tag3', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson3] }
-    let op: Operation = { type: 'insert_node', path: { parentId: pageId, offset: 1 }, node: paraJson3 }
-    page.apply(op)
-    let pageJson = page.toJson()
-    assert.deepStrictEqual(extractChildrenId(pageJson), [pid1, pid3, pid2])
-    assert.deepStrictEqual(pageJson.children[1].children[0], textJson3)
-  });
-  it('inserts a paragraph at the end', () => {
-    let paraJson3 = { id: 'tag3', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson3] }
-    let op: Operation = { type: 'insert_node', path: { parentId: pageId, offset: 2 }, node: paraJson3 }
-    page.apply(op)
-    let pageJson = page.toJson()
-    assert.deepStrictEqual(extractChildrenId(pageJson), [pid1, pid2, pid3])
-    assert.deepStrictEqual(pageJson.children[2].children[0], textJson3)
-  });
+    it('removes a paragraph in the beginning', () => {
+      page.apply(removeNodeOp0)
 
-  it ('undoes', () => {
-    let op: Operation = { type: 'insert_node', path: { parentId: paraId1, offset: 0 }, node: textJson3 }
-    page.apply(op)
-    page.undo()
-    let pageJson = page.toJson()
-    assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [tid1])
-  })
-})
+      assert.deepStrictEqual(page.toJson().children, [config.para[1], config.para[2]])
+      assert(page.getNode(config.para[0].id)?.isDeleted())
+      assert(page.getNode(config.text[0].id)?.isDeleted())
+    });
 
-describe('Remove Node', () => {
-  beforeEach(() => {
-    page = new Page(pageId, turtle);
-  });
+    it('removes a paragraph in the middle', () => {
+      page.apply(removeNodeOp1)
 
-  it('removes a paragraph at the beginning', () => {
-    let op: Operation = { type: 'remove_node', path: { parentId: pageId, offset: 0 } }
-    page.apply(op)
-    assert.deepStrictEqual(extractChildrenId(page.toJson()), [pid2])
-  });
+      assert.deepStrictEqual(page.toJson().children, [config.para[0], config.para[2]])
+      assert(page.getNode(config.para[1].id)?.isDeleted())
+      assert(page.getNode(config.text[4].id)?.isDeleted())
+    });
 
-  it('removes a paragraph in the end', () => {
-    let op: Operation = { type: 'remove_node', path: { parentId: pageId, offset: 1 } }
-    page.apply(op)
-    assert.deepStrictEqual(extractChildrenId(page.toJson()), [pid1])
-  });
+    it('removes a paragraph in the end', () => {
+      page.apply(removeNodeOp2)
 
-  it('removes text', () => {
-    let op: Operation = { type: 'remove_node', path: { parentId: paraId1, offset: 0 } }
-    page.apply(op)
-    let pageJson = page.toJson()
-    assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [])
-  });
+      assert.deepStrictEqual(page.toJson().children, [config.para[0], config.para[1]])
+      assert(page.getNode(config.para[2].id)?.isDeleted())
+      assert(page.getNode(config.text[8].id)?.isDeleted())
+    });
 
-  it('removes paragraph after insertion', () => {
-    let paraJson3 = { id: 'tag3', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson3] }
-    let op1: Operation = { type: 'insert_node', path: { parentId: pageId, offset: 1 }, node: paraJson3 }
-    let op2: Operation = { type: 'remove_node', path: { parentId: pageId, offset: 0 } }
-    page.apply(op1)
-    page.apply(op2)
-    let pageJson = page.toJson()
-    assert.deepStrictEqual(extractChildrenId(pageJson), [pid3, pid2])
-    assert.deepStrictEqual(pageJson.children[0].children[0], textJson3)
-  });
+    it('does not remove at offset > length', () => {
+      removeNodeOp0.path.offset = 100
+      page.apply(removeNodeOp0)
 
-  it('the paragraph is marked as deleted', () => {
-    let op: Operation = { type: 'remove_node', path: { parentId: pageId, offset: 1 } }
-    page.apply(op)
-    let para = page.getNode(paraId2)
-    assert(para && para.isDeleted())
-  });
+      assert.deepStrictEqual(page.toJson(), config.page)
+    });
 
-  it('the children text is also marked deleted', () => {
-    let op: Operation = { type: 'remove_node', path: { parentId: pageId, offset: 1 } }
-    page.apply(op)
-    let text = page.getNode(textId2)
-    assert(text && text.isDeleted())
-  });
+    it('removes a text node', () => {
+      page.apply(removeNodeOp3);
 
-  it('does not remove at offset > length', () => {
-    let op: Operation = { type: 'remove_node', path: { parentId: pageId, offset: 2 } }
-    page.apply(op)
-    let pageJson = page.toJson()
-    assert.deepStrictEqual(extractChildrenId(pageJson), [pid1, pid2])
+      assert.deepStrictEqual(page.toJson().children[0].children, [config.text[0], config.text[2]])
+    })
+
+    // it('undoes to original after a bunch of operations', () => {
+    //   page.apply(removeNodeOp2);
+    //   page.apply(removeNodeOp1);
+    //   page.apply(insertNodeOp3);
+    //   page.undo();
+
+    //   assert.deepStrictEqual(page.toJson(), config.page);
+    //   assert.deepStrictEqual(page.getSparqlForUpdate(), '')
+    // })
+
+    // it('removes paragraph after insertion', () => {
+    //   let paraJson3 = { id: 'tag3', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson3] }
+    //   let insertNodeOp1: Operation = { type: 'insert_node', path: { parentId: pageId, offset: 1 }, node: paraJson3 }
+    //   let insertNodeOp2: Operation = { type: 'remove_node', path: { parentId: pageId, offset: 0 } }
+    //   page.apply(insertNodeOp1)
+    //   page.apply(insertNodeOp2)
+    //   let pageJson = page.toJson()
+    //   assert.deepStrictEqual(extractChildrenId(pageJson), [pid3, pid2])
+    //   assert.deepStrictEqual(pageJson.children[0].children[0], textJson3)
+    // });
+
   });
 });
 
-describe('Move Node', () => {
-  beforeEach(() => {
-    page = new Page(pageId, turtle);
-  });
 
-  it('moves paragraph 2 to the beginning', () => {
-    let op: Operation = { type: 'move_node', path: { parentId: pageId, offset: 1 }, newPath: { parentId: pageId, offset: 0 } }
-    page.apply(op)
-    let pageJson = page.toJson()
-    assert.deepStrictEqual(extractChildrenId(pageJson), [pid2, pid1])
-    assert.deepStrictEqual(pageJson.children[0].children[0], textJson2)
-  });
-  it('moves paragraph 1 to the end', () => {
-    let op: Operation = { type: 'move_node', path: { parentId: pageId, offset: 0 }, newPath: { parentId: pageId, offset: 1 } }
-    page.apply(op)
-    let pageJson = page.toJson()
-    assert.deepStrictEqual(extractChildrenId(pageJson), [pid2, pid1])
-    assert.deepStrictEqual(pageJson.children[1].children[0], textJson1)
-  });
-  it('moves text', () => {
-    let op: Operation = { type: 'move_node', path: { parentId: paraId1, offset: 0 }, newPath: { parentId: paraId2, offset: 1 } }
-    page.apply(op)
-    let pageJson = page.toJson()
-    assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [])
-    assert.deepStrictEqual(extractChildrenId(pageJson.children[1]), [tid2, tid1])
-  });
-  it('disallows moving below a child', () => {
-    let op: Operation = { type: 'move_node', path: { parentId: pageId, offset: 0 }, newPath: { parentId: paraId1, offset: 0 } }
-    try {
-      page.apply(op)
-    } catch (e) {
-      return
-    }
-    assert(0)
-  });
-});
+// describe('Move Node', () => {
+//   beforeEach(() => {
+//     page = new Page(pageId, turtle);
+//   });
 
-describe('Merge Text Node', () => {
-  beforeEach(() => {
-    page = new Page(pageId, turtle);
-    let op: Operation = { type: 'insert_node', path: { parentId: paraId1, offset: 1 }, node: textJson3 }
-    page.apply(op)
-  });
-  it('merges text nodes', () => {
-    let op: Operation = { type: 'merge_node', path: { parentId: paraId1, offset: 1 } }
-    page.apply(op)
-    let pageJson = page.toJson()
-    assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [tid1])
-    assert.strictEqual(pageJson.children[0].children[0].text, textJson1.text + textJson3.text)
-  });
-  // it('throws on merging text node 0', () => {
-  //   let op: Operation = { type: 'merge_node', path: { parentId: paraId1, offset: 0 } }
-  //   try {
-  //     page.apply(op)
-  //   } catch (e) {
-  //     return
-  //   }
-  //   assert(0)
-  // });
-  // it('throws on merging offset > length', () => {
-  //   let op: Operation = { type: 'merge_node', path: { parentId: paraId1, offset: 2 } }
-  //   try {
-  //     page.apply(op)
-  //   } catch (e) {
-  //     return
-  //   }
-  //   assert(0);
-  // });
-});
+//   it('moves paragraph 2 to the beginning', () => {
+//     let op: Operation = { type: 'move_node', path: { parentId: pageId, offset: 1 }, newPath: { parentId: pageId, offset: 0 } }
+//     page.apply(op)
+//     let pageJson = page.toJson()
+//     assert.deepStrictEqual(extractChildrenId(pageJson), [pid2, pid1])
+//     assert.deepStrictEqual(pageJson.children[0].children[0], textJson2)
+//   });
+//   it('moves paragraph 1 to the end', () => {
+//     let op: Operation = { type: 'move_node', path: { parentId: pageId, offset: 0 }, newPath: { parentId: pageId, offset: 1 } }
+//     page.apply(op)
+//     let pageJson = page.toJson()
+//     assert.deepStrictEqual(extractChildrenId(pageJson), [pid2, pid1])
+//     assert.deepStrictEqual(pageJson.children[1].children[0], textJson1)
+//   });
+//   it('moves text', () => {
+//     let op: Operation = { type: 'move_node', path: { parentId: paraId1, offset: 0 }, newPath: { parentId: paraId2, offset: 1 } }
+//     page.apply(op)
+//     let pageJson = page.toJson()
+//     assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [])
+//     assert.deepStrictEqual(extractChildrenId(pageJson.children[1]), [tid2, tid1])
+//   });
+//   it('disallows moving below a child', () => {
+//     let op: Operation = { type: 'move_node', path: { parentId: pageId, offset: 0 }, newPath: { parentId: paraId1, offset: 0 } }
+//     try {
+//       page.apply(op)
+//     } catch (e) {
+//       return
+//     }
+//     assert(0)
+//   });
+// });
 
-describe('Merge Element Node', () => {
-  beforeEach(() => {
-    page = new Page(pageId, turtle);
-    let op: Operation = { type: 'insert_node', path: { parentId: paraId2, offset: 1 }, node: textJson3 }
-    page.apply(op)
-  });
-  it('merges paragraph 2', () => {
-    let op: Operation = { type: 'merge_node', path: { parentId: pageId, offset: 1 } }
-    page.apply(op)
-    let pageJson = page.toJson()
-    assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [tid1, tid2, tid3])
-  });
-  // it('throws on merging paragraph 1', () => {
-  //   let op: Operation = { type: 'merge_node', path: { parentId: pageId, offset: 0 } }
-  //   try {
-  //     page.apply(op)
-  //   } catch (e) {
-  //     return
-  //   }
-  //   assert(0)
-  // });
-  // it('throws on merging offset > length', () => {
-  //   let op: Operation = { type: 'merge_node', path: { parentId: pageId, offset: 2 } }
-  //   try {
-  //     page.apply(op)
-  //   } catch (e) {
-  //     return
-  //   }
-  //   assert(0)
-  // });
-});
+// describe('Merge Text Node', () => {
+//   beforeEach(() => {
+//     page = new Page(pageId, turtle);
+//     let op: Operation = { type: 'insert_node', path: { parentId: paraId1, offset: 1 }, node: textJson3 }
+//     page.apply(op)
+//   });
+//   it('merges text nodes', () => {
+//     let op: Operation = { type: 'merge_node', path: { parentId: paraId1, offset: 1 } }
+//     page.apply(op)
+//     let pageJson = page.toJson()
+//     assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [tid1])
+//     assert.strictEqual(pageJson.children[0].children[0].text, textJson1.text + textJson3.text)
+//   });
+//   // it('throws on merging text node 0', () => {
+//   //   let op: Operation = { type: 'merge_node', path: { parentId: paraId1, offset: 0 } }
+//   //   try {
+//   //     page.apply(op)
+//   //   } catch (e) {
+//   //     return
+//   //   }
+//   //   assert(0)
+//   // });
+//   // it('throws on merging offset > length', () => {
+//   //   let op: Operation = { type: 'merge_node', path: { parentId: paraId1, offset: 2 } }
+//   //   try {
+//   //     page.apply(op)
+//   //   } catch (e) {
+//   //     return
+//   //   }
+//   //   assert(0);
+//   // });
+// });
 
-describe('Split Text Node', () => {
-  beforeEach(() => {
-    page = new Page(pageId, turtle);
-  });
-  it('splits text 1', () => {
-    let op: Operation = { type: 'split_node', path: { parentId: paraId1, offset: 0 }, position: 1, properties: { id: tid3, type: 'http://www.solidoc.net/ontologies#Leaf' } }
-    page.apply(op)
-    let pageJson = page.toJson()
-    assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [tid1, tid3])
-    assert.strictEqual(pageJson.children[0].children[0].text, 'P')
-    assert.strictEqual(pageJson.children[0].children[1].text, 'aragraph 1')
-  });
-});
+// describe('Merge Element Node', () => {
+//   beforeEach(() => {
+//     page = new Page(pageId, turtle);
+//     let op: Operation = { type: 'insert_node', path: { parentId: paraId2, offset: 1 }, node: textJson3 }
+//     page.apply(op)
+//   });
+//   it('merges paragraph 2', () => {
+//     let op: Operation = { type: 'merge_node', path: { parentId: pageId, offset: 1 } }
+//     page.apply(op)
+//     let pageJson = page.toJson()
+//     assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [tid1, tid2, tid3])
+//   });
+//   // it('throws on merging paragraph 1', () => {
+//   //   let op: Operation = { type: 'merge_node', path: { parentId: pageId, offset: 0 } }
+//   //   try {
+//   //     page.apply(op)
+//   //   } catch (e) {
+//   //     return
+//   //   }
+//   //   assert(0)
+//   // });
+//   // it('throws on merging offset > length', () => {
+//   //   let op: Operation = { type: 'merge_node', path: { parentId: pageId, offset: 2 } }
+//   //   try {
+//   //     page.apply(op)
+//   //   } catch (e) {
+//   //     return
+//   //   }
+//   //   assert(0)
+//   // });
+// });
 
-describe('Split Branch Node', () => {
-  beforeEach(() => {
-    page = new Page(pageId, turtle);
-    let op: Operation = { type: 'insert_node', path: { parentId: paraId1, offset: 1 }, node: textJson3 }
-    page.apply(op)
-  });
-  it('splits paragraph 1', () => {
-    let op: Operation = { type: 'split_node', path: { parentId: pageId, offset: 0 }, position: 0, properties: { id: pid3, type: 'http://www.solidoc.net/ontologies#Paragraph' } }
-    page.apply(op)
-    let pageJson = page.toJson()
-    assert.deepStrictEqual(extractChildrenId(pageJson), [pid1, pid3, pid2])
-    assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [])
-    assert.deepStrictEqual(extractChildrenId(pageJson.children[1]), [tid1, tid3])
-  });
-});
+// describe('Split Text Node', () => {
+//   beforeEach(() => {
+//     page = new Page(pageId, turtle);
+//   });
+//   it('splits text 1', () => {
+//     let op: Operation = { type: 'split_node', path: { parentId: paraId1, offset: 0 }, position: 1, properties: { id: tid3, type: 'http://www.solidoc.net/ontologies#Leaf' } }
+//     page.apply(op)
+//     let pageJson = page.toJson()
+//     assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [tid1, tid3])
+//     assert.strictEqual(pageJson.children[0].children[0].text, 'P')
+//     assert.strictEqual(pageJson.children[0].children[1].text, 'aragraph 1')
+//   });
+// });
 
-describe('Set Node', () => {
-  beforeEach(() => {
-    page = new Page(pageId, turtle);
-  });
+// describe('Split Branch Node', () => {
+//   beforeEach(() => {
+//     page = new Page(pageId, turtle);
+//     let op: Operation = { type: 'insert_node', path: { parentId: paraId1, offset: 1 }, node: textJson3 }
+//     page.apply(op)
+//   });
+//   it('splits paragraph 1', () => {
+//     let op: Operation = { type: 'split_node', path: { parentId: pageId, offset: 0 }, position: 0, properties: { id: pid3, type: 'http://www.solidoc.net/ontologies#Paragraph' } }
+//     page.apply(op)
+//     let pageJson = page.toJson()
+//     assert.deepStrictEqual(extractChildrenId(pageJson), [pid1, pid3, pid2])
+//     assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [])
+//     assert.deepStrictEqual(extractChildrenId(pageJson.children[1]), [tid1, tid3])
+//   });
+// });
 
-  // it('sets page title', () => {
-  //   let op: Operation = { type: 'set_node', path: { parentId: '', offset: 0 }, newProperties: { title: 'Welcome' } }
-  //   page.apply(op)
-  //   let pageJson: any = page.toJson()
-  //   assert.strictEqual(pageJson.title, 'Welcome')
-  // })
+// describe('Set Node', () => {
+//   beforeEach(() => {
+//     page = new Page(pageId, turtle);
+//   });
 
-  it('sets a paragraph by adding a property', () => {
-    let op: Operation = { type: 'set_node', path: { parentId: pageId, offset: 0 }, newProperties: { name: 'alice' } }
-    page.apply(op)
-    let pageJson = page.toJson()
-    assert.strictEqual(pageJson.children[0].name, 'alice')
-    // TODO: sparql
-  });
-  it('sets a paragraph by adding and removing', () => {
-    let op1: Operation = { type: 'set_node', path: { parentId: pageId, offset: 0 }, newProperties: { name: 'alice' } }
-    let op2: Operation = { type: 'set_node', path: { parentId: pageId, offset: 0 }, newProperties: { name: null, age: 25 } }
-    page.apply(op1)
-    page.apply(op2)
-    let pageJson = page.toJson()
-    assert.strictEqual(pageJson.children[0].name, undefined)
-    assert.strictEqual(pageJson.children[0].age, 25)
-    // TODO: sparql
-  });
-  it('sets a text by adding a property', () => {
-    let op: Operation = { type: 'set_node', path: { parentId: paraId1, offset: 0 }, newProperties: { bold: false } }
-    page.apply(op)
-    let pageJson = page.toJson()
-    assert.strictEqual(pageJson.children[0].children[0].bold, false)
-    // TODO: sparql
-  });
-});
+//   // it('sets page title', () => {
+//   //   let op: Operation = { type: 'set_node', path: { parentId: '', offset: 0 }, newProperties: { title: 'Welcome' } }
+//   //   page.apply(op)
+//   //   let pageJson: any = page.toJson()
+//   //   assert.strictEqual(pageJson.title, 'Welcome')
+//   // })
+
+//   it('sets a paragraph by adding a property', () => {
+//     let op: Operation = { type: 'set_node', path: { parentId: pageId, offset: 0 }, newProperties: { name: 'alice' } }
+//     page.apply(op)
+//     let pageJson = page.toJson()
+//     assert.strictEqual(pageJson.children[0].name, 'alice')
+//     // TODO: sparql
+//   });
+//   it('sets a paragraph by adding and removing', () => {
+//     let insertNodeOp1: Operation = { type: 'set_node', path: { parentId: pageId, offset: 0 }, newProperties: { name: 'alice' } }
+//     let insertNodeOp2: Operation = { type: 'set_node', path: { parentId: pageId, offset: 0 }, newProperties: { name: null, age: 25 } }
+//     page.apply(insertNodeOp1)
+//     page.apply(insertNodeOp2)
+//     let pageJson = page.toJson()
+//     assert.strictEqual(pageJson.children[0].name, undefined)
+//     assert.strictEqual(pageJson.children[0].age, 25)
+//     // TODO: sparql
+//   });
+//   it('sets a text by adding a property', () => {
+//     let op: Operation = { type: 'set_node', path: { parentId: paraId1, offset: 0 }, newProperties: { bold: false } }
+//     page.apply(op)
+//     let pageJson = page.toJson()
+//     assert.strictEqual(pageJson.children[0].children[0].bold, false)
+//     // TODO: sparql
+//   });
+// });

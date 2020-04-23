@@ -23,7 +23,7 @@ class Branch extends Subject {
 
   public toBlankJson(): Element {
     return {
-      ...super.toJson(),
+      ...this.toJson(),
       children: []
     }
   }
@@ -43,8 +43,10 @@ class Branch extends Subject {
     if (!curr) {
       throw new Error('Trying to insert a null subject')
     }
-
-    offset = (offset < 0) ? 0 : offset
+    
+    if (offset < 0) {
+      throw new Error(`Attach children at: offset = ${offset}`)
+    }
 
     let prev: Subject | undefined = (offset === 0) ? undefined : (this.getIndexedChild(offset - 1) || this.getLastChild());
     if (!prev) {
@@ -66,7 +68,6 @@ class Branch extends Subject {
 
   public detachChildren(offset: number, length: number): Subject | undefined {
     if (offset < 0 || length <= 0) {
-      // TODO: allow length === 0 ??
       throw new Error(`Remove children: offset = ${offset}, length = ${length}`)
     }
 
