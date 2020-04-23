@@ -1,4 +1,4 @@
-import { Root, Branch, Leaf, createNode } from './Node';
+import { Root, Branch, Leaf } from './Node';
 import { Subject } from './Subject';
 import { Graph } from './Graph';
 import { Path, Operation, Element } from './interface'
@@ -100,7 +100,7 @@ class Page extends Graph {
           ...op.properties,
         }
 
-        const newNext = createNode(json, this._nodeMap);
+        const newNext = this.createNode(json);
 
         parent.attachChildren(newNext, op.path.offset + 1)
 

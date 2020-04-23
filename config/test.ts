@@ -70,13 +70,11 @@ turtle.para[1] = `<${config.para[1].id}> a <${ont.sdoc.paragraph}>;
 turtle.para[2] = `<${config.para[2].id}> a <${ont.sdoc.paragraph}>;
   <${ont.sdoc.firstChild}> <${config.text[6].id}>.`
 
-for (let i = 0; i < 8; i++) {
+for (let i = 0; i < 9; i++) {
   turtle.text[i] = `<${config.text[i].id}> a <${ont.sdoc.leaf}>;`
-  turtle.text[i] += `  <${ont.sdoc.next}> <${config.text[i+1].id}>;`
+  if (i % 3 !== 2) {
+    turtle.text[i] += `  <${ont.sdoc.next}> <${config.text[i + 1].id}>;`
+  }
   turtle.text[i] += `  <${ont.sdoc.text}> '${config.text[i].text}';`
   turtle.text[i] += `  <${ont.sdoc.option}> '{"bold":true}'.`
 }
-
-turtle.text[8] = `<${config.text[8].id}> a <${ont.sdoc.leaf}>;
-  <${ont.sdoc.text}> '${config.text[8].text}';
-  <${ont.sdoc.option}> '{"bold":true}'.`
