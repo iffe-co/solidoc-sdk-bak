@@ -45,7 +45,7 @@ class Page extends Graph {
 
       case 'remove_node': {
         const { parent, curr } = this._getContextOf(op.path)
-        if (!(curr instanceof Subject) && curr !== undefined) {
+        if (!(parent instanceof Branch)) {
           throw new Error('Cannot remove')
         }
 

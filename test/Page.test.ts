@@ -28,7 +28,7 @@ describe('Create Page', () => {
 
 });
 
-describe('Page', () => {
+describe('Operations', () => {
   let insertNodeOp0: Operation;
   let insertNodeOp1: Operation;
   let insertNodeOp2: Operation;
@@ -145,7 +145,7 @@ describe('Page', () => {
 
     it('disallows inserting to offset < 0', () => {
       insertNodeOp0.path.offset = -1;
-      assert.throws(()=>{
+      assert.throws(() => {
         page.apply(insertNodeOp0)
       })
     })
@@ -198,7 +198,7 @@ describe('Page', () => {
       assert(page.getNode(config.text[8].id)?.isDeleted())
     });
 
-    it('does not remove at offset > length', () => {
+    it('does nothing to remove at offset > length', () => {
       removeNodeOp0.path.offset = 100
       page.apply(removeNodeOp0)
 
@@ -209,30 +209,42 @@ describe('Page', () => {
       page.apply(removeNodeOp3);
 
       assert.deepStrictEqual(page.toJson().children[0].children, [config.text[0], config.text[2]])
+    });
+
+    it('throws if parent is not found', () => {
+      removeNodeOp0.path.parentId = config.page.id + '#fake';
+      assert.throws(() => {
+        page.apply(removeNodeOp0)
+      })
+    });
+
+    it('throws if parent is a leaf node', () => {
+      removeNodeOp3.path.parentId = config.text[0].id;
+      assert.throws(() => {
+        page.apply(removeNodeOp3)
+      })
     })
 
-    // it('undoes to original after a bunch of operations', () => {
-    //   page.apply(removeNodeOp2);
-    //   page.apply(removeNodeOp1);
-    //   page.apply(insertNodeOp3);
-    //   page.undo();
+    it('throws on offset < 0', () => {
+      removeNodeOp3.path.offset = -1;
+      assert.throws(() => {
+        page.apply(removeNodeOp3)
+      })
+    })
 
-    //   assert.deepStrictEqual(page.toJson(), config.page);
-    //   assert.deepStrictEqual(page.getSparqlForUpdate(), '')
-    // })
+    it('undoes to the original state after a bunch of operations', () => {
+      page.apply(removeNodeOp2);
+      page.apply(removeNodeOp1);
+      page.undo();
 
-    // it('removes paragraph after insertion', () => {
-    //   let paraJson3 = { id: 'tag3', type: 'http://www.solidoc.net/ontologies#Paragraph', children: [textJson3] }
-    //   let insertNodeOp1: Operation = { type: 'insert_node', path: { parentId: pageId, offset: 1 }, node: paraJson3 }
-    //   let insertNodeOp2: Operation = { type: 'remove_node', path: { parentId: pageId, offset: 0 } }
-    //   page.apply(insertNodeOp1)
-    //   page.apply(insertNodeOp2)
-    //   let pageJson = page.toJson()
-    //   assert.deepStrictEqual(extractChildrenId(pageJson), [pid3, pid2])
-    //   assert.deepStrictEqual(pageJson.children[0].children[0], textJson3)
-    // });
+      assert.deepStrictEqual(page.toJson(), config.page);
+      assert.deepStrictEqual(page.getSparqlForUpdate(), '')
+    })
 
   });
+
+
+  
 });
 
 
