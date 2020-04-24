@@ -11,8 +11,8 @@ class Page extends Graph {
   }
 
   public toJson = (): Element => {
-    let head = this.getRoot();
-    return head?.toJson()
+    let head = <Root>this.getRoot();
+    return head.toJson()
   }
 
   public undo() {
@@ -145,7 +145,8 @@ class Page extends Graph {
       }
 
       default: {
-        break
+        throw new Error('Unknow operation')
+        // break
       }
 
     }

@@ -72,22 +72,10 @@ export type SetNodeOperation = {
 }
 
 export type SetSelectionOperation =
-  | {
+  {
     type: 'set_selection'
     [key: string]: any
     properties: null
-    newProperties: Range
-  }
-  | {
-    type: 'set_selection'
-    [key: string]: any
-    properties: Partial<Range>
-    newProperties: Partial<Range>
-  }
-  | {
-    type: 'set_selection'
-    [key: string]: any
-    properties: Range
     newProperties: null
   }
 
