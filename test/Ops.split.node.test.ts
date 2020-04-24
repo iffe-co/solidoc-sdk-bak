@@ -1,5 +1,6 @@
 import { Page } from '../src/Page';
-import { config as cfg, turtle, config } from '../config/test';
+import { config as cfg, turtle } from '../config/test';
+
 import { Operation } from '../src/interface'
 import * as assert from 'power-assert';
 
@@ -9,79 +10,138 @@ turtleAll += turtle.page + '\n';
 turtleAll += turtle.para.join('\n') + '\n'
 turtleAll += turtle.text.join('\n') + '\n'
 
-let newId = config.page.id + '#new'
-let splitBranchOp: Operation = {
-  type: 'split_node',
-  path: { parentId: config.page.id, offset: 0 },
-  position: 1,
-  properties: { id: newId }
-}
+let newId = cfg.page.id + '#new'
 
 describe('Split Nodes', () => {
-  beforeEach(() => {
-    page = new Page(cfg.page.id, turtleAll);
-  });
 
-  it('splits branch 0', () => {
-    page.apply(splitBranchOp)
+  describe('Branch Nodes', () => {
 
-    assert.deepStrictEqual(page.toJson().children[0].children, [cfg.text[0]])
-    assert.deepStrictEqual(page.toJson().children[1].children, [cfg.text[1], cfg.text[2]])
-  })
+    let splitBranchOp: Operation
 
-  it('splits branch 0 at position > length', () => {
-    splitBranchOp.position = 10
-    page.apply(splitBranchOp)
+    beforeEach(() => {
+      page = new Page(cfg.page.id, turtleAll);
 
-    assert.deepStrictEqual(page.toJson().children.length, 4)
-    assert.deepStrictEqual(page.toJson().children[1], {
-      id: newId,
-      type: 'http://www.solidoc.net/ontologies#Paragraph',
-      children: []
-    })
-  })
-
-  it('throws to split a branch at position -1', () => {
-    assert.throws(() => {
-      page.apply({
+      splitBranchOp = {
         type: 'split_node',
-        path: { parentId: config.page.id, offset: 0 },
-        position: -1,
-        properties: { id: newId, type: 'http://www.solidoc.net/ontologies#Branch' }
-      })
+        path: { parentId: cfg.page.id, offset: 0 },
+        position: 1,
+        properties: { id: newId }
+      }
     });
 
+    it('splits branch 0', () => {
+      page.apply(splitBranchOp)
+
+      assert.strictEqual(page.toJson().children.length, 4)
+      assert.deepStrictEqual(page.toJson().children[0].children, [cfg.text[0]])
+      assert.deepStrictEqual(page.toJson().children[1].children, [cfg.text[1], cfg.text[2]])
+      assert.strictEqual(page.toJson().children[1].id, newId)
+      assert.strictEqual(page.toJson().children[1].type, cfg.para[0].type)
+    })
+
+    it('splits branch 0 at position > length', () => {
+      splitBranchOp.position = 10
+      page.apply(splitBranchOp)
+
+      assert.strictEqual(page.toJson().children.length, 4)
+      assert.strictEqual(page.toJson().children[0].children.length, 3)
+      assert.strictEqual(page.toJson().children[1].children.length, 0)
+    })
+
+    it('disallows splitting a branch at position -1', () => {
+      splitBranchOp.position = -1
+      assert.throws(() => {
+        page.apply(splitBranchOp)
+      });
+    })
+
+    it('throws if parent is not found', () => {
+      splitBranchOp.path.parentId = cfg.page.id + '#fake'
+      assert.throws(() => {
+        page.apply(splitBranchOp)
+      });
+    })
+
+    it('throws if parent is a leaf', () => {
+      splitBranchOp.path.parentId = cfg.text[0].id
+      assert.throws(() => {
+        page.apply(splitBranchOp)
+      });
+    })
+
+    it('throws if offset < 0', () => {
+      splitBranchOp.path.offset = -1
+      assert.throws(() => {
+        page.apply(splitBranchOp)
+      });
+    })
+
+    it('throws if offset > length', () => {
+      splitBranchOp.path.offset = 10
+      assert.throws(() => {
+        page.apply(splitBranchOp)
+      });
+    })
+  });
+
+  describe('Leaf nodes', () => {
+
+    let splitLeafOp: Operation
+
+    beforeEach(() => {
+      page = new Page(cfg.page.id, turtleAll);
+
+      splitLeafOp = {
+        type: 'split_node',
+        path: { parentId: cfg.para[0].id, offset: 0 },
+        position: 1,
+        properties: { id: newId }
+      }
+    });
+
+
+    it('splits Leaf 0', () => {
+      page.apply(splitLeafOp)
+
+      assert.strictEqual(page.toJson().children[0].children.length, 4)
+      assert.deepStrictEqual(page.toJson().children[0].children[0].text, 't')
+      assert.deepStrictEqual(page.toJson().children[0].children[1], {
+        ...cfg.text[0],
+        id: newId,
+        text: 'ext 0'
+      })
+    })
+
+    it('splits leaf 0 at position > length', () => {
+      splitLeafOp.position = 10
+      page.apply(splitLeafOp)
+
+      assert.deepStrictEqual(page.toJson().children[0].children.length, 4)
+      assert.deepStrictEqual(page.toJson().children[0].children[0], cfg.text[0])
+      assert.deepStrictEqual(page.toJson().children[0].children[1].text, '')
+    })
+
+    it('allows splitting a leaf at position -1', () => {
+      splitLeafOp.position = -1
+      page.apply(splitLeafOp)
+      assert.deepStrictEqual(page.toJson().children[0].children[0].text, 'text ')
+      assert.deepStrictEqual(page.toJson().children[0].children[1].text, '0')
+    })
+
+    it('throws if offset < 0', () => {
+      splitLeafOp.path.offset = -1
+      assert.throws(() => {
+        page.apply(splitLeafOp)
+      });
+    })
+
+    it('throws if offset < 0', () => {
+      splitLeafOp.path.offset = -1
+      assert.throws(() => {
+        page.apply(splitLeafOp)
+      });
+    })
+
   })
-
-  // describe('Split Text Node', () => {
-  //   beforeEach(() => {
-  //     page = new Page(pageId, turtle);
-  //   });
-  //   it('splits text 1', () => {
-  //     let op: Operation = { type: 'split_node', path: { parentId: paraId1, offset: 0 }, position: 1, properties: { id: tid3, type: 'http://www.solidoc.net/ontologies#Leaf' } }
-  //     page.apply(op)
-  //     let pageJson = page.toJson()
-  //     assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [tid1, tid3])
-  //     assert.strictEqual(pageJson.children[0].children[0].text, 'P')
-  //     assert.strictEqual(pageJson.children[0].children[1].text, 'aragraph 1')
-  //   });
-  // });
-
-  // describe('Split Branch Node', () => {
-  //   beforeEach(() => {
-  //     page = new Page(pageId, turtle);
-  //     let op: Operation = { type: 'insert_node', path: { parentId: paraId1, offset: 1 }, node: textJson3 }
-  //     page.apply(op)
-  //   });
-  //   it('splits paragraph 1', () => {
-  //     let op: Operation = { type: 'split_node', path: { parentId: pageId, offset: 0 }, position: 0, properties: { id: pid3, type: 'http://www.solidoc.net/ontologies#Paragraph' } }
-  //     page.apply(op)
-  //     let pageJson = page.toJson()
-  //     assert.deepStrictEqual(extractChildrenId(pageJson), [pid1, pid3, pid2])
-  //     assert.deepStrictEqual(extractChildrenId(pageJson.children[0]), [])
-  //     assert.deepStrictEqual(extractChildrenId(pageJson.children[1]), [tid1, tid3])
-  //   });
-  // });
-
 
 });
