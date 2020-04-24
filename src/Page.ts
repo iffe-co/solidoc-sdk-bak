@@ -76,13 +76,13 @@ class Page extends Graph {
 
       case 'merge_node': {
         const { parent, prev, curr } = this._getContextOf(op.path)
-        if (!(curr instanceof Subject) || !(prev instanceof Subject)) {
+        if (!(curr instanceof Branch && prev instanceof Branch) && !(curr instanceof Leaf && prev instanceof Leaf)) {
           throw new Error('Cannot merge')
         }
 
         const child = curr.detachChildren(0, Infinity);
 
-        prev.attachChildren(child, Infinity);
+        (<Subject>prev).attachChildren(child, Infinity);
 
         parent.detachChildren(op.path.offset, 1);
 
