@@ -75,13 +75,9 @@ describe('Branch', () => {
       })
     })
 
-    it('throws on inserting an undefined child', () => {
-      try {
-        branch.attachChildren(undefined, 0)
-      } catch (e) {
-        return
-      }
-      assert(0)
+    it('does nothing on inserting an undefined child', () => {
+      branch.attachChildren(undefined, 0)
+      assert.strictEqual(branch.getChildrenNum(), 3);
     })
   })
 

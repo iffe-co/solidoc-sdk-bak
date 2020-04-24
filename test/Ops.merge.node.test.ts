@@ -1,6 +1,5 @@
 import { Page } from '../src/Page';
 import { config as cfg, turtle } from '../config/test'
-// import { Operation } from '../src/interface'
 import * as assert from 'power-assert';
 
 let page: Page;

@@ -41,7 +41,7 @@ class Branch extends Subject {
 
   public attachChildren(curr: Subject | undefined, offset: number) {
     if (!curr) {
-      throw new Error('Trying to insert a null subject')
+      return
     }
 
     if (offset < 0) {
