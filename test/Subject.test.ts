@@ -123,21 +123,12 @@ describe('src/Subject.ts', () => {
       assert.strictEqual(branch1.get("next"), branch2.get('id'));
     });
 
-    // it('disallows set("next")', () => {
-    //   try {
-    //     branch1.set({ "next": branch2.get('id') })
-    //   } catch (e) {
-    //     return
-    //   }
-    //   assert(0)
-    // });
-
     it('parses #nextNode from quads and synced with getNext()', () => {
       let quads = parser.parse(turtle.para[1])
       // note the index of quads
       branch1.fromQuad(quads[1], nodeMap)
 
-      assert.strictEqual(branch1.getNext(), branch2)
+      assert.strictEqual(branch1.get('next'), config.para[2].id)
     })
 
     it('throws if #nextNode inconsistent with next', () => {
@@ -154,7 +145,7 @@ describe('src/Subject.ts', () => {
       branch1.setNext(branch2)
       branch1.commit()
       branch1.setNext(undefined)
-      assert.strictEqual(branch1.getNext(), undefined)
+      assert.strictEqual(branch1.get('next'), '')
     })
   });
 
@@ -187,7 +178,7 @@ describe('src/Subject.ts', () => {
     it('commits attributes', () => {
       branch2.set({ type: ont.sdoc.numberedList })
       branch2.commit()
-      branch2.undo(nodeMap)
+      branch2.undo()
 
       assert.strictEqual(branch2.get('type'), ont.sdoc.numberedList)
       assert(branch2.isFromPod())
@@ -210,14 +201,14 @@ describe('src/Subject.ts', () => {
 
     it('disallows undoing a non-existOnPod node', () => {
       assert.throws(() => {
-        branch2.undo(nodeMap)
+        branch2.undo()
       });
     })
 
     it('undoes deletion', () => {
       branch2.setFromPod()  // otherwise it disallows undo
       branch2.delete();
-      branch2.undo(nodeMap);
+      branch2.undo();
 
       assert.strictEqual(branch2.isDeleted(), false);
     });
@@ -226,7 +217,7 @@ describe('src/Subject.ts', () => {
       branch2.commit() // so {type: Paragraph} becomes value
       branch2.set({ type: ont.sdoc.numberedList })
       branch2.delete()
-      branch2.undo(nodeMap)
+      branch2.undo()
 
       assert.strictEqual(branch2.get('type'), config.para[2].type)
     })
@@ -234,9 +225,9 @@ describe('src/Subject.ts', () => {
     it('undoes next', () => {
       branch2.setFromPod()  // otherwise it disallows undo
       branch2.setNext(branch1);
-      branch2.undo(nodeMap);
+      branch2.undo();
 
-      assert.strictEqual(branch2.getNext(), undefined)
+      assert.strictEqual(branch2.get('next'), '')
     })
   });
 

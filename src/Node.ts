@@ -54,6 +54,7 @@ class Root extends Branch {
     super.fromQuad(quad, nodeMap)
   }
 
+  // TODO: remove this
   public setNext(node: Subject | undefined) {
     if (node) {
       throw new Error('setNext: The root node cannot have syblings: ' + this._id);

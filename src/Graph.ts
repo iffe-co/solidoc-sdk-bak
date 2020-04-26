@@ -79,7 +79,7 @@ class Graph {
       if (!node.isFromPod()) {
         this._nodeMap.delete(id)
       } else {
-        node.undo(this._nodeMap);
+        node.undo();
       }
     }
   }

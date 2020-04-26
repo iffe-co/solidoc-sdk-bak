@@ -32,22 +32,21 @@ describe('Graph', () => {
 
     it('constructs branch nodes', () => {
       let branch0 = graph.getNode(cfg.para[0].id)
-      let branch1 = graph.getNode(cfg.para[1].id)
+      // let branch1 = graph.getNode(cfg.para[1].id)
       let branch2 = graph.getNode(cfg.para[2].id)
 
       assert(branch0 instanceof Branch);
-      assert.strictEqual(branch0?.getNext(), branch1)
-      assert.strictEqual(branch2?.getNext(), undefined)
+      assert.strictEqual(branch0?.get('next'), cfg.para[1].id)
+      assert.strictEqual(branch2?.get('next'), '')
     })
 
     it('constructs leaf nodes', () => {
       let leaf0 = graph.getNode(cfg.text[0].id)
-      let leaf1 = graph.getNode(cfg.text[1].id)
       let leaf2 = graph.getNode(cfg.text[2].id)
 
       assert(leaf0 instanceof Leaf);
-      assert.strictEqual(leaf0?.getNext(), leaf1)
-      assert.strictEqual(leaf2?.getNext(), undefined)
+      assert.strictEqual(leaf0?.get('next'), cfg.text[1].id)
+      assert.strictEqual(leaf2?.get('next'), '')
     })
 
     it('does not construct a node without type definition', () => {
@@ -96,11 +95,10 @@ describe('Graph', () => {
 
     it('undoes to recover #nextNode', () => {
       let branch0 = graph.getNode(cfg.para[0].id)
-      let branch1 = graph.getNode(cfg.para[1].id)
       branch0?.setNext(branch0); // meaningless and illegal, but ok for test
       graph.undo()
 
-      assert.strictEqual(branch0?.getNext(), branch1)
+      assert.strictEqual(branch0?.get('next'), cfg.para[1].id)
     })
 
   })

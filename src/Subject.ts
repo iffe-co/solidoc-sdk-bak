@@ -6,7 +6,6 @@ abstract class Subject {
   protected _predicates: { [key: string]: Property } = {}
   private _isDeleted: boolean
   private _isFromPod: boolean
-  private _next: Subject | undefined
 
   constructor(id: string) {
     this._id = id;
@@ -75,10 +74,6 @@ abstract class Subject {
   public setNext(node: Subject | undefined) {
     let nextId = node ? node._id : '';
     this._predicates['next'].set(nextId);
-    this._next = node;
-  }
-  public getNext(): Subject | undefined {
-    return this._next
   }
 
   public getSparqlForUpdate = (graph: string): string => {
@@ -104,7 +99,7 @@ abstract class Subject {
     this._isFromPod = true
   }
 
-  public undo(nodeMap: Map<string, Subject>) {
+  public undo() {
     if (!this._isFromPod) {
       throw new Error('A non-persisted subject should not be undone')
     }
@@ -112,7 +107,6 @@ abstract class Subject {
     Object.keys(this._predicates).forEach(key => {
       this._predicates[key].undo();
     });
-    this._next = nodeMap.get(this.get('next'))
   }
 
   public delete() {

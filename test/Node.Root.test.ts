@@ -43,12 +43,6 @@ describe('Root', () => {
     });
   })
 
-  it('is ok to setNext(undefined)', () => {
-    root.setNext(undefined)
-
-    assert.strictEqual(root.getNext(), undefined)
-  })
-
   it('disallows deletion', () => {
     assert.throws(() => {
       root.delete()
