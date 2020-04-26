@@ -7,7 +7,7 @@ const parser = new n3.Parser();
 
 // a graph could be a page or a database
 class Graph {
-  private _id: string
+  protected _id: string
   protected _nodeMap = new Map<string, Subject>();
 
   constructor(id: string, turtle: string) {
@@ -56,7 +56,7 @@ class Graph {
     return createNode(json, this._nodeMap)
   }
 
-  public getSparqlForUpdate = (): string => {
+  public getSparqlForUpdate(): string {
     let sparql = '';
     for (let node of this._nodeMap.values()) {
       sparql += node.getSparqlForUpdate(this._id);
@@ -64,7 +64,7 @@ class Graph {
     return sparql;
   }
 
-  public commit = () => {
+  public commit() {
     for (let [id, node] of this._nodeMap.entries()) {
       if (node.isDeleted()) {
         this._nodeMap.delete(id);

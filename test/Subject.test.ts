@@ -123,14 +123,14 @@ describe('src/Subject.ts', () => {
       assert.strictEqual(branch1.get("next"), branch2.get('id'));
     });
 
-    it('disallows set("next")', () => {
-      try {
-        branch1.set({ "next": branch2.get('id') })
-      } catch (e) {
-        return
-      }
-      assert(0)
-    });
+    // it('disallows set("next")', () => {
+    //   try {
+    //     branch1.set({ "next": branch2.get('id') })
+    //   } catch (e) {
+    //     return
+    //   }
+    //   assert(0)
+    // });
 
     it('parses #nextNode from quads and synced with getNext()', () => {
       let quads = parser.parse(turtle.para[1])

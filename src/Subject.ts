@@ -56,9 +56,9 @@ abstract class Subject {
       throw new Error('Trying to update a deleted subject: ' + this._id);
     }
 
-    if (Object.keys(props).includes('next')) {
-      throw new Error('The "next" property may not be set: ' + this._id);
-    }
+    // if (Object.keys(props).includes('next')) {
+    //   throw new Error('The "next" property may not be set: ' + this._id);
+    // }
 
     let option = {}
     Object.keys(props).forEach(key => {

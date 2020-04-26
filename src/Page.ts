@@ -1,156 +1,89 @@
-import { Root, Branch, Leaf } from './Node';
-import { Subject } from './Subject';
+import { Root } from './Node';
 import { Graph } from './Graph';
-import { Path, Operation, Element } from './interface'
+import { Element, Node, Operation, transform, Path } from './interface'
 
 
 class Page extends Graph {
+  private _editor: Element
+
   constructor(id: string, turtle: string) {
     super(id, turtle);
-    (<Root>this.getRoot()).assembleChlildren(this._nodeMap)
+    const root = <Root>this.getRoot();
+    root.assembleChlildren(this._nodeMap)
+    this._editor = root.toJson()
   }
 
   public toJson = (): Element => {
-    let head = <Root>this.getRoot();
-    return head.toJson()
+    return this._editor
+  }
+
+  public apply = (op: Operation) => {
+    transform(this._editor, op)
+  }
+
+  public getSparqlForUpdate(): string {
+    let visited = new Set<string>();
+
+    this._updateNodesRecursive(this._editor, [], visited);
+
+    this._deleteNodesIfNot(visited);
+
+    return super.getSparqlForUpdate();
+
+  }
+
+  private _updateNodesRecursive = (node: Node, path: Path, visited: Set<string>) => {
+    const nodeId = node.id;
+    let subject = this.getNode(nodeId);
+
+    if (subject) {
+      subject.set(node);
+    } else {
+      subject = this.createNode(node);
+    }
+    !(subject instanceof Root) && subject.set({ next: this._getNodeId(Path.next(path)) });
+
+    visited.add(nodeId)
+
+    if (!node.children) return
+
+    subject.set({ firstChild: this._getNodeId([...path, 0]) });
+
+    node.children.forEach((child: Node, index: number) => {
+      this._updateNodesRecursive(child, [...path, index], visited)
+    });
+  }
+
+  private _getNodeId = (path: Path): string => {
+    try {
+      const node: Node = Node.get(this._editor, path);
+      return node.id
+    } catch (e) {
+      return ''
+    }
+  }
+
+  private _deleteNodesIfNot(visited: Set<string>) {
+    for (let [nodeId, subject] of this._nodeMap.entries()) {
+      if (!visited.has(nodeId)) {
+        subject.delete();
+      }
+    }
+  }
+
+  public commit() {
+    super.commit();
+    const root = <Root>this.getRoot();
+    root.assembleChlildren(this._nodeMap)
   }
 
   public undo() {
     super.undo();
-    (<Root>this.getRoot()).assembleChlildren(this._nodeMap)
+    const root = <Root>this.getRoot();
+    root.assembleChlildren(this._nodeMap)
+    this._editor = root.toJson()
   }
 
-  private _getContextOf = (path: Path) => {
-    const parent = this.getNode(path.parentId);
-    if (!parent) {
-      throw new Error('Cannot get parent: ' + path.parentId)
-    }
-    const curr = (parent instanceof Branch) ? parent.getIndexedChild(path.offset) : undefined
-    const prev = (parent instanceof Branch) ? parent.getIndexedChild(path.offset - 1) : undefined
-    const next = (parent instanceof Branch) ? parent.getIndexedChild(path.offset + 1) : undefined
-
-    return { parent, curr, prev, next }
-  }
-
-  public apply = (op: Operation) => {
-    switch (op.type) {
-      case 'insert_node': {
-        const { parent } = this._getContextOf(op.path);
-        if (!(parent instanceof Branch)) {
-          throw new Error('Cannot insert')
-        }
-        parent.insertRecursive(op.node, op.path.offset, this._nodeMap)
-        break
-      }
-
-      case 'remove_node': {
-        const { parent, curr } = this._getContextOf(op.path)
-        if (!(parent instanceof Branch)) {
-          throw new Error('Cannot remove')
-        }
-
-        parent.detachChildren(op.path.offset, 1);
-
-        curr && curr.delete()
-
-        break
-      }
-
-      case 'move_node': {
-        const { parent, curr } = this._getContextOf(op.path)
-        const { parent: newParent } = this._getContextOf(op.newPath)
-
-        if (!(parent instanceof Branch) || !(newParent instanceof Branch)) {
-          throw new Error('Cannot move')
-        }
-        if (!curr || (curr instanceof Branch && curr.isAncestor(newParent))) {
-          throw new Error('Cannot move')
-        }
-
-        parent.detachChildren(op.path.offset, 1);
-
-        newParent.attachChildren(curr, op.newPath.offset);
-
-        break
-      }
-
-      case 'merge_node': {
-        const { parent, prev, curr } = this._getContextOf(op.path)
-        if (!(curr instanceof Branch && prev instanceof Branch) && !(curr instanceof Leaf && prev instanceof Leaf)) {
-          throw new Error('Cannot merge')
-        }
-
-        const child = curr.detachChildren(0, Infinity);
-
-        (<Subject>prev).attachChildren(child, Infinity);
-
-        parent.detachChildren(op.path.offset, 1);
-
-        curr.delete()
-
-        break
-      }
-
-      case 'split_node': {
-        const { parent, curr } = this._getContextOf(op.path)
-
-        if (!curr || !(curr instanceof Subject)) {
-          throw new Error('Cannot split')
-        }
-
-        const json = {
-          ...curr.toBlankJson(),
-          ...op.properties,
-        }
-
-        const newNext = this.createNode(json);
-
-        parent.attachChildren(newNext, op.path.offset + 1)
-
-        const children = curr.detachChildren(op.position, Infinity);
-
-        newNext.attachChildren(children, 0);
-
-        break
-      }
-
-      case 'set_node': {
-        const { curr } = this._getContextOf(op.path)
-
-        if (!curr || !(curr instanceof Subject)) {
-          throw new Error('Cannot get path')
-        }
-
-        curr.set(op.newProperties)
-
-        break
-      }
-
-      case 'insert_text': {
-        const { curr } = this._getContextOf(op.path);
-        if (!(curr instanceof Leaf)) {
-          throw new Error('Not a Leaf node: ' + JSON.stringify(op.path))
-        }
-        curr.attachChildren(op.text, op.offset)
-        break
-      }
-
-      case 'remove_text': {
-        const { curr } = this._getContextOf(op.path);
-        if (!(curr instanceof Leaf)) {
-          throw new Error('Not a Leaf node: ' + JSON.stringify(op.path))
-        }
-        curr.detachChildren(op.offset, op.text.length);
-        break
-      }
-
-      default: {
-        throw new Error('Unknow operation')
-        // break
-      }
-
-    }
-  }
 }
 
-export { Page, Path, Operation }
+export { Page }
