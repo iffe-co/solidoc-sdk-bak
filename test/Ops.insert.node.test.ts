@@ -10,28 +10,25 @@ let op0: Operation;
 let op1: Operation;
 let op2: Operation;
 
-beforeEach(() => {
-  op0 = {
-    type: 'insert_node',
-    path: [0],
-    node: cfg.para[0]
-  }
-  op1 = {
-    type: 'insert_node',
-    path: [0, 1],
-    node: cfg.text[3]
-  }
-  op2 = {
-    type: 'insert_node',
-    path: [0, 0, 1],
-    node: cfg.text[3],
-  }
-});
-
 describe('Insert Node', () => {
 
   beforeEach(() => {
     page = new Page(cfg.page.id, `<${cfg.page.id}> <${ont.dct.title}> "${cfg.page.title}".`);
+    op0 = {
+      type: 'insert_node',
+      path: [0],
+      node: cfg.para[0]
+    }
+    op1 = {
+      type: 'insert_node',
+      path: [0, 1],
+      node: cfg.text[3]
+    }
+    op2 = {
+      type: 'insert_node',
+      path: [0, 0, 1],
+      node: cfg.text[3],
+    }
   })
 
   it('inserts a paragraph', () => {
@@ -53,26 +50,24 @@ describe('Insert Node', () => {
     op0.path = [10, 0];
     assert.throws(() => {
       page.apply(op0)
-    })
+    }, /^Error: Cannot find a descendant/)
   })
 
   it('throws if parent is a leaf node', () => {
     page.apply(op0)
     assert.throws(() => {
       page.apply(op2)
-    })
+    }, /^Error: Cannot get the parent/)
   })
 
-  it('disallows inserting a duplicated node',
-    // () => {
-    //   page.apply(op0)
-    //   assert.throws(() => {
-    //     page.apply(op0)
-    //   })
-    // }
-  )
+  it('disallows inserting a duplicated node', () => {
+    page.apply(op0)
+    assert.throws(() => {
+      page.apply(op0)
+    }, /^Error: Duplicated node insertion/)
+  })
 
-  it('recovers editor after throw'),
+  it('applies no change on throw')
 
   it('gets sparql', () => {
     page.apply(op0);

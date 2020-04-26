@@ -1,7 +1,7 @@
 import { Root } from './Node';
 import { Graph } from './Graph';
-import { Element, Node, Operation, transform, Path } from './interface'
-
+import { Element, Node, Operation, transform, Path, Text } from './interface'
+import * as _ from 'lodash'
 
 class Page extends Graph {
   private _editor: Element
@@ -18,11 +18,53 @@ class Page extends Graph {
   }
 
   public apply = (op: Operation) => {
-    transform(this._editor, op)
+    const opCloned = _.cloneDeep(op)
+    const newSubjects: Set<Node> = this._placeholder(opCloned);
+
+    transform(this._editor, opCloned)
+
+    for (let subject of newSubjects) {
+      this.createNode(subject);
+    }
+  }
+
+  private _placeholder(op: Operation): Set<Node> {
+    const newSubjects = new Set<Node>();
+
+    switch (op.type) {
+      case 'insert_node':
+        this._placeholderRecursive(op.node, newSubjects);
+        break
+
+      case 'split_node':
+        const currId = Node.get(this._editor, op.path).id;
+        const curr = this.getNode(currId);
+        this._placeholderRecursive({
+          id: <string>op.properties.id,
+          type: <string>curr?.get('type'),
+          children: [], // TODO: this is a workaround
+        }, newSubjects)
+        break
+
+    }
+    return newSubjects
+  }
+
+  private _placeholderRecursive = (node: Node, newSubjects: Set<Node>) => {
+    if (this._nodeMap.has(node.id)) {
+      throw new Error('Duplicated node insertion: ' + node.id)
+    }
+    newSubjects.add(node)
+
+    if(Text.isText(node)) return;
+
+    (<Element>node).children.forEach(child => {
+      this._placeholderRecursive(child, newSubjects)
+    });
   }
 
   public getSparqlForUpdate(): string {
-    let visited = new Set<string>();
+    const visited = new Set<string>();
 
     this._updateNodesRecursive(this._editor, [], visited);
 

@@ -568,10 +568,8 @@ export const Text = {
    */
 
   isText(value: any): value is Text {
-    // let a = isPlainObject(value);
-    let b = (typeof value.text === 'string');
-    return b
     // return isPlainObject(value) && typeof value.text === 'string'
+    return typeof value.text === 'string'
   },
 
 
