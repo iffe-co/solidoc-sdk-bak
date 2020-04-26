@@ -40,7 +40,7 @@ class Graph {
 
     quads.forEach(quad => {
       let node = this._nodeMap.get(quad.subject.id)
-      node?.fromQuad(quad, this._nodeMap)
+      node?.fromQuad(quad)
     })
   }
 

@@ -20,8 +20,8 @@ describe('Branch', () => {
     leaf[1] = <Leaf>createNode(config.text[1], nodeMap);
     leaf[2] = <Leaf>createNode(config.text[2], nodeMap);
 
-    leaf[0].setNext(leaf[1]);
-    leaf[1].setNext(leaf[2]);
+    leaf[0].set({next: config.text[1].id});
+    leaf[1].set({next: config.text[2].id});
     branch.set({'firstChild': leaf[0].get('id')})
 
   });

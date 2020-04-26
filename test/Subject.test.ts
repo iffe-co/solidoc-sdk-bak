@@ -42,7 +42,7 @@ describe('src/Subject.ts', () => {
 
     it('parses from quads', () => {
       quads = parser.parse(turtle.para[2]);
-      quads.forEach(quad => branch2.fromQuad(quad, nodeMap));
+      quads.forEach(quad => branch2.fromQuad(quad));
 
       assert.equal(branch2.get('firstChild'), config.para[2].children[0].id);
     })
@@ -50,7 +50,7 @@ describe('src/Subject.ts', () => {
     it('discards an unknown quad', () => {
       let turtle = `<${config.para[2].id}> <${ont.sdoc.text}> "abc".`;
       let quads = parser.parse(turtle)
-      branch2.fromQuad(quads[0], nodeMap)
+      branch2.fromQuad(quads[0])
 
       assert(!branch2.isFromPod())
     });
@@ -118,7 +118,7 @@ describe('src/Subject.ts', () => {
     })
 
     it('setNext() is together with set("next")', () => {
-      branch1.setNext(branch2)
+      branch1.set({next: config.para[2].id})
 
       assert.strictEqual(branch1.get("next"), branch2.get('id'));
     });
@@ -126,25 +126,15 @@ describe('src/Subject.ts', () => {
     it('parses #nextNode from quads and synced with getNext()', () => {
       let quads = parser.parse(turtle.para[1])
       // note the index of quads
-      branch1.fromQuad(quads[1], nodeMap)
+      branch1.fromQuad(quads[1])
 
       assert.strictEqual(branch1.get('next'), config.para[2].id)
     })
 
-    it('throws if #nextNode inconsistent with next', () => {
-      let quads = parser.parse(turtle.para[1])
-      // note the index of quads
-      quads[1].object.id = config.para[0].id
-
-      assert.throws(() => {
-        branch1.fromQuad(quads[1], nodeMap)
-      })
-    })
-
     it('unsets next', () => {
-      branch1.setNext(branch2)
+      branch1.set({next: config.para[2].id})
       branch1.commit()
-      branch1.setNext(undefined)
+      branch1.set({next: ''})
       assert.strictEqual(branch1.get('next'), '')
     })
   });
@@ -224,7 +214,7 @@ describe('src/Subject.ts', () => {
 
     it('undoes next', () => {
       branch2.setFromPod()  // otherwise it disallows undo
-      branch2.setNext(branch1);
+      branch2.set({next: config.para[1].id});
       branch2.undo();
 
       assert.strictEqual(branch2.get('next'), '')

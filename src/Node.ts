@@ -47,19 +47,18 @@ class Root extends Branch {
     }
   }
 
-  public fromQuad(quad: any, nodeMap: Map<string, Subject>) {
+  public fromQuad(quad: any) {
     if (quad.predicate.id === 'http://www.solidoc.net/ontologies#nextNode') {
       throw new Error('fromQuad: The root node cannot have syblings: ' + this._id)
     }
-    super.fromQuad(quad, nodeMap)
+    super.fromQuad(quad)
   }
 
-  // TODO: remove this
-  public setNext(node: Subject | undefined) {
-    if (node) {
-      throw new Error('setNext: The root node cannot have syblings: ' + this._id);
+  public set(props: any) {
+    if (Object.keys(props).includes('next')) {
+      throw new Error('Cannot set "next" property for Root: ' + this._id);
     }
-    super.setNext(undefined)
+    super.set(props)
   }
 
   public delete = () => {

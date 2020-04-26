@@ -18,7 +18,7 @@ describe('Leaf', () => {
   beforeEach(() => {
     nodeMap.clear()
     leaf = <Leaf>createNode(text, nodeMap);
-    quads.forEach(quad => leaf.fromQuad(quad, nodeMap));
+    quads.forEach(quad => leaf.fromQuad(quad));
   });
 
   it('parses from quads', () => {

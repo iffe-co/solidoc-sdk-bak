@@ -31,15 +31,13 @@ describe('Root', () => {
     let quads = parser.parse(turtle)
 
     assert.throws(() => {
-      root.fromQuad(quads[0], nodeMap)
+      root.fromQuad(quads[0])
     })
   })
 
-  it('throws on setNext(node)', () => {
-    let next = new Root(config.para[0].id)
-
+  it('throws on set("next")', () => {
     assert.throws(() => {
-      root.setNext(next)
+      root.set({next: config.para[0].id})
     });
   })
 

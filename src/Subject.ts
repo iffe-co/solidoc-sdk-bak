@@ -16,18 +16,11 @@ abstract class Subject {
     this._predicates.option = new JsonProperty('http://www.solidoc.net/ontologies#option', 'option');
   }
 
-  public fromQuad(quad: any, nodeMap: Map<string, Subject>) {
+  public fromQuad(quad: any) {
     let key = idToKey[quad.predicate.id];
     if (!key || !this._predicates[key]) {
       // console.log('Quad not matched: ' + JSON.stringify(quad));
       return;
-    }
-    if (key == 'next') {
-      let next = nodeMap.get(quad.object.id)
-      if (!next || next._id != quad.object.id) {
-        throw new Error('#nextNode inconsistency: ' + quad.object.id)
-      }
-      this.setNext(next)
     }
     this._predicates[key].fromQuad(quad)
   }
@@ -69,11 +62,6 @@ abstract class Subject {
       }
     });
     (<JsonProperty>(this._predicates['option'])).set(option);
-  }
-
-  public setNext(node: Subject | undefined) {
-    let nextId = node ? node._id : '';
-    this._predicates['next'].set(nextId);
   }
 
   public getSparqlForUpdate = (graph: string): string => {
