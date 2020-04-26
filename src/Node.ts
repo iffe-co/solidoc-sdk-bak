@@ -3,7 +3,6 @@ import { Subject } from './Subject';
 import { Element, Text, Node } from './interface'
 
 class Branch extends Subject {
-  private _children: Subject[] = [];
 
   constructor(id: string) {
     super(id);
@@ -11,133 +10,28 @@ class Branch extends Subject {
   }
 
   public toJson(): Element {
-    let result = super.toJson()
-
+    let result = super.toJson();
     result.children = []
-    this._children.forEach(child => {
-      result.children.push(child.toJson())
-    })
+    return result
+  }
+
+  public toJsonRecursive(nodeMap: Map<string, Subject>): Element {
+    let result = this.toJson()
+
+    let child = nodeMap.get(this.get('firstChild'))
+
+    while (child) {
+      if (child instanceof Branch) {
+        result.children.push(child.toJsonRecursive(nodeMap))
+      } else {
+        result.children.push(child.toJson())
+      }
+      child = nodeMap.get(child.get('next'))
+    }
 
     return result
   }
 
-  public toBlankJson(): Element {
-    return {
-      ...this.toJson(),
-      children: []
-    }
-  }
-
-  private _setFirstChild = (node: Subject | undefined) => {
-    this.set({ firstChild: node ? node.get('id') : '' })
-  }
-
-  public getIndexedChild(offset: number): Subject | undefined {
-    return this._children[offset]
-  }
-  public getLastChild = (): Subject | undefined => {
-    return this._children[this._children.length - 1]
-  }
-
-  public attachChildren(curr: Subject | undefined, offset: number) {
-    if (!curr) {
-      return
-    }
-
-    if (offset < 0) {
-      throw new Error(`Attach children at: offset = ${offset}`)
-    }
-
-    let prev: Subject | undefined = (offset === 0) ? undefined : (this.getIndexedChild(offset - 1) || this.getLastChild());
-    if (!prev) {
-      this._setFirstChild(curr)
-    } else {
-      prev.setNext(curr)
-    }
-
-    let next: Subject | undefined = this.getIndexedChild(offset)
-    this._children.splice(offset, 0, curr)
-    while (curr.getNext()) {
-      offset++
-      curr = <Subject>(curr.getNext())
-      this._children.splice(offset, 0, curr)
-    }
-
-    curr.setNext(next)
-  }
-
-  public detachChildren(offset: number, length: number): Subject | undefined {
-    if (offset < 0 || length <= 0) {
-      throw new Error(`Remove children: offset = ${offset}, length = ${length}`)
-    }
-
-    let next: Subject | undefined = this.getIndexedChild(offset + length);
-    let prev: Subject | undefined = this.getIndexedChild(offset - 1);
-    if (!prev) {
-      this._setFirstChild(next);
-    } else {
-      prev.setNext(next)
-    }
-
-    let lastToRemove = this.getIndexedChild(offset + length - 1);
-    lastToRemove && lastToRemove.setNext(undefined)
-
-    let curr: Subject | undefined = this.getIndexedChild(offset);
-    this._children.splice(offset, length)
-    return curr
-  }
-
-  public getChildrenNum = (): number => {
-    return this._children.length
-  }
-
-  public isAncestor = (to: Subject): boolean => {
-    if (this === to) return true
-
-    // TODO: use map??
-    for (let i = 0; i < this.getChildrenNum(); i++) {
-      let child = this.getIndexedChild(i)
-      if (child === to || (child instanceof Branch && child.isAncestor(to))) return true
-    }
-    return false
-  }
-
-  public undo(nodeMap: Map<string, Subject>) {
-    super.undo(nodeMap);
-    this._children = []
-  }
-
-  public assembleChlildren = (nodeMap: Map<string, Subject>) => {
-    let childId = this.get('firstChild'); // Cannot get from children[] as it's not establish
-    let child: Subject | undefined = nodeMap.get(childId)
-    child && this.attachChildren(child, 0)
-
-    while (child) { // Cannot iterate over children[]
-      (child instanceof Branch) && child.assembleChlildren(nodeMap);
-      child = child.getNext()
-    }
-  }
-
-  public insertRecursive = (json: Node, offset: number, nodeMap: Map<string, Subject>) => {
-
-    const node = createNode(json, nodeMap);
-
-    this.attachChildren(node, offset)
-
-    for (let i = 0; node instanceof Branch && i < json.children.length; i++) {
-      node.insertRecursive(json.children[i], i, nodeMap);
-    }
-
-    return
-  }
-
-  public delete() {
-    super.delete()
-    for (let i = 0; i < this.getChildrenNum(); i++) {
-      let child = <Subject>this.getIndexedChild(i)
-      child.delete();
-    }
-  }
 }
 
 class Root extends Branch {
@@ -147,11 +41,9 @@ class Root extends Branch {
   }
 
   public toJson(): Element {
-    let result = super.toJson();
-    let titleJson = { title: this.get('title') }
     return {
-      ...result,
-      ...titleJson
+      ...super.toJson(),
+      title: this.get('title')
     }
   }
 
@@ -189,26 +81,6 @@ class Leaf extends Subject {
     }
   }
 
-  public toBlankJson(): Text {
-    return {
-      ...super.toJson(),
-      text: ''
-    }
-  }
-
-  public attachChildren(text: string, offset: number) {
-    const before = this.get('text').slice(0, offset);
-    const after = this.get('text').slice(offset);
-    this.set({ text: before + text + after });
-  }
-
-  public detachChildren(offset: number, length: number): string {
-    const before = this.get('text').slice(0, offset);
-    const removed = this.get('text').slice(offset, length);
-    const after = this.get('text').slice(offset + length);
-    this.set({ text: before + after });
-    return removed
-  }
 }
 
 const createNode = (json: Node, nodeMap: Map<string, Subject>): Subject => {

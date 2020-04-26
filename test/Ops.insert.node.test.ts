@@ -81,7 +81,7 @@ describe('Insert Node', () => {
     page.apply(op0)
     page.undo()
 
-    assert.deepStrictEqual(page.toJson(), page.getRoot()?.toBlankJson())
+    assert.deepStrictEqual(page.toJson(), page.getRoot()?.toJson())
     assert.strictEqual(page.getNode(cfg.para[0].id), undefined)
     assert.strictEqual(page.getNode(cfg.text[0].id), undefined)
   });

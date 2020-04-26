@@ -9,8 +9,7 @@ class Page extends Graph {
   constructor(id: string, turtle: string) {
     super(id, turtle);
     const root = <Root>this.getRoot();
-    root.assembleChlildren(this._nodeMap)
-    this._editor = root.toJson()
+    this._editor = root.toJsonRecursive(this._nodeMap)
   }
 
   public toJson = (): Element => {
@@ -115,15 +114,12 @@ class Page extends Graph {
 
   public commit() {
     super.commit();
-    const root = <Root>this.getRoot();
-    root.assembleChlildren(this._nodeMap)
   }
 
   public undo() {
     super.undo();
     const root = <Root>this.getRoot();
-    root.assembleChlildren(this._nodeMap)
-    this._editor = root.toJson()
+    this._editor = root.toJsonRecursive(this._nodeMap)
   }
 
 }

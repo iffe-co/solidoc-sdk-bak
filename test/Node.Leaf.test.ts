@@ -31,48 +31,4 @@ describe('Leaf', () => {
     assert.deepStrictEqual(leaf.toJson(), text);
   })
 
-  it('translate to blank Json', () => {
-    assert.deepStrictEqual(leaf.toBlankJson().text, '');
-  })
-
-  it('inserts text at offset 0', () => {
-    leaf.attachChildren('Insert: ', 0);
-    assert.deepStrictEqual(leaf.toJson(), {
-      ...text,
-      text: 'Insert: text 8'
-    });
-  });
-
-  it('inserts text at offset > length', () => {
-    leaf.attachChildren('!', Infinity);
-    assert.deepStrictEqual(leaf.toJson(), {
-      ...text,
-      text: 'text 8!'
-    });
-  });
-
-  it('removes text head', () => {
-    let removed: string = leaf.detachChildren(0, 1);
-    assert.deepStrictEqual(leaf.toJson(), {
-      ...text,
-      text: 'ext 8'
-    });
-    assert.strictEqual(removed, 't')
-  });
-
-  it('removes text tail', () => {
-    let removed: string = leaf.detachChildren(1, Infinity);
-    assert.deepStrictEqual(leaf.toJson(), {
-      ...text,
-      text: 't'
-    });
-    assert.strictEqual(removed, 'ext 8')
-  });
-
-  it('leaves it unchanged if there is no overlap', () => {
-    let removed: string = leaf.detachChildren(100, 10);
-    assert.deepStrictEqual(leaf.toJson(), text);
-    assert.strictEqual(removed, '')
-  });
-
 });

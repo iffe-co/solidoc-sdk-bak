@@ -41,7 +41,6 @@ abstract class Subject {
       ...option
     };
   }
-  public abstract toBlankJson(): any
 
   public get = (key: string): string => {
     if (key === 'id') return this._id;
@@ -132,8 +131,6 @@ abstract class Subject {
     this._isFromPod = true
   }
 
-  public abstract attachChildren(curr: Subject | string | undefined, offset: number)
-  public abstract detachChildren(offset: number, length: number): Subject | string | undefined
 }
 
 export { Subject }
