@@ -8,7 +8,7 @@ class Page extends Graph {
 
   constructor(id: string, turtle: string) {
     super(id, turtle);
-    this._editor = this.getRoot().toJson()
+    this._editor = <Element>this.getRoot().toJson()
   }
 
   public toJson = (): Element => {
@@ -116,7 +116,7 @@ class Page extends Graph {
 
   public undo() {
     super.undo();
-    this._editor = this.getRoot().toJson()
+    this._editor = <Element>this.getRoot().toJson()
   }
 
 }
