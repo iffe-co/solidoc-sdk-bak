@@ -1,5 +1,4 @@
-import { Subject } from '../src/Subject';
-import { Leaf, createNode } from '../src/Node';
+import { Subject, Leaf, createNode } from '../src/Subject';
 import { config, turtle } from '../config/test'
 import * as assert from 'power-assert';
 

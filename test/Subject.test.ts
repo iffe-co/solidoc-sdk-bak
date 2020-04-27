@@ -1,5 +1,4 @@
-import { Subject } from '../src/Subject'
-import { Branch, createNode } from '../src/Node';
+import { Subject, Branch, createNode } from '../src/Subject'
 import { ont } from '../config/ontology'
 import { config, turtle } from '../config/test'
 import * as assert from 'power-assert';

@@ -1,5 +1,4 @@
-import { Subject } from '../src/Subject'
-import { Branch, Leaf, createNode } from '../src/Node';
+import { Subject, Branch, Leaf, createNode } from '../src/Subject'
 import { config } from '../config/test'
 import * as assert from 'power-assert';
 

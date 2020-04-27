@@ -3,8 +3,7 @@ import { ont } from '../config/ontology';
 import * as assert from 'power-assert';
 
 import { Graph } from '../src/Graph';
-import { Root, Branch, Leaf } from '../src/Node'
-import { Subject } from '../src/Subject';
+import { Subject, Root, Branch, Leaf } from '../src/Subject';
 
 
 

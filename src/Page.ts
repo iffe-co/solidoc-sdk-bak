@@ -1,4 +1,4 @@
-import { Root } from './Node';
+import { Root } from './Subject';
 import { Graph } from './Graph';
 import { Element, Node, Operation, transform, Path, Text } from './interface'
 import * as _ from 'lodash'
@@ -74,17 +74,15 @@ class Page extends Graph {
   }
 
   private _updateNodesRecursive = (node: Node, path: Path, visited: Set<string>) => {
-    const nodeId = node.id;
-    let subject = this.getNode(nodeId);
+    let subject = this.getNode(node.id);
 
-    if (subject) {
-      subject.set(node);
-    } else {
-      subject = this.createNode(node);
+    if (!subject) {
+      throw new Error('An unknown node to persist: ' + node.id)
     }
+    subject.set(node);
     !(subject instanceof Root) && subject.set({ next: this._getNodeId(Path.next(path)) });
 
-    visited.add(nodeId)
+    visited.add(node.id)
 
     if (!node.children) return
 

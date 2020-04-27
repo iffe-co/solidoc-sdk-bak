@@ -1,5 +1,4 @@
-import { Subject } from './Subject'
-import { createNode } from './Node'
+import { Subject, createNode } from './Subject'
 import { Node } from './interface'
 import * as n3 from 'n3';
 
