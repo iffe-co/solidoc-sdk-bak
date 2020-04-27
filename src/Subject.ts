@@ -1,5 +1,5 @@
 import { Property, NamedNodeProperty, TextProperty, JsonProperty } from './Property';
-import { idToKey } from '../config/ontology'
+import { idToAlias } from '../config/ontology'
 import { Element, Node } from './interface'
 
 abstract class Subject {
@@ -12,18 +12,18 @@ abstract class Subject {
     this._id = id;
     this._isDeleted = false
     this._isFromPod = false
-    this._predicates.type = new NamedNodeProperty('http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'type');
-    this._predicates.next = new NamedNodeProperty('http://www.solidoc.net/ontologies#nextNode', 'next');
-    this._predicates.option = new JsonProperty('http://www.solidoc.net/ontologies#option', 'option');
+    this._predicates.type = new NamedNodeProperty('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
+    this._predicates.next = new NamedNodeProperty('http://www.solidoc.net/ontologies#nextNode');
+    this._predicates.option = new JsonProperty('http://www.solidoc.net/ontologies#option');
   }
 
   public fromQuad(quad: any) {
-    let key = idToKey[quad.predicate.id];
-    if (!key || !this._predicates[key]) {
+    let alias = idToAlias[quad.predicate.id];
+    if (!alias || !this._predicates[alias]) {
       // console.log('Quad not matched: ' + JSON.stringify(quad));
       return;
     }
-    this._predicates[key].fromQuad(quad)
+    this._predicates[alias].fromQuad(quad)
   }
 
   public toJson(): Node {
@@ -33,19 +33,19 @@ abstract class Subject {
       ...JSON.parse(this.get('option')),
     }
 
-    Object.keys(this._predicates).forEach(key => {
-      ['next', 'firstChild', 'option', 'type'].includes(key) || (result[key] = this.get(key));
+    Object.keys(this._predicates).forEach(alias => {
+      ['next', 'firstChild', 'option', 'type'].includes(alias) || (result[alias] = this.get(alias));
     });
 
     return result;
   }
 
-  public get = (key: string): string => {
-    if (key === 'id') return this._id;
-    if (!this._predicates[key]) { // TODO: get from options?
-      throw new Error('Try to get an unknown property: ' + this._id + key)
+  public get = (alias: string): string => {
+    if (alias === 'id') return this._id;
+    if (!this._predicates[alias]) { // TODO: get from options?
+      throw new Error('Try to get an unknown property: ' + this._id + alias)
     }
-    return this._predicates[key].get();
+    return this._predicates[alias].get();
   }
 
   public set(node: Node, next?: Node) {
@@ -54,13 +54,13 @@ abstract class Subject {
     }
 
     let newOptions = {}
-    Object.keys(node).forEach(key => {
-      if (key === 'id' || key === 'children') {
+    Object.keys(node).forEach(alias => {
+      if (alias === 'id' || alias === 'children') {
         //
-      } else if (this._predicates[key]) {
-        this._predicates[key].set(node[key]);
+      } else if (this._predicates[alias]) {
+        this._predicates[alias].set(node[alias]);
       } else {
-        newOptions[key] = node[key]
+        newOptions[alias] = node[alias]
       }
     });
     (<JsonProperty>(this._predicates['option'])).set(newOptions);
@@ -123,7 +123,7 @@ class Branch extends Subject {
 
   constructor(id: string) {
     super(id);
-    this._predicates.firstChild = new NamedNodeProperty('http://www.solidoc.net/ontologies#firstChild', 'firstChild');
+    this._predicates.firstChild = new NamedNodeProperty('http://www.solidoc.net/ontologies#firstChild');
   }
 
   public toJson(): Element {
@@ -143,7 +143,7 @@ class Branch extends Subject {
 class Root extends Branch {
   constructor(id: string) {
     super(id);
-    this._predicates.title = new TextProperty('http://purl.org/dc/terms/title', 'title');
+    this._predicates.title = new TextProperty('http://purl.org/dc/terms/title');
   }
 
   public fromQuad(quad: any) {
@@ -170,7 +170,7 @@ class Leaf extends Subject {
   constructor(id: string) {
     // TODO: using blank nodes
     super(id);
-    this._predicates.text = new TextProperty('http://www.solidoc.net/ontologies#text', 'text');
+    this._predicates.text = new TextProperty('http://www.solidoc.net/ontologies#text');
   }
 }
 

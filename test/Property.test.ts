@@ -18,7 +18,7 @@ describe('Type: a NamedNode Property', () => {
   const insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.rdf.type}> <${ont.sdoc.paragraph}>} };\n`;
 
   beforeEach(() => {
-    type = new NamedNodeProperty(ont.rdf.type, 'type');
+    type = new NamedNodeProperty(ont.rdf.type);
     type.fromQuad(quads[0]);
   });
 
@@ -71,12 +71,12 @@ describe('Text Property', () => {
   const insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.text}> "Hello world!"} };\n`;
 
   beforeEach(() => {
-    text = new TextProperty(ont.sdoc.text, 'text');
+    text = new TextProperty(ont.sdoc.text);
     text.fromQuad(quads[1]);
   });
 
   it('parses quad as text', () => {
-    assert.strictEqual(text.value, node.text);
+    assert.strictEqual(text.get(), node.text);
   });
 
   it('generates sparql for update', async () => {
@@ -104,11 +104,11 @@ describe('Json Property', () => {
   let option: JsonProperty;
 
   beforeEach(() => {
-    option = new JsonProperty(ont.sdoc.option, 'option');
+    option = new JsonProperty(ont.sdoc.option);
   });
 
   it('before init', () => {
-    assert.strictEqual(option.value, '{}')
+    assert.strictEqual(option.get(), '{}')
   });
 
   it('gets sparql after set from null', () => {

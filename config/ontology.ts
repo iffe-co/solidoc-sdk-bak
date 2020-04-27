@@ -1,4 +1,4 @@
-const idToKey = {
+const idToAlias = {
   'http://www.w3.org/1999/02/22-rdf-syntax-ns#type': 'type',
   'http://purl.org/dc/terms/title': 'title',
   'http://www.solidoc.net/ontologies#firstChild': 'firstChild',
@@ -27,4 +27,4 @@ const ont = {
   }
 }
 
-export { ont, idToKey }
+export { ont, idToAlias }

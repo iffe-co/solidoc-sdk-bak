@@ -1,15 +1,13 @@
 import * as _ from 'lodash'
 
 abstract class Property {
-  id: string
-  alias: string
-  value = ''
-  uncommitted = ''
-  nullValue = ''
+  protected id: string
+  protected value = ''
+  protected uncommitted = ''
+  protected nullValue = ''
 
-  constructor(id: string, alias: string) {
+  constructor(id: string) {
     this.id = id;
-    this.alias = alias;
   }
 
   public abstract fromQuad(quad: any): void
@@ -21,17 +19,17 @@ abstract class Property {
     return this.uncommitted;
   }
 
-  protected _getSparqlForDeletion = (graph: string, subject: string): string => {
+  protected _deletionClause = (graph: string, subject: string): string => {
     let sparql: string = ''
     if (this.uncommitted !== this.value && this.value !== this.nullValue) {
       sparql = `DELETE WHERE { GRAPH <${graph}> { <${subject}> <${this.id}> ?o } };\n`;
     }
     return sparql
   }
-  protected abstract _getSparqlForInsertion(graph: string, subject: string): string
+  protected abstract _insertionClause(graph: string, subject: string): string
 
   public getSparqlForUpdate = (graph: string, subject: string): string => {
-    return this._getSparqlForDeletion(graph, subject) + this._getSparqlForInsertion(graph, subject)
+    return this._deletionClause(graph, subject) + this._insertionClause(graph, subject)
   }
 
   public commit = () => {
@@ -48,7 +46,7 @@ class NamedNodeProperty extends Property {
     this.value = quad.object.id;
     this.uncommitted = this.value;
   }
-  protected _getSparqlForInsertion = (graph: string, subject: string): string => {
+  protected _insertionClause = (graph: string, subject: string): string => {
     let sparql = ''
     if (this.uncommitted !== this.value && this.uncommitted) {
       sparql += `INSERT DATA { GRAPH <${graph}> { <${subject}> <${this.id}> <${this.uncommitted}>} };\n`;
@@ -63,7 +61,7 @@ class TextProperty extends Property {
     this.value = text.substring(1, text.lastIndexOf('"'));
     this.uncommitted = this.value;
   }
-  protected _getSparqlForInsertion = (graph: string, subject: string): string => {
+  protected _insertionClause = (graph: string, subject: string): string => {
     let sparql = ''
     if (this.uncommitted !== this.value && this.uncommitted !== this.nullValue) {
       let backSlashEscaped: string = this.uncommitted.replace(/\\/g, '\\\\');
@@ -75,9 +73,8 @@ class TextProperty extends Property {
 }
 
 class JsonProperty extends TextProperty {
-  json: any
-  constructor(id: string, alias: string) {
-    super(id, alias)
+  constructor(id: string) {
+    super(id)
     this.value = this.uncommitted = this.nullValue = '{}'
   }
 
