@@ -1,13 +1,18 @@
+import { idToType } from '../config/ontology'
 import * as _ from 'lodash'
 
 abstract class Property {
   protected id: string
+  protected graph: string
+  protected subject: string
   protected value = ''
   protected uncommitted = ''
   protected nullValue = ''
 
-  constructor(id: string) {
+  constructor(id: string, graph: string, subject: string) {
     this.id = id;
+    this.graph = graph;
+    this.subject = subject;
   }
 
   public abstract fromQuad(quad: any): void
@@ -19,17 +24,17 @@ abstract class Property {
     return this.uncommitted;
   }
 
-  protected _deletionClause = (graph: string, subject: string): string => {
+  protected _deletionClause = (): string => {
     let sparql: string = ''
     if (this.uncommitted !== this.value && this.value !== this.nullValue) {
-      sparql = `DELETE WHERE { GRAPH <${graph}> { <${subject}> <${this.id}> ?o } };\n`;
+      sparql = `DELETE WHERE { GRAPH <${this.graph}> { <${this.subject}> <${this.id}> ?o } };\n`;
     }
     return sparql
   }
-  protected abstract _insertionClause(graph: string, subject: string): string
+  protected abstract _insertionClause(): string
 
-  public getSparqlForUpdate = (graph: string, subject: string): string => {
-    return this._deletionClause(graph, subject) + this._insertionClause(graph, subject)
+  public getSparqlForUpdate = (): string => {
+    return this._deletionClause() + this._insertionClause()
   }
 
   public commit = () => {
@@ -46,10 +51,10 @@ class NamedNodeProperty extends Property {
     this.value = quad.object.id;
     this.uncommitted = this.value;
   }
-  protected _insertionClause = (graph: string, subject: string): string => {
+  protected _insertionClause = (): string => {
     let sparql = ''
     if (this.uncommitted !== this.value && this.uncommitted) {
-      sparql += `INSERT DATA { GRAPH <${graph}> { <${subject}> <${this.id}> <${this.uncommitted}>} };\n`;
+      sparql += `INSERT DATA { GRAPH <${this.graph}> { <${this.subject}> <${this.id}> <${this.uncommitted}>} };\n`;
     }
     return sparql;
   }
@@ -61,29 +66,58 @@ class TextProperty extends Property {
     this.value = text.substring(1, text.lastIndexOf('"'));
     this.uncommitted = this.value;
   }
-  protected _insertionClause = (graph: string, subject: string): string => {
+  protected _insertionClause = (): string => {
     let sparql = ''
     if (this.uncommitted !== this.value && this.uncommitted !== this.nullValue) {
       let backSlashEscaped: string = this.uncommitted.replace(/\\/g, '\\\\');
       let doubleQuoteEscaped: string = backSlashEscaped.replace(/"/g, '\\"');
-      sparql += `INSERT DATA { GRAPH <${graph}> { <${subject}> <${this.id}> "${doubleQuoteEscaped}"} };\n`;
+      sparql += `INSERT DATA { GRAPH <${this.graph}> { <${this.subject}> <${this.id}> "${doubleQuoteEscaped}"} };\n`;
     }
     return sparql;
   }
 }
 
 class JsonProperty extends TextProperty {
-  constructor(id: string) {
-    super(id)
+  constructor(id: string, graph: string, subject: string) {
+    super(id, graph, subject)
     this.value = this.uncommitted = this.nullValue = '{}'
   }
 
-  public set = (json: any) => {
+  public set = (value: string) => {
+    let json = JSON.parse(value);
     if (!_.isEqual(json, JSON.parse(this.uncommitted))) {
-      this.uncommitted = JSON.stringify(json);
+      this.uncommitted = value;
     }
   }
 
 }
 
-export { Property, NamedNodeProperty, TextProperty, JsonProperty }
+const Prop = {
+  create: (id: string, graph: string, subject: string): Property => {
+    const type = idToType[id]
+    switch (type) {
+      case 'NamedNode':
+        return new NamedNodeProperty(id, graph, subject);
+      case 'Text':
+        return new TextProperty(id, graph, subject);
+      case 'Json':
+        return new JsonProperty(id, graph, subject);
+      default:
+        throw new Error('Unknown property type: ' + type)
+    }
+  },
+
+  commit: (prop: Property) => {
+    prop.commit();
+  },
+
+  undo: (prop: Property) => {
+    prop.undo();
+  },
+
+  getSparql: (sparql: string, prop: Property): string => {
+    return sparql + prop.getSparqlForUpdate()
+  }
+}
+
+export { Property, NamedNodeProperty, TextProperty, JsonProperty, Prop }

@@ -19,7 +19,7 @@ describe('src/Subject.ts', () => {
   beforeEach(() => {
     para1 = _.cloneDeep(config.para[1])
     para2 = _.cloneDeep(config.para[2])
-    branch2 = <Branch>createSubject(para2);
+    branch2 = <Branch>createSubject(para2, config.page.id);
   });
 
   describe('Create Node', () => {
@@ -96,7 +96,7 @@ describe('src/Subject.ts', () => {
 
   describe('#nextNode property', () => {
     beforeEach(() => {
-      branch1 = <Branch>createSubject(para1);
+      branch1 = <Branch>createSubject(para1, config.page.id);
     })
 
     it('setNext() is together with set("next")', () => {
@@ -138,9 +138,9 @@ describe('src/Subject.ts', () => {
     })
 
     it('generates sparql after deletion', () => {
-      const sparql = branch2.getSparqlForUpdate(config.page.id);
+      const sparql = branch2.getSparqlForUpdate();
 
-      assert.strictEqual(sparql, `WITH <${config.page.id}> DELETE { <${config.para[2].id}> ?p ?o } WHERE { <${config.para[2].id}> ?p ?o };\n`);
+      assert.strictEqual(sparql, `DELETE WHERE { GRAPH <${config.page.id}> { <${config.para[2].id}> ?p ?o } };\n`);
     });
 
   });
@@ -169,7 +169,7 @@ describe('src/Subject.ts', () => {
 
   describe('undoes', () => {
     beforeEach(() => {
-      branch1 = <Branch>createSubject(config.para[1]);
+      branch1 = <Branch>createSubject(config.para[1], config.page.id);
     })
 
     it('disallows undoing a non-existOnPod node', () => {
@@ -214,7 +214,7 @@ describe('Root', () => {
   let root: Root;
 
   beforeEach(() => {
-    root = <Root>createSubject(page);
+    root = <Root>createSubject(page, config.page.id);
   });
 
 
@@ -257,7 +257,7 @@ describe('Leaf', () => {
   const quads: any[] = parser.parse(turtle.text[8]);
   
   beforeEach(() => {
-    leaf = <Leaf>createSubject(text);
+    leaf = <Leaf>createSubject(text, config.page.id);
     quads.forEach(quad => leaf.fromQuad(quad));
   });
 

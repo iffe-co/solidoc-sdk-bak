@@ -18,7 +18,7 @@ describe('Type: a NamedNode Property', () => {
   const insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.rdf.type}> <${ont.sdoc.paragraph}>} };\n`;
 
   beforeEach(() => {
-    type = new NamedNodeProperty(ont.rdf.type);
+    type = new NamedNodeProperty(ont.rdf.type, page.id, node.id);
     type.fromQuad(quads[0]);
   });
 
@@ -27,19 +27,19 @@ describe('Type: a NamedNode Property', () => {
   });
 
   it('generates null sparql for a new property', () => {
-    const sparql: string = type.getSparqlForUpdate(page.id, node.id);
+    const sparql: string = type.getSparqlForUpdate();
     assert.strictEqual(sparql, '');
   });
 
   it('generate sparql for updated property', () => {
     type.set(ont.sdoc.paragraph);
-    const sparql: string = type.getSparqlForUpdate(page.id, node.id);
+    const sparql: string = type.getSparqlForUpdate();
     assert.strictEqual(sparql, deleteClause + insertClause);
   });
 
   it('generate sparql for deleted property', () => {
     type.set('');
-    const sparql: string = type.getSparqlForUpdate(page.id, node.id);
+    const sparql: string = type.getSparqlForUpdate();
     assert.strictEqual(sparql, deleteClause);
   });
 
@@ -47,7 +47,7 @@ describe('Type: a NamedNode Property', () => {
     type.set('');
     type.commit()
     type.set(ont.sdoc.paragraph);
-    const sparql: string = type.getSparqlForUpdate(page.id, node.id);
+    const sparql: string = type.getSparqlForUpdate();
     assert.strictEqual(sparql, insertClause);
   });
 
@@ -71,7 +71,7 @@ describe('Text Property', () => {
   const insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.text}> "Hello world!"} };\n`;
 
   beforeEach(() => {
-    text = new TextProperty(ont.sdoc.text);
+    text = new TextProperty(ont.sdoc.text, page.id, node.id);
     text.fromQuad(quads[1]);
   });
 
@@ -81,13 +81,13 @@ describe('Text Property', () => {
 
   it('generates sparql for update', async () => {
     text.set('Hello world!');
-    const sparql: string = text.getSparqlForUpdate(page.id, node.id);
+    const sparql: string = text.getSparqlForUpdate();
     assert.strictEqual(sparql, deleteClause + insertClause);
   });
 
   it('generates sparql for deletion only', async () => {
     text.set('');
-    const sparql: string = text.getSparqlForUpdate(page.id, node.id);
+    const sparql: string = text.getSparqlForUpdate();
     assert.strictEqual(sparql, deleteClause);
   });
 
@@ -95,7 +95,7 @@ describe('Text Property', () => {
     text.set('');
     text.commit();
     text.set('Hello world!');
-    const sparql: string = text.getSparqlForUpdate(page.id, node.id);
+    const sparql: string = text.getSparqlForUpdate();
     assert.strictEqual(sparql, insertClause);
   });
 });
@@ -104,7 +104,7 @@ describe('Json Property', () => {
   let option: JsonProperty;
 
   beforeEach(() => {
-    option = new JsonProperty(ont.sdoc.option);
+    option = new JsonProperty(ont.sdoc.option, page.id, node.id);
   });
 
   it('before init', () => {
@@ -112,8 +112,8 @@ describe('Json Property', () => {
   });
 
   it('gets sparql after set from null', () => {
-    option.set({ name: 'alice' })
-    const sparql: string = option.getSparqlForUpdate(page.id, node.id);
+    option.set(JSON.stringify({ name: 'alice' }))
+    const sparql: string = option.getSparqlForUpdate();
     assert.strictEqual(sparql, `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.option}> "{\\"name\\":\\"alice\\"}"} };\n`);
   });
 
@@ -127,22 +127,22 @@ describe('Json Property', () => {
 
     it('parses quad as json', () => {
       assert.deepStrictEqual(JSON.parse(option.get()), { bold: true });
-      const sparql: string = option.getSparqlForUpdate(page.id, node.id);
+      const sparql: string = option.getSparqlForUpdate();
 
       assert.strictEqual(sparql, '');
     });
 
     it('gets sparql after reseting a property', () => {
-      option.set({})
+      option.set('{}')
 
       assert.deepStrictEqual(JSON.parse(option.get()), {})
-      assert.strictEqual(option.getSparqlForUpdate(page.id, node.id), deleteClause)
+      assert.strictEqual(option.getSparqlForUpdate(), deleteClause)
     });
 
     it('gets sparql after changing a property', () => {
-      option.set({ bold: true, size: 25 })
+      option.set(JSON.stringify({ bold: true, size: 25 }))
 
-      assert.strictEqual(option.getSparqlForUpdate(page.id, node.id), deleteClause + insertClause)
+      assert.strictEqual(option.getSparqlForUpdate(), deleteClause + insertClause)
     });
   })
 });

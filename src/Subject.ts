@@ -1,20 +1,21 @@
-import { Property, NamedNodeProperty, TextProperty, JsonProperty } from './Property';
-import { idToAlias } from '../config/ontology'
+import { Property, Prop } from './Property';
+import { ont, idToAlias } from '../config/ontology'
 import { Element, Node } from './interface'
 
 abstract class Subject {
   protected _id: string
+  protected _graph: string
   protected _predicates: { [key: string]: Property } = {}
   private _isDeleted: boolean
   private _isFromPod: boolean
 
-  constructor(id: string) {
+  constructor(id: string, graph: string) {
     this._id = id;
+    this._graph = graph
     this._isDeleted = false
     this._isFromPod = false
-    this._predicates.type = new NamedNodeProperty('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
-    this._predicates.next = new NamedNodeProperty('http://www.solidoc.net/ontologies#nextNode');
-    this._predicates.option = new JsonProperty('http://www.solidoc.net/ontologies#option');
+    this._predicates.type = Prop.create(ont.rdf.type, this._graph, this._id);
+    this._predicates.option = Prop.create(ont.sdoc.option, this._graph, this._id);
   }
 
   public fromQuad(quad: any) {
@@ -63,21 +64,17 @@ abstract class Subject {
         newOptions[alias] = node[alias]
       }
     });
-    (<JsonProperty>(this._predicates['option'])).set(newOptions);
+    this._predicates['option'].set(JSON.stringify(newOptions));
 
     this._predicates['next'].set(next ? next.id : '')
   }
 
-  public getSparqlForUpdate = (graphId: string): string => {
+  public getSparqlForUpdate = (): string => {
     if (this._isDeleted) {
       // TODO: for non-persisted subjects, this clause should be empty
-      return `WITH <${graphId}> DELETE { <${this._id}> ?p ?o } WHERE { <${this._id}> ?p ?o };\n`;
+      return `DELETE WHERE { GRAPH <${this._graph}> { <${this._id}> ?p ?o } };\n`;
     } else {
-      let sparql = '';
-      Object.values(this._predicates).forEach(predicate => {
-        sparql += predicate.getSparqlForUpdate(graphId, this._id);
-      });
-      return sparql;
+      return Object.values(this._predicates).reduce(Prop.getSparql, '');
     }
   }
 
@@ -85,9 +82,9 @@ abstract class Subject {
     if (this._isDeleted) {
       throw new Error('A deleted subject should not be committed')
     }
-    Object.values(this._predicates).forEach(predicate => {
-      predicate.commit();
-    });
+
+    Object.values(this._predicates).map(Prop.commit)
+
     this._isFromPod = true
   }
 
@@ -95,10 +92,10 @@ abstract class Subject {
     if (!this._isFromPod) {
       throw new Error('A non-persisted subject should not be undone')
     }
+    
+    Object.values(this._predicates).map(Prop.undo);
+    
     this._isDeleted = false
-    Object.values(this._predicates).forEach(predicate => {
-      predicate.undo();
-    });
   }
 
   public delete() {
@@ -121,9 +118,10 @@ abstract class Subject {
 
 class Branch extends Subject {
 
-  constructor(id: string) {
-    super(id);
-    this._predicates.firstChild = new NamedNodeProperty('http://www.solidoc.net/ontologies#firstChild');
+  constructor(id: string, graph: string) {
+    super(id, graph);
+    this._predicates.firstChild = Prop.create(ont.sdoc.firstChild, this._graph, this._id);
+    this._predicates.next = Prop.create(ont.sdoc.next, this._graph, this._id);
   }
 
   public toJson(): Element {
@@ -141,9 +139,9 @@ class Branch extends Subject {
 }
 
 class Root extends Branch {
-  constructor(id: string) {
-    super(id);
-    this._predicates.title = new TextProperty('http://purl.org/dc/terms/title');
+  constructor(id: string, graph: string) {
+    super(id, graph);
+    this._predicates.title = Prop.create(ont.dct.title, this._graph, this._id);
   }
 
   public fromQuad(quad: any) {
@@ -167,25 +165,26 @@ class Root extends Branch {
 }
 
 class Leaf extends Subject {
-  constructor(id: string) {
+  constructor(id: string, graph: string) {
     // TODO: using blank nodes
-    super(id);
-    this._predicates.text = new TextProperty('http://www.solidoc.net/ontologies#text');
+    super(id, graph);
+    this._predicates.text = Prop.create(ont.sdoc.text, this._graph, this._id);
+    this._predicates.next = Prop.create(ont.sdoc.next, this._graph, this._id);
   }
 }
 
-const createSubject = (json: Node): Subject => {
+const createSubject = (json: Node, graph: string): Subject => {
 
   let subject: Subject
   switch (json.type) {
     case 'http://www.solidoc.net/ontologies#Root':
-      subject = new Root(json.id)
+      subject = new Root(json.id, graph)
       break
     case 'http://www.solidoc.net/ontologies#Leaf':
-      subject = new Leaf(json.id)
+      subject = new Leaf(json.id, graph)
       break
     default:
-      subject = new Branch(json.id)
+      subject = new Branch(json.id, graph)
       break
   }
   subject.set(json)

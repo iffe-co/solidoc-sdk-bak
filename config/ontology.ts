@@ -7,6 +7,15 @@ const idToAlias = {
   'http://www.solidoc.net/ontologies#text': 'text'
 };
 
+const idToType = {
+  'http://www.w3.org/1999/02/22-rdf-syntax-ns#type': 'NamedNode',
+  'http://purl.org/dc/terms/title': 'Text',
+  'http://www.solidoc.net/ontologies#firstChild': 'NamedNode',
+  'http://www.solidoc.net/ontologies#nextNode': 'NamedNode',
+  'http://www.solidoc.net/ontologies#option': 'Json',
+  'http://www.solidoc.net/ontologies#text': 'Text'
+};
+
 const ont = {
   rdf: {
     type: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
@@ -27,4 +36,4 @@ const ont = {
   }
 }
 
-export { ont, idToAlias }
+export { ont, idToAlias, idToType }

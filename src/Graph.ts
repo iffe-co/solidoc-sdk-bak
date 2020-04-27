@@ -60,7 +60,7 @@ class Graph {
     if (this._subjectMap.get(json.id)) {
       throw new Error('duplicated subject creation: ' + json.id)
     }
-    let subject = createSubject(json)
+    let subject = createSubject(json, this._id)
     this._subjectMap.set(json.id, subject)
     return subject
   }
@@ -68,7 +68,7 @@ class Graph {
   public getSparqlForUpdate(): string {
     let sparql = '';
     for (let subject of this._subjectMap.values()) {
-      sparql += subject.getSparqlForUpdate(this._id);
+      sparql += subject.getSparqlForUpdate();
     }
     return sparql;
   }
