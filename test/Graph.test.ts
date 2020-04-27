@@ -108,25 +108,3 @@ describe('Graph', () => {
 
 });
 
-
-import { Page } from '../src/Page';
-
-let page: Page;
-let turtleAll = '';
-turtleAll += turtle.page + '\n';
-turtleAll += turtle.para.join('\n') + '\n'
-turtleAll += turtle.text.join('\n') + '\n'
-
-describe('Create Page', () => {
-
-  it('parses from quads', () => {
-    page = new Page(cfg.page.id, turtleAll);
-    assert.deepStrictEqual(page.toJson(), cfg.page);
-  });
-
-  it('parses from an empty string', () => {
-    page = new Page(cfg.page.id, '');
-    assert.deepStrictEqual(page.toJson(), page.getRoot().toJson());
-  });
-
-});

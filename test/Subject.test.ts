@@ -1,4 +1,4 @@
-import { Subject, Branch, createSubject } from '../src/Subject'
+import { Subject, Branch, Root, Leaf, createSubject } from '../src/Subject'
 import { ont } from '../config/ontology'
 import { config, turtle } from '../config/test'
 import { Element } from '../src/interface'
@@ -8,7 +8,7 @@ import * as _ from 'lodash'
 import * as n3 from 'n3';
 const parser = new n3.Parser();
 
-const nodeMap = new Map<string, Subject>();
+const subjectMap = new Map<string, Subject>();
 
 // const page = config.page
 
@@ -20,10 +20,10 @@ describe('src/Subject.ts', () => {
   let quads: any[];
 
   beforeEach(() => {
-    nodeMap.clear()
+    subjectMap.clear()
     para1 = _.cloneDeep(config.para[1])
     para2 = _.cloneDeep(config.para[2])
-    branch2 = <Branch>createSubject(para2, nodeMap);
+    branch2 = <Branch>createSubject(para2, subjectMap);
   });
 
   describe('Create Node', () => {
@@ -62,7 +62,7 @@ describe('src/Subject.ts', () => {
 
     it('disallows creating node with a duplicated id', () => {
       assert.throws(() => {
-        createSubject(config.para[2], nodeMap);
+        createSubject(config.para[2], subjectMap);
       })
     })
   })
@@ -105,7 +105,7 @@ describe('src/Subject.ts', () => {
 
   describe('#nextNode property', () => {
     beforeEach(() => {
-      branch1 = <Branch>createSubject(para1, nodeMap);
+      branch1 = <Branch>createSubject(para1, subjectMap);
     })
 
     it('setNext() is together with set("next")', () => {
@@ -178,7 +178,7 @@ describe('src/Subject.ts', () => {
 
   describe('undoes', () => {
     beforeEach(() => {
-      branch1 = <Branch>createSubject(config.para[1], nodeMap);
+      branch1 = <Branch>createSubject(config.para[1], subjectMap);
     })
 
     it('disallows undoing a non-existOnPod node', () => {
@@ -213,5 +213,73 @@ describe('src/Subject.ts', () => {
       assert.strictEqual(branch2.get('next'), '')
     })
   });
+
+});
+
+
+
+describe('Root', () => {
+  const page = config.page
+  let root: Root;
+
+  beforeEach(() => {
+    subjectMap.clear()
+    root = <Root>createSubject(page, subjectMap);
+  });
+
+
+  it('sets title', () => {
+    let pageCloned = _.cloneDeep(page);
+    pageCloned.title = 'Welcome'
+    root.set(pageCloned)
+
+    assert.strictEqual(root.get('title'), 'Welcome')
+  })
+
+  it('throws on parsing #nextNode predicate', () => {
+    let turtle = `<${page.id}> <${ont.sdoc.next}> <${config.para[0].id}>.`;
+    let quads = parser.parse(turtle)
+
+    assert.throws(() => {
+      root.fromQuad(quads[0])
+    })
+  })
+
+  it('throws on set("next")', () => {
+    assert.throws(() => {
+      root.set(page, config.para[0])
+    });
+  })
+
+  it('disallows deletion', () => {
+    assert.throws(() => {
+      root.delete()
+    })
+  })
+
+});
+
+
+
+describe('Leaf', () => {
+  let leaf: Leaf;
+  const text = config.text[8]
+  const quads: any[] = parser.parse(turtle.text[8]);
+  
+  beforeEach(() => {
+    subjectMap.clear()
+    leaf = <Leaf>createSubject(text, subjectMap);
+    quads.forEach(quad => leaf.fromQuad(quad));
+  });
+
+  it('parses from quads', () => {
+    assert.strictEqual(leaf.get('id'), text.id)
+    assert.strictEqual(leaf.get('type'), text.type)
+    assert.strictEqual(leaf.get('text'), text.text)
+  });
+  
+  it('translate to Json', () => {
+    assert.deepStrictEqual(leaf.toJson(), text);
+  })
 
 });

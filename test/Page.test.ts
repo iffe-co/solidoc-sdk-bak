@@ -1,17 +1,36 @@
 import { Page } from '../src/Page';
-import { config as cfg } from '../config/test'
+import { config as cfg, turtle } from '../config/test'
 import { ont } from '../config/ontology'
 import { Operation } from '../src/interface'
 import * as assert from 'power-assert';
 
 let page: Page;
 
-let op0: Operation;
-let op1: Operation;
-let op2: Operation;
+describe('Create Page', () => {
+
+  let turtleAll = '';
+  turtleAll += turtle.page + '\n';
+  turtleAll += turtle.para.join('\n') + '\n'
+  turtleAll += turtle.text.join('\n') + '\n'
+    
+  it('parses from quads', () => {
+    page = new Page(cfg.page.id, turtleAll);
+    assert.deepStrictEqual(page.toJson(), cfg.page);
+  });
+
+  it('parses from an empty string', () => {
+    page = new Page(cfg.page.id, '');
+    assert.deepStrictEqual(page.toJson(), page.getRoot().toJson());
+  });
+
+});
+
 
 describe('Insert Node', () => {
-
+  let op0: Operation;
+  let op1: Operation;
+  let op2: Operation;
+    
   beforeEach(() => {
     page = new Page(cfg.page.id, `<${cfg.page.id}> <${ont.dct.title}> "${cfg.page.title}".`);
     op0 = {

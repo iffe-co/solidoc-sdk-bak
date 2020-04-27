@@ -34,7 +34,7 @@ abstract class Subject {
     }
 
     Object.keys(this._predicates).forEach(key => {
-      key === 'next' || key === 'firstChild' || key === 'option' || (result[key] = this._predicates[key].get());
+      ['next', 'firstChild', 'option', 'type'].includes(key) || (result[key] = this.get(key));
     });
 
     return result;
@@ -42,7 +42,7 @@ abstract class Subject {
 
   public get = (key: string): string => {
     if (key === 'id') return this._id;
-    if (!this._predicates[key]) {
+    if (!this._predicates[key]) { // TODO: get from options?
       throw new Error('Try to get an unknown property: ' + this._id + key)
     }
     return this._predicates[key].get();
