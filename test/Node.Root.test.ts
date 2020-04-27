@@ -1,4 +1,4 @@
-import { Subject, Root, createNode } from '../src/Subject';
+import { Subject, Root, createSubject } from '../src/Subject';
 import { ont } from '../config/ontology'
 import { config } from '../config/test'
 import * as assert from 'power-assert';
@@ -6,7 +6,7 @@ import * as assert from 'power-assert';
 import * as n3 from 'n3';
 const parser = new n3.Parser();
 
-const nodeMap = new Map<string, Subject>();
+const subjectMap = new Map<string, Subject>();
 
 const page = config.page
 
@@ -14,8 +14,8 @@ describe('Root', () => {
   let root: Root;
 
   beforeEach(() => {
-    nodeMap.clear()
-    root = <Root>createNode(page, nodeMap);
+    subjectMap.clear()
+    root = <Root>createSubject(page, subjectMap);
   });
 
 

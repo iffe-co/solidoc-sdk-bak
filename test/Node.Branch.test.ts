@@ -1,8 +1,8 @@
-import { Subject, Branch, Leaf, createNode } from '../src/Subject'
+import { Subject, Branch, Leaf, createSubject } from '../src/Subject'
 import { config } from '../config/test'
 import * as assert from 'power-assert';
 
-const nodeMap = new Map<string, Subject>();
+const subjectMap = new Map<string, Subject>();
 
 const para0 = config.para[0]
 let branch: Branch
@@ -11,13 +11,13 @@ let leaf: Leaf[] = []
 describe('Branch', () => {
 
   beforeEach(() => {
-    nodeMap.clear()
+    subjectMap.clear()
 
-    branch = <Branch>createNode(para0, nodeMap);
+    branch = <Branch>createSubject(para0, subjectMap);
 
-    leaf[0] = <Leaf>createNode(config.text[0], nodeMap);
-    leaf[1] = <Leaf>createNode(config.text[1], nodeMap);
-    leaf[2] = <Leaf>createNode(config.text[2], nodeMap);
+    leaf[0] = <Leaf>createSubject(config.text[0], subjectMap);
+    leaf[1] = <Leaf>createSubject(config.text[1], subjectMap);
+    leaf[2] = <Leaf>createSubject(config.text[2], subjectMap);
 
     leaf[0].set({next: config.text[1].id});
     leaf[1].set({next: config.text[2].id});
@@ -26,7 +26,7 @@ describe('Branch', () => {
   });
 
   it('converts to Json', () => {
-    assert.deepStrictEqual(branch.toJsonRecursive(nodeMap), para0)
+    assert.deepStrictEqual(branch.toJsonRecursive(subjectMap), para0)
   });
   
   it('converts to blank Json', () => {

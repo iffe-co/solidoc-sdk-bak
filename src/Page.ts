@@ -9,7 +9,7 @@ class Page extends Graph {
   constructor(id: string, turtle: string) {
     super(id, turtle);
     const root = <Root>this.getRoot();
-    this._editor = root.toJsonRecursive(this._nodeMap)
+    this._editor = root.toJsonRecursive(this._subjectMap)
   }
 
   public toJson = (): Element => {
@@ -18,66 +18,66 @@ class Page extends Graph {
 
   public apply = (op: Operation) => {
     const opCloned = _.cloneDeep(op)
-    const newSubjects: Set<Node> = this._placeholder(opCloned);
+    const nodesToInsert: Set<Node> = this._placeholder(opCloned);
 
     transform(this._editor, opCloned)
 
-    for (let subject of newSubjects) {
-      this.createNode(subject);
+    for (let node of nodesToInsert) {
+      this.createSubject(node);
     }
   }
 
   private _placeholder(op: Operation): Set<Node> {
-    const newSubjects = new Set<Node>();
+    const nodesToInsert = new Set<Node>();
 
     switch (op.type) {
       case 'insert_node':
-        this._placeholderRecursive(op.node, newSubjects);
+        this._placeholderRecursive(op.node, nodesToInsert);
         break
 
       case 'split_node':
         const currId = Node.get(this._editor, op.path).id;
-        const curr = this.getNode(currId);
+        const curr = this.getSubject(currId);
         this._placeholderRecursive({
           id: <string>op.properties.id,
           type: <string>curr?.get('type'),
           children: [], // TODO: this is a workaround
-        }, newSubjects)
+        }, nodesToInsert)
         break
 
     }
-    return newSubjects
+    return nodesToInsert
   }
 
-  private _placeholderRecursive = (node: Node, newSubjects: Set<Node>) => {
-    if (this._nodeMap.has(node.id)) {
+  private _placeholderRecursive = (node: Node, nodesToInsert: Set<Node>) => {
+    if (this._subjectMap.has(node.id)) {
       throw new Error('Duplicated node insertion: ' + node.id)
     }
-    newSubjects.add(node)
+    nodesToInsert.add(node)
 
     if(Text.isText(node)) return;
 
     (<Element>node).children.forEach(child => {
-      this._placeholderRecursive(child, newSubjects)
+      this._placeholderRecursive(child, nodesToInsert)
     });
   }
 
   public getSparqlForUpdate(): string {
     const visited = new Set<string>();
 
-    this._updateNodesRecursive(this._editor, [], visited);
+    this._updateSubjectsRecursive(this._editor, [], visited);
 
-    this._deleteNodesIfNot(visited);
+    this._deleteSubjectsIfNot(visited);
 
     return super.getSparqlForUpdate();
 
   }
 
-  private _updateNodesRecursive = (node: Node, path: Path, visited: Set<string>) => {
-    let subject = this.getNode(node.id);
+  private _updateSubjectsRecursive = (node: Node, path: Path, visited: Set<string>) => {
+    let subject = this.getSubject(node.id);
 
     if (!subject) {
-      throw new Error('An unknown node to persist: ' + node.id)
+      throw new Error('An unknown subject to update: ' + node.id)
     }
     subject.set(node);
     !(subject instanceof Root) && subject.set({ next: this._getNodeId(Path.next(path)) });
@@ -89,7 +89,7 @@ class Page extends Graph {
     subject.set({ firstChild: this._getNodeId([...path, 0]) });
 
     node.children.forEach((child: Node, index: number) => {
-      this._updateNodesRecursive(child, [...path, index], visited)
+      this._updateSubjectsRecursive(child, [...path, index], visited)
     });
   }
 
@@ -102,8 +102,8 @@ class Page extends Graph {
     }
   }
 
-  private _deleteNodesIfNot(visited: Set<string>) {
-    for (let [nodeId, subject] of this._nodeMap.entries()) {
+  private _deleteSubjectsIfNot(visited: Set<string>) {
+    for (let [nodeId, subject] of this._subjectMap.entries()) {
       if (!visited.has(nodeId)) {
         subject.delete();
       }
@@ -117,7 +117,7 @@ class Page extends Graph {
   public undo() {
     super.undo();
     const root = <Root>this.getRoot();
-    this._editor = root.toJsonRecursive(this._nodeMap)
+    this._editor = root.toJsonRecursive(this._subjectMap)
   }
 
 }

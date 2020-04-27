@@ -1,10 +1,10 @@
-import { Subject, Leaf, createNode } from '../src/Subject';
+import { Subject, Leaf, createSubject } from '../src/Subject';
 import { config, turtle } from '../config/test'
 import * as assert from 'power-assert';
 
 import * as n3 from 'n3';
 const parser = new n3.Parser();
-const nodeMap = new Map<string, Subject>();
+const subjectMap = new Map<string, Subject>();
 
 
 const text = config.text[8]
@@ -15,8 +15,8 @@ describe('Leaf', () => {
   let leaf: Leaf;
 
   beforeEach(() => {
-    nodeMap.clear()
-    leaf = <Leaf>createNode(text, nodeMap);
+    subjectMap.clear()
+    leaf = <Leaf>createSubject(text, subjectMap);
     quads.forEach(quad => leaf.fromQuad(quad));
   });
 

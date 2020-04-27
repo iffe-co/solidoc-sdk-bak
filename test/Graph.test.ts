@@ -22,42 +22,41 @@ describe('Graph', () => {
 
   describe('Constructor', () => {
 
-    it('constructs the root node', () => {
+    it('constructs the root ', () => {
       assert(root instanceof Root)
-      assert.strictEqual(root, graph.getNode(cfg.page.id))
+      assert.strictEqual(root, graph.getSubject(cfg.page.id))
       assert.strictEqual(root?.isDeleted(), false)
       assert.strictEqual(root?.isFromPod(), true)
     })
 
-    it('constructs branch nodes', () => {
-      let branch0 = graph.getNode(cfg.para[0].id)
-      // let branch1 = graph.getNode(cfg.para[1].id)
-      let branch2 = graph.getNode(cfg.para[2].id)
+    it('constructs branch subject', () => {
+      let branch0 = graph.getSubject(cfg.para[0].id)
+      let branch2 = graph.getSubject(cfg.para[2].id)
 
       assert(branch0 instanceof Branch);
       assert.strictEqual(branch0?.get('next'), cfg.para[1].id)
       assert.strictEqual(branch2?.get('next'), '')
     })
 
-    it('constructs leaf nodes', () => {
-      let leaf0 = graph.getNode(cfg.text[0].id)
-      let leaf2 = graph.getNode(cfg.text[2].id)
+    it('constructs leaf subject', () => {
+      let leaf0 = graph.getSubject(cfg.text[0].id)
+      let leaf2 = graph.getSubject(cfg.text[2].id)
 
       assert(leaf0 instanceof Leaf);
       assert.strictEqual(leaf0?.get('next'), cfg.text[1].id)
       assert.strictEqual(leaf2?.get('next'), '')
     })
 
-    it('does not construct a node without type definition', () => {
+    it('does not construct a subject without type definition', () => {
       let tempId = cfg.page.id + '#temp';
       let turtleTemp = turtleAll + `<${tempId}> <${ont.sdoc.text}> "ABC".`
       let tempGraph = new Graph(cfg.page.id, turtleTemp);
 
-      assert.strictEqual(tempGraph.getNode(tempId), undefined)
+      assert.strictEqual(tempGraph.getSubject(tempId), undefined)
     })
 
-    it('does not construct a node with an unknown type')
-    it('handles a node with multiple type definitions')
+    it('does not construct a subject with an unknown type')
+    it('handles a subject with multiple type definitions')
 
   })
 
@@ -72,28 +71,28 @@ describe('Graph', () => {
 
   describe('Commits and Undoes', () => {
 
-    it('commits to remove deleted nodes from memory', () => {
-      let branch0 = graph.getNode(cfg.para[0].id);
+    it('commits to remove deleted subject from memory', () => {
+      let branch0 = graph.getSubject(cfg.para[0].id);
       branch0?.delete();
       graph.commit()
 
-      assert.strictEqual(graph.getNode(cfg.para[0].id), undefined);
+      assert.strictEqual(graph.getSubject(cfg.para[0].id), undefined);
     });
 
-    it('undoes to remove new nodes from memory', () => {
+    it('undoes to remove new subject from memory', () => {
       let tempId = cfg.page.id + '#temp';
-      graph.createNode({
+      graph.createSubject({
         id: tempId,
         type: ont.sdoc.branch,
         children: []
       })
       graph.undo();
 
-      assert.strictEqual(graph.getNode(tempId), undefined)
+      assert.strictEqual(graph.getSubject(tempId), undefined)
     })
 
     it('undoes to recover #nextNode', () => {
-      let branch0 = graph.getNode(cfg.para[0].id)
+      let branch0 = graph.getSubject(cfg.para[0].id)
       branch0?.set({next: cfg.para[0].id}); // meaningless and illegal, but ok for test
       graph.undo()
 

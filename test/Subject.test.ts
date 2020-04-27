@@ -1,4 +1,4 @@
-import { Subject, Branch, createNode } from '../src/Subject'
+import { Subject, Branch, createSubject } from '../src/Subject'
 import { ont } from '../config/ontology'
 import { config, turtle } from '../config/test'
 import * as assert from 'power-assert';
@@ -17,7 +17,7 @@ describe('src/Subject.ts', () => {
 
   beforeEach(() => {
     nodeMap.clear()
-    branch2 = <Branch>createNode(config.para[2], nodeMap);
+    branch2 = <Branch>createSubject(config.para[2], nodeMap);
   });
 
   describe('Create Node', () => {
@@ -56,7 +56,7 @@ describe('src/Subject.ts', () => {
 
     it('disallows creating node with a duplicated id', () => {
       assert.throws(() => {
-        createNode(config.para[2], nodeMap);
+        createSubject(config.para[2], nodeMap);
       })
     })
   })
@@ -113,7 +113,7 @@ describe('src/Subject.ts', () => {
 
   describe('#nextNode property', () => {
     beforeEach(() => {
-      branch1 = <Branch>createNode(config.para[1], nodeMap);
+      branch1 = <Branch>createSubject(config.para[1], nodeMap);
     })
 
     it('setNext() is together with set("next")', () => {
@@ -185,7 +185,7 @@ describe('src/Subject.ts', () => {
 
   describe('undoes', () => {
     beforeEach(() => {
-      branch1 = <Branch>createNode(config.para[1], nodeMap);
+      branch1 = <Branch>createSubject(config.para[1], nodeMap);
     })
 
     it('disallows undoing a non-existOnPod node', () => {

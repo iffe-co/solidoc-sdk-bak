@@ -48,10 +48,6 @@ abstract class Subject {
       throw new Error('Trying to update a deleted subject: ' + this._id);
     }
 
-    // if (Object.keys(props).includes('next')) {
-    //   throw new Error('The "next" property may not be set: ' + this._id);
-    // }
-
     let option = {}
     Object.keys(props).forEach(key => {
       if (key === 'id' || key === 'children') {
@@ -67,7 +63,7 @@ abstract class Subject {
 
   public getSparqlForUpdate = (graph: string): string => {
     if (this._isDeleted) {
-      // TODO: for non-persisted nodes, this clause could be empty
+      // TODO: for non-persisted subjects, this clause should be empty
       return `WITH <${graph}> DELETE { <${this._id}> ?p ?o } WHERE { <${this._id}> ?p ?o };\n`;
     } else {
       let sparql = '';
@@ -129,18 +125,18 @@ class Branch extends Subject {
     return result
   }
 
-  public toJsonRecursive(nodeMap: Map<string, Subject>): Element {
+  public toJsonRecursive(subjectMap: Map<string, Subject>): Element {
     let result = this.toJson()
 
-    let child = nodeMap.get(this.get('firstChild'))
+    let child = subjectMap.get(this.get('firstChild'))
 
     while (child) {
       if (child instanceof Branch) {
-        result.children.push(child.toJsonRecursive(nodeMap))
+        result.children.push(child.toJsonRecursive(subjectMap))
       } else {
         result.children.push(child.toJson())
       }
-      child = nodeMap.get(child.get('next'))
+      child = subjectMap.get(child.get('next'))
     }
 
     return result
@@ -163,7 +159,7 @@ class Root extends Branch {
 
   public fromQuad(quad: any) {
     if (quad.predicate.id === 'http://www.solidoc.net/ontologies#nextNode') {
-      throw new Error('fromQuad: The root node cannot have syblings: ' + this._id)
+      throw new Error('fromQuad: The root may not have syblings: ' + this._id)
     }
     super.fromQuad(quad)
   }
@@ -176,7 +172,7 @@ class Root extends Branch {
   }
 
   public delete = () => {
-    throw new Error('The root node is not removable :' + this._id);
+    throw new Error('The root is not removable :' + this._id);
   }
 
 }
@@ -197,25 +193,25 @@ class Leaf extends Subject {
 
 }
 
-const createNode = (json: Node, nodeMap: Map<string, Subject>): Subject => {
-  if (nodeMap.get(json.id)) {
-    throw new Error('duplicated node creation: ' + json.id)
+const createSubject = (json: Node, subjectMap: Map<string, Subject>): Subject => {
+  if (subjectMap.get(json.id)) {
+    throw new Error('duplicated subject creation: ' + json.id)
   }
-  let node: Subject
+  let subject: Subject
   switch (json.type) {
     case 'http://www.solidoc.net/ontologies#Root':
-      node = new Root(json.id)
+      subject = new Root(json.id)
       break
     case 'http://www.solidoc.net/ontologies#Leaf':
-      node = new Leaf(json.id)
+      subject = new Leaf(json.id)
       break
     default:
-      node = new Branch(json.id)
+      subject = new Branch(json.id)
       break
   }
-  node.set(json)
-  nodeMap.set(json.id, node)
-  return node
+  subject.set(json)
+  subjectMap.set(json.id, subject)
+  return subject
 }
 
-export { Subject, Branch, Root, Leaf, createNode }
+export { Subject, Branch, Root, Leaf, createSubject }
