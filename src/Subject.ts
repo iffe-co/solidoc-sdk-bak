@@ -2,12 +2,13 @@ import { Property, Prop } from './Property';
 import { ont, idToAlias } from '../config/ontology'
 import { Element, Node } from './interface'
 
-abstract class Subject {
+class Subject {
   protected _id: string
   protected _graph: string
   protected _predicates: { [key: string]: Property } = {}
   private _isDeleted: boolean
   private _isFromPod: boolean
+  protected _next: Subject | undefined
 
   constructor(id: string, graph: string) {
     this._id = id;
@@ -18,13 +19,15 @@ abstract class Subject {
     this._predicates.option = Prop.create(ont.sdoc.option, this._graph, this._id);
   }
 
-  public fromQuad(quad: any) {
+  public fromQuad(quad: any, subjectMap: Map<string, Subject>) {
     let alias = idToAlias[quad.predicate.id];
     if (!alias || !this._predicates[alias]) {
-      // console.log('Quad not matched: ' + JSON.stringify(quad));
       return;
     }
     this._predicates[alias].fromQuad(quad)
+    if (quad.predicate.id === ont.sdoc.next) {
+      this._next = subjectMap.get(quad.object.id)
+    }
   }
 
   public toJson(): Node {
@@ -49,7 +52,7 @@ abstract class Subject {
     return this._predicates[alias].get();
   }
 
-  public set(node: Node, next?: Node) {
+  public set(node: Node, next?: Subject, _firstChild?: Subject) {
     if (this._isDeleted) {
       throw new Error('Trying to update a deleted subject: ' + this._id);
     }
@@ -66,7 +69,8 @@ abstract class Subject {
     });
     this._predicates['option'].set(JSON.stringify(newOptions));
 
-    this._predicates['next'].set(next ? next.id : '')
+    this._predicates['next'].set(next ? next._id : '')
+    this._next = next
   }
 
   public getSparqlForUpdate = (): string => {
@@ -92,9 +96,9 @@ abstract class Subject {
     if (!this._isFromPod) {
       throw new Error('A non-persisted subject should not be undone')
     }
-    
+
     Object.values(this._predicates).map(Prop.undo);
-    
+
     this._isDeleted = false
   }
 
@@ -118,6 +122,8 @@ abstract class Subject {
 
 class Branch extends Subject {
 
+  protected _firstChild: Subject | undefined
+
   constructor(id: string, graph: string) {
     super(id, graph);
     this._predicates.firstChild = Prop.create(ont.sdoc.firstChild, this._graph, this._id);
@@ -131,10 +137,19 @@ class Branch extends Subject {
     }
   }
 
-  public set(node: Element, next?: Node) {
+  public fromQuad(quad: any, subjectMap: Map<string, Subject>) {
+    if (quad.predicate.id === ont.sdoc.firstChild) {
+      this._firstChild = subjectMap.get(quad.object.id)
+      // this._predicates['firstChild'].set(this._firstChild ? this._firstChild.get('id') : '')
+    }
+    super.fromQuad(quad, subjectMap)
+  }
+
+  public set(node: Element, next?: Subject, firstChild?: Subject) {
     super.set(node, next);
 
-    this._predicates['firstChild'].set(node.children[0] ? node.children[0].id : '')
+    this._predicates['firstChild'].set(firstChild ? firstChild.get('id') : '')
+    this._firstChild = firstChild;
   }
 }
 
@@ -144,18 +159,18 @@ class Root extends Branch {
     this._predicates.title = Prop.create(ont.dct.title, this._graph, this._id);
   }
 
-  public fromQuad(quad: any) {
-    if (quad.predicate.id === 'http://www.solidoc.net/ontologies#nextNode') {
+  public fromQuad(quad: any, subjectMap: Map<string, Subject>) {
+    if (quad.predicate.id === ont.sdoc.next) {
       throw new Error('fromQuad: The root may not have syblings: ' + this._id)
     }
-    super.fromQuad(quad)
+    super.fromQuad(quad, subjectMap)
   }
 
-  public set(node: Element, next?: Node) {
+  public set(node: Element, next?: Subject, firstChild?: Subject) {
     if (next) {
       throw new Error('Cannot set "next" property for Root: ' + node._id);
     }
-    super.set(node)
+    super.set(node, undefined, firstChild)
   }
 
   public delete() {

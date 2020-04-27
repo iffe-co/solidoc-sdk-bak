@@ -1,4 +1,5 @@
 import { Subject, Root, createSubject } from './Subject'
+import { ont } from '../config/ontology'
 import { Node } from './interface'
 import * as n3 from 'n3';
 
@@ -17,7 +18,7 @@ class Graph {
   private _parseTurtle = (turtle: string) => {
     const quads: any[] = parser.parse(turtle);
     quads.forEach(quad => {
-      if (quad.predicate.id === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type') {
+      if (quad.predicate.id === ont.rdf.type) {
         let subject = this.createSubject({
           id: quad.subject.id,
           type: quad.object.id, // TODO: should only createSubject for known types
@@ -31,7 +32,7 @@ class Graph {
     if (!this._subjectMap.get(this._id)) {
       let root = this.createSubject({
         id: this._id,
-        type: 'http://www.solidoc.net/ontologies#Root',
+        type: ont.sdoc.root,
         children: [],
       });
       root.setFromPod()
@@ -40,7 +41,7 @@ class Graph {
     quads.forEach(quad => {
       // TODO: should it throw on an unknown subject?
       let subject = this.getSubject(quad.subject.id)
-      subject.fromQuad(quad)
+      subject.fromQuad(quad, this._subjectMap)
     })
   }
 

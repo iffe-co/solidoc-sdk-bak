@@ -92,7 +92,7 @@ class Page extends Graph {
   private _updateSubjectsRecursive = (node: Node, path: Path, visited: Set<string>) => {
     let subject = this.getSubject(node.id);
 
-    subject.set(node, this._getNext(path));
+    subject.set(node, this._getNextSubject(path), this._getFirstChildSubject(path));
 
     visited.add(node.id)
 
@@ -101,10 +101,19 @@ class Page extends Graph {
     });
   }
 
-  private _getNext = (path: Path): Node | undefined => {
+  private _getNextSubject = (path: Path): Subject | undefined => {
     try {
       const node: Node = Node.get(this._editor, Path.next(path));
-      return node
+      return this._subjectMap.get(node.id)
+    } catch (e) {
+      return undefined
+    }
+  }
+
+  private _getFirstChildSubject = (path: Path): Subject | undefined => {
+    try {
+      const node: Node = Node.get(this._editor, [...path, 0]);
+      return this._subjectMap.get(node.id)
     } catch (e) {
       return undefined
     }

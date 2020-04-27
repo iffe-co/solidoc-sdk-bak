@@ -1,12 +1,12 @@
-import { Branch, Root, Leaf, createSubject } from '../src/Subject'
+import { Branch, Root, createSubject } from '../src/Subject'
 import { ont } from '../config/ontology'
-import { config, turtle } from '../config/test'
+import { config } from '../config/test'
 import { Element } from '../src/interface'
 import * as assert from 'power-assert';
 import * as _ from 'lodash'
 
-import * as n3 from 'n3';
-const parser = new n3.Parser();
+// import * as n3 from 'n3';
+// const parser = new n3.Parser();
 
 
 describe('src/Subject.ts', () => {
@@ -14,7 +14,7 @@ describe('src/Subject.ts', () => {
   let branch2: Branch;
   let para1: Element
   let para2: Element
-  let quads: any[];
+  // let quads: any[];
 
   beforeEach(() => {
     para1 = _.cloneDeep(config.para[1])
@@ -28,7 +28,7 @@ describe('src/Subject.ts', () => {
       assert.strictEqual(branch2.get('id'), config.para[2].id)
       assert.strictEqual(branch2.get('type'), config.para[2].type)
       assert.strictEqual(branch2.get('next'), '')
-      assert.strictEqual(branch2.get('firstChild'), config.text[6].id)
+      assert.strictEqual(branch2.get('firstChild'), '')
       assert.strictEqual(branch2.get('option'), '{}')
       assert(!branch2.isDeleted())
       assert(!branch2.isFromPod())
@@ -41,20 +41,20 @@ describe('src/Subject.ts', () => {
       });
     });
 
-    it('parses from quads', () => {
-      quads = parser.parse(turtle.para[2]);
-      quads.forEach(quad => branch2.fromQuad(quad));
+    // it('parses from quads', () => {
+    //   quads = parser.parse(turtle.para[2]);
+    //   quads.forEach(quad => branch2.fromQuad(quad));
 
-      assert.equal(branch2.get('firstChild'), config.para[2].children[0].id);
-    })
+    //   assert.equal(branch2.get('firstChild'), config.para[2].children[0].id);
+    // })
 
-    it('discards an unknown quad', () => {
-      let turtle = `<${config.para[2].id}> <${ont.sdoc.text}> "abc".`;
-      let quads = parser.parse(turtle)
-      branch2.fromQuad(quads[0])
+    // it('discards an unknown quad', () => {
+    //   let turtle = `<${config.para[2].id}> <${ont.sdoc.text}> "abc".`;
+    //   let quads = parser.parse(turtle)
+    //   branch2.fromQuad(quads[0])
 
-      assert(!branch2.isFromPod())
-    });
+    //   assert(!branch2.isFromPod())
+    // });
 
   })
 
@@ -100,21 +100,21 @@ describe('src/Subject.ts', () => {
     })
 
     it('setNext() is together with set("next")', () => {
-      branch1.set(para1, para2)
+      branch1.set(para1, branch2)
 
       assert.strictEqual(branch1.get('next'), branch2.get('id'));
     });
 
-    it('parses #nextNode from quads and synced with getNext()', () => {
-      let quads = parser.parse(turtle.para[1])
-      // note the index of quads
-      branch1.fromQuad(quads[1])
+    // it('parses #nextNode from quads and synced with getNext()', () => {
+    //   let quads = parser.parse(turtle.para[1])
+    //   // note the index of quads
+    //   branch1.fromQuad(quads[1])
 
-      assert.strictEqual(branch1.get('next'), config.para[2].id)
-    })
+    //   assert.strictEqual(branch1.get('next'), config.para[2].id)
+    // })
 
     it('unsets next', () => {
-      branch1.set(para1, para2)
+      branch1.set(para1, branch2)
       branch1.commit()
       branch1.set(para1)
       assert.strictEqual(branch1.get('next'), '')
@@ -198,7 +198,7 @@ describe('src/Subject.ts', () => {
 
     it('undoes next', () => {
       branch2.setFromPod()  // otherwise it disallows undo
-      branch2.set(para2, para1);
+      branch2.set(para2, branch1);
       branch2.undo();
 
       assert.strictEqual(branch2.get('next'), '')
@@ -226,14 +226,14 @@ describe('Root', () => {
     assert.strictEqual(root.get('title'), 'Welcome')
   })
 
-  it('throws on parsing #nextNode predicate', () => {
-    let turtle = `<${page.id}> <${ont.sdoc.next}> <${config.para[0].id}>.`;
-    let quads = parser.parse(turtle)
+  // it('throws on parsing #nextNode predicate', () => {
+  //   let turtle = `<${page.id}> <${ont.sdoc.next}> <${config.para[0].id}>.`;
+  //   let quads = parser.parse(turtle)
 
-    assert.throws(() => {
-      root.fromQuad(quads[0])
-    })
-  })
+  //   assert.throws(() => {
+  //     root.fromQuad(quads[0])
+  //   })
+  // })
 
   it('throws on set("next")', () => {
     assert.throws(() => {
@@ -251,24 +251,24 @@ describe('Root', () => {
 
 
 
-describe('Leaf', () => {
-  let leaf: Leaf;
-  const text = config.text[8]
-  const quads: any[] = parser.parse(turtle.text[8]);
+// describe('Leaf', () => {
+//   let leaf: Leaf;
+//   const text = config.text[8]
+//   const quads: any[] = parser.parse(turtle.text[8]);
   
-  beforeEach(() => {
-    leaf = <Leaf>createSubject(text, config.page.id);
-    quads.forEach(quad => leaf.fromQuad(quad));
-  });
+//   beforeEach(() => {
+//     leaf = <Leaf>createSubject(text, config.page.id);
+//     quads.forEach(quad => leaf.fromQuad(quad));
+//   });
 
-  it('parses from quads', () => {
-    assert.strictEqual(leaf.get('id'), text.id)
-    assert.strictEqual(leaf.get('type'), text.type)
-    assert.strictEqual(leaf.get('text'), text.text)
-  });
+//   it('parses from quads', () => {
+//     assert.strictEqual(leaf.get('id'), text.id)
+//     assert.strictEqual(leaf.get('type'), text.type)
+//     assert.strictEqual(leaf.get('text'), text.text)
+//   });
   
-  it('translate to Json', () => {
-    assert.deepStrictEqual(leaf.toJson(), text);
-  })
+//   it('translate to Json', () => {
+//     assert.deepStrictEqual(leaf.toJson(), text);
+//   })
 
-});
+// });
