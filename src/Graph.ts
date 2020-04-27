@@ -57,7 +57,12 @@ class Graph {
   }
 
   public createSubject = (json: Node): Subject => {
-    return createSubject(json, this._subjectMap)
+    if (this._subjectMap.get(json.id)) {
+      throw new Error('duplicated subject creation: ' + json.id)
+    }
+    let subject = createSubject(json)
+    this._subjectMap.set(json.id, subject)
+    return subject
   }
 
   public getSparqlForUpdate(): string {

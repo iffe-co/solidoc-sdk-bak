@@ -174,10 +174,8 @@ class Leaf extends Subject {
   }
 }
 
-const createSubject = (json: Node, subjectMap: Map<string, Subject>): Subject => {
-  if (subjectMap.get(json.id)) {
-    throw new Error('duplicated subject creation: ' + json.id)
-  }
+const createSubject = (json: Node): Subject => {
+
   let subject: Subject
   switch (json.type) {
     case 'http://www.solidoc.net/ontologies#Root':
@@ -191,7 +189,7 @@ const createSubject = (json: Node, subjectMap: Map<string, Subject>): Subject =>
       break
   }
   subject.set(json)
-  subjectMap.set(json.id, subject)
+
   return subject
 }
 

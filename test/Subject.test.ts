@@ -1,4 +1,4 @@
-import { Subject, Branch, Root, Leaf, createSubject } from '../src/Subject'
+import { Branch, Root, Leaf, createSubject } from '../src/Subject'
 import { ont } from '../config/ontology'
 import { config, turtle } from '../config/test'
 import { Element } from '../src/interface'
@@ -8,9 +8,6 @@ import * as _ from 'lodash'
 import * as n3 from 'n3';
 const parser = new n3.Parser();
 
-const subjectMap = new Map<string, Subject>();
-
-// const page = config.page
 
 describe('src/Subject.ts', () => {
   let branch1: Branch;
@@ -20,10 +17,9 @@ describe('src/Subject.ts', () => {
   let quads: any[];
 
   beforeEach(() => {
-    subjectMap.clear()
     para1 = _.cloneDeep(config.para[1])
     para2 = _.cloneDeep(config.para[2])
-    branch2 = <Branch>createSubject(para2, subjectMap);
+    branch2 = <Branch>createSubject(para2);
   });
 
   describe('Create Node', () => {
@@ -60,11 +56,6 @@ describe('src/Subject.ts', () => {
       assert(!branch2.isFromPod())
     });
 
-    it('disallows creating node with a duplicated id', () => {
-      assert.throws(() => {
-        createSubject(config.para[2], subjectMap);
-      })
-    })
   })
 
   describe('Sets and gets', () => {
@@ -105,7 +96,7 @@ describe('src/Subject.ts', () => {
 
   describe('#nextNode property', () => {
     beforeEach(() => {
-      branch1 = <Branch>createSubject(para1, subjectMap);
+      branch1 = <Branch>createSubject(para1);
     })
 
     it('setNext() is together with set("next")', () => {
@@ -178,7 +169,7 @@ describe('src/Subject.ts', () => {
 
   describe('undoes', () => {
     beforeEach(() => {
-      branch1 = <Branch>createSubject(config.para[1], subjectMap);
+      branch1 = <Branch>createSubject(config.para[1]);
     })
 
     it('disallows undoing a non-existOnPod node', () => {
@@ -223,8 +214,7 @@ describe('Root', () => {
   let root: Root;
 
   beforeEach(() => {
-    subjectMap.clear()
-    root = <Root>createSubject(page, subjectMap);
+    root = <Root>createSubject(page);
   });
 
 
@@ -267,8 +257,7 @@ describe('Leaf', () => {
   const quads: any[] = parser.parse(turtle.text[8]);
   
   beforeEach(() => {
-    subjectMap.clear()
-    leaf = <Leaf>createSubject(text, subjectMap);
+    leaf = <Leaf>createSubject(text);
     quads.forEach(quad => leaf.fromQuad(quad));
   });
 

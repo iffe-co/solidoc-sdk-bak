@@ -56,6 +56,12 @@ describe('Graph', () => {
       });
     })
 
+    it('disallows creating node with a duplicated id', () => {
+      assert.throws(() => {
+        graph.createSubject(cfg.para[2]);
+      })
+    })
+
     it('does not construct a subject with an unknown type')
     it('handles a subject with multiple type definitions')
 
