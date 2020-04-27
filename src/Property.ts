@@ -1,3 +1,5 @@
+import * as _ from 'lodash'
+
 abstract class Property {
   id: string
   name: string
@@ -80,17 +82,9 @@ class JsonProperty extends TextProperty {
   }
 
   public set = (json: any) => {
-    for (const key in json) {
-      const value = json[key]
-
-      if (value == null) {
-        delete this.json[key]
-      } else {
-        this.json[key] = value
-      }
+    if (!_.isEqual(json, this.json)) {
+      this.uncommitted = JSON.stringify(json);
     }
-
-    this.uncommitted = JSON.stringify(this.json);
   }
 
   public fromQuad = (quad: any) => {

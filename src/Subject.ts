@@ -53,17 +53,17 @@ abstract class Subject {
       throw new Error('Trying to update a deleted subject: ' + this._id);
     }
 
-    let option = {}
+    let newOptions = {}
     Object.keys(node).forEach(key => {
       if (key === 'id' || key === 'children') {
         //
       } else if (this._predicates[key]) {
         this._predicates[key].set(node[key]);
       } else {
-        option[key] = node[key]
+        newOptions[key] = node[key]
       }
     });
-    (<JsonProperty>(this._predicates['option'])).set(option);
+    (<JsonProperty>(this._predicates['option'])).set(newOptions);
 
     this._predicates['next'].set(next ? next.id : '')
   }

@@ -103,7 +103,6 @@ describe('Text Property', () => {
 describe('Json Property', () => {
   let option: JsonProperty;
 
-  let deleteClause = `DELETE WHERE { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.option}> ?o } };\n`;
   let insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.option}> "{\\"name\\":\\"alice\\"}"} };\n`;
 
   beforeEach(() => {
@@ -130,18 +129,6 @@ describe('Json Property', () => {
       assert.deepStrictEqual(option.json, { bold: true });
       const sparql: string = option.getSparqlForUpdate(page.id, node.id);
       assert.strictEqual(sparql, '');
-    });
-
-    it('gets sparql after adding a property', () => {
-      option.set({ size: 25 })
-      assert.deepStrictEqual(option.json, { size: 25, bold: true });
-      const sparql: string = option.getSparqlForUpdate(page.id, node.id);
-      assert.strictEqual(sparql, deleteClause + insertClause);
-    });
-
-    it('gets sparql after removing a property', () => {
-      option.set({ bold: null })
-      assert.deepStrictEqual(JSON.parse(option.get()), {})
     });
 
     it('gets sparql after reseting a property', () => {

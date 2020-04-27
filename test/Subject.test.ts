@@ -91,18 +91,6 @@ describe('src/Subject.ts', () => {
       })
     })
 
-    it('deletes optional property', () => {
-      para2.author = 'alice'
-      branch2.set(para2)
-      branch2.commit()
-      para2.author = null
-      branch2.set(para2)
-
-      let json: any = branch2.toJson();
-      assert.strictEqual(json.author, undefined);
-      assert.strictEqual(branch2.get('option'), '{}')
-    });
-
     it('modifies optional property', () => {
       para2.author = 'alice'
       branch2.set(para2)
