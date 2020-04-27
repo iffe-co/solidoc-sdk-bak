@@ -28,7 +28,7 @@ class Graph {
     })
 
     // Should always create the root
-    if (!this.getRoot()) {
+    if (!this._subjectMap.get(this._id)) {
       let root = this.createSubject({
         id: this._id,
         type: 'http://www.solidoc.net/ontologies#Root',
@@ -38,17 +38,22 @@ class Graph {
     }
 
     quads.forEach(quad => {
-      let subject = this._subjectMap.get(quad.subject.id)
-      subject?.fromQuad(quad)
+      // TODO: should it throw on an unknown subject?
+      let subject = this.getSubject(quad.subject.id)
+      subject.fromQuad(quad)
     })
   }
 
-  public getRoot = (): Subject | undefined => {
-    return this._subjectMap.get(this._id)
+  public getRoot = (): Subject => {
+    return this.getSubject(this._id)
   }
 
-  public getSubject = (id: string): Subject | undefined => {
-    return this._subjectMap.get(id)
+  public getSubject = (id: string): Subject => {
+    const subject = this._subjectMap.get(id)
+    if (!subject) {
+      throw new Error('Subject not found: ' + id)
+    }
+    return subject
   }
 
   public createSubject = (json: Node): Subject => {

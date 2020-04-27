@@ -40,7 +40,7 @@ class Page extends Graph {
         const curr = this.getSubject(currId);
         this._placeholderRecursive({
           id: <string>op.properties.id,
-          type: <string>curr?.get('type'),
+          type: <string>curr.get('type'),
           children: [], // TODO: this is a workaround
         }, nodesToInsert)
         break
@@ -76,9 +76,6 @@ class Page extends Graph {
   private _updateSubjectsRecursive = (node: Node, path: Path, visited: Set<string>) => {
     let subject = this.getSubject(node.id);
 
-    if (!subject) {
-      throw new Error('An unknown subject to update: ' + node.id)
-    }
     subject.set(node);
     !(subject instanceof Root) && subject.set({ next: this._getNodeId(Path.next(path)) });
 

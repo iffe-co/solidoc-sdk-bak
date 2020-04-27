@@ -9,7 +9,7 @@ import { Subject, Root, Branch, Leaf } from '../src/Subject';
 
 describe('Graph', () => {
   let graph: Graph;
-  let root: Subject | undefined
+  let root: Subject
   let turtleAll = '';
   turtleAll += turtle.page + '\n';
   turtleAll += turtle.para.join('\n') + '\n'
@@ -25,8 +25,8 @@ describe('Graph', () => {
     it('constructs the root ', () => {
       assert(root instanceof Root)
       assert.strictEqual(root, graph.getSubject(cfg.page.id))
-      assert.strictEqual(root?.isDeleted(), false)
-      assert.strictEqual(root?.isFromPod(), true)
+      assert.strictEqual(root.isDeleted(), false)
+      assert.strictEqual(root.isFromPod(), true)
     })
 
     it('constructs branch subject', () => {
@@ -34,8 +34,8 @@ describe('Graph', () => {
       let branch2 = graph.getSubject(cfg.para[2].id)
 
       assert(branch0 instanceof Branch);
-      assert.strictEqual(branch0?.get('next'), cfg.para[1].id)
-      assert.strictEqual(branch2?.get('next'), '')
+      assert.strictEqual(branch0.get('next'), cfg.para[1].id)
+      assert.strictEqual(branch2.get('next'), '')
     })
 
     it('constructs leaf subject', () => {
@@ -43,16 +43,17 @@ describe('Graph', () => {
       let leaf2 = graph.getSubject(cfg.text[2].id)
 
       assert(leaf0 instanceof Leaf);
-      assert.strictEqual(leaf0?.get('next'), cfg.text[1].id)
-      assert.strictEqual(leaf2?.get('next'), '')
+      assert.strictEqual(leaf0.get('next'), cfg.text[1].id)
+      assert.strictEqual(leaf2.get('next'), '')
     })
 
     it('does not construct a subject without type definition', () => {
       let tempId = cfg.page.id + '#temp';
       let turtleTemp = turtleAll + `<${tempId}> <${ont.sdoc.text}> "ABC".`
-      let tempGraph = new Graph(cfg.page.id, turtleTemp);
-
-      assert.strictEqual(tempGraph.getSubject(tempId), undefined)
+      
+      assert.throws(() => {
+        new Graph(cfg.page.id, turtleTemp);
+      });
     })
 
     it('does not construct a subject with an unknown type')
@@ -73,10 +74,12 @@ describe('Graph', () => {
 
     it('commits to remove deleted subject from memory', () => {
       let branch0 = graph.getSubject(cfg.para[0].id);
-      branch0?.delete();
+      branch0.delete();
       graph.commit()
 
-      assert.strictEqual(graph.getSubject(cfg.para[0].id), undefined);
+      assert.throws(() => {
+        graph.getSubject(cfg.para[0].id)
+      });
     });
 
     it('undoes to remove new subject from memory', () => {
@@ -88,15 +91,17 @@ describe('Graph', () => {
       })
       graph.undo();
 
-      assert.strictEqual(graph.getSubject(tempId), undefined)
+      assert.throws(() => {
+        graph.getSubject(tempId)
+      })
     })
 
     it('undoes to recover #nextNode', () => {
       let branch0 = graph.getSubject(cfg.para[0].id)
-      branch0?.set({next: cfg.para[0].id}); // meaningless and illegal, but ok for test
+      branch0.set({ next: cfg.para[0].id }); // meaningless and illegal, but ok for test
       graph.undo()
 
-      assert.strictEqual(branch0?.get('next'), cfg.para[1].id)
+      assert.strictEqual(branch0.get('next'), cfg.para[1].id)
     })
 
   })
@@ -121,7 +126,7 @@ describe('Create Page', () => {
 
   it('parses from an empty string', () => {
     page = new Page(cfg.page.id, '');
-    assert.deepStrictEqual(page.toJson(), page.getRoot()?.toJson());
+    assert.deepStrictEqual(page.toJson(), page.getRoot().toJson());
   });
 
 });

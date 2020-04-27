@@ -35,8 +35,8 @@ describe('Insert Node', () => {
     page.apply(op0)
 
     assert.deepStrictEqual(page.toJson().children[0], cfg.para[0])
-    assert(!page.getSubject(cfg.para[0].id)?.isFromPod())
-    assert(!page.getSubject(cfg.text[0].id)?.isFromPod())
+    assert(!page.getSubject(cfg.para[0].id).isFromPod())
+    assert(!page.getSubject(cfg.text[0].id).isFromPod())
   })
 
   it('inserts a text node', () => {
@@ -73,16 +73,20 @@ describe('Insert Node', () => {
     page.apply(op0);
     page.getSparqlForUpdate();
 
-    assert(page.getRoot()?.get('firstChild'), cfg.para[0].id)
-    assert(page.getSubject(cfg.para[0].id)?.toJson(), cfg.para[0])
+    assert(page.getRoot().get('firstChild'), cfg.para[0].id)
+    assert(page.getSubject(cfg.para[0].id).toJson(), cfg.para[0])
   })
 
   it('undoes', () => {
     page.apply(op0)
     page.undo()
 
-    assert.deepStrictEqual(page.toJson(), page.getRoot()?.toJson())
-    assert.strictEqual(page.getSubject(cfg.para[0].id), undefined)
-    assert.strictEqual(page.getSubject(cfg.text[0].id), undefined)
+    assert.deepStrictEqual(page.toJson(), page.getRoot().toJson())
+    assert.throws(() => {
+      page.getSubject(cfg.para[0].id)
+    })
+    assert.throws(() => {
+      page.getSubject(cfg.text[0].id)
+    })
   });
 });
