@@ -103,8 +103,6 @@ describe('Text Property', () => {
 describe('Json Property', () => {
   let option: JsonProperty;
 
-  let insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.option}> "{\\"name\\":\\"alice\\"}"} };\n`;
-
   beforeEach(() => {
     option = new JsonProperty(ont.sdoc.option, 'option');
   });
@@ -116,24 +114,35 @@ describe('Json Property', () => {
   it('gets sparql after set from null', () => {
     option.set({ name: 'alice' })
     const sparql: string = option.getSparqlForUpdate(page.id, node.id);
-    assert.strictEqual(sparql, insertClause);
+    assert.strictEqual(sparql, `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.option}> "{\\"name\\":\\"alice\\"}"} };\n`);
   });
 
   describe('after init', () => {
+    let deleteClause = `DELETE WHERE { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.option}> ?o } };\n`;
+    let insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.option}> "{\\"bold\\":true,\\"size\\":25}"} };\n`;
+
     beforeEach(() => {
-      insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.option}> "{\\"bold\\":true,\\"size\\":25}"} };\n`;
       option.fromQuad(quads[2]);
     })
 
     it('parses quad as json', () => {
-      assert.deepStrictEqual(option.json, { bold: true });
+      assert.deepStrictEqual(JSON.parse(option.get()), { bold: true });
       const sparql: string = option.getSparqlForUpdate(page.id, node.id);
+
       assert.strictEqual(sparql, '');
     });
 
     it('gets sparql after reseting a property', () => {
-      option.set({ bold: false })
-      assert.deepStrictEqual(JSON.parse(option.get()), { bold: false })
+      option.set({})
+
+      assert.deepStrictEqual(JSON.parse(option.get()), {})
+      assert.strictEqual(option.getSparqlForUpdate(page.id, node.id), deleteClause)
+    });
+
+    it('gets sparql after changing a property', () => {
+      option.set({ bold: true, size: 25 })
+
+      assert.strictEqual(option.getSparqlForUpdate(page.id, node.id), deleteClause + insertClause)
     });
   })
 });

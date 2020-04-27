@@ -78,11 +78,10 @@ class JsonProperty extends TextProperty {
   constructor(id: string, name: string) {
     super(id, name)
     this.value = this.uncommitted = '{}'
-    this.json = {}
   }
 
   public set = (json: any) => {
-    if (!_.isEqual(json, this.json)) {
+    if (!_.isEqual(json, JSON.parse(this.uncommitted))) {
       this.uncommitted = JSON.stringify(json);
     }
   }
@@ -91,7 +90,6 @@ class JsonProperty extends TextProperty {
     const text: string = quad.object.id;
     this.value = text.substring(1, text.lastIndexOf('"'));
     this.uncommitted = this.value;
-    this.json = JSON.parse(this.value)
   }
 
   protected _getSparqlForDeletion = (graph: string, subject: string): string => {
@@ -103,6 +101,15 @@ class JsonProperty extends TextProperty {
     return sparql
   }
 
+  protected _getSparqlForInsertion = (graph: string, subject: string): string => {
+    let sparql = ''
+    if (this.uncommitted !== this.value && this.uncommitted !== '{}') {
+      let backSlashEscaped: string = this.uncommitted.replace(/\\/g, '\\\\');
+      let doubleQuoteEscaped: string = backSlashEscaped.replace(/"/g, '\\"');
+      sparql += `INSERT DATA { GRAPH <${graph}> { <${subject}> <${this.id}> "${doubleQuoteEscaped}"} };\n`;
+    }
+    return sparql;
+  }
 }
 
 export { Property, NamedNodeProperty, TextProperty, JsonProperty }
