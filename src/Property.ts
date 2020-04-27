@@ -2,13 +2,14 @@ import * as _ from 'lodash'
 
 abstract class Property {
   id: string
-  name: string
+  alias: string
   value = ''
   uncommitted = ''
+  nullValue = ''
 
-  constructor(id: string, name: string) {
+  constructor(id: string, alias: string) {
     this.id = id;
-    this.name = name;
+    this.alias = alias;
   }
 
   public abstract fromQuad(quad: any): void
@@ -22,7 +23,7 @@ abstract class Property {
 
   protected _getSparqlForDeletion = (graph: string, subject: string): string => {
     let sparql: string = ''
-    if (this.uncommitted !== this.value && this.value) {
+    if (this.uncommitted !== this.value && this.value !== this.nullValue) {
       sparql = `DELETE WHERE { GRAPH <${graph}> { <${subject}> <${this.id}> ?o } };\n`;
     }
     return sparql
@@ -64,7 +65,7 @@ class TextProperty extends Property {
   }
   protected _getSparqlForInsertion = (graph: string, subject: string): string => {
     let sparql = ''
-    if (this.uncommitted !== this.value && this.uncommitted) {
+    if (this.uncommitted !== this.value && this.uncommitted !== this.nullValue) {
       let backSlashEscaped: string = this.uncommitted.replace(/\\/g, '\\\\');
       let doubleQuoteEscaped: string = backSlashEscaped.replace(/"/g, '\\"');
       sparql += `INSERT DATA { GRAPH <${graph}> { <${subject}> <${this.id}> "${doubleQuoteEscaped}"} };\n`;
@@ -75,9 +76,9 @@ class TextProperty extends Property {
 
 class JsonProperty extends TextProperty {
   json: any
-  constructor(id: string, name: string) {
-    super(id, name)
-    this.value = this.uncommitted = '{}'
+  constructor(id: string, alias: string) {
+    super(id, alias)
+    this.value = this.uncommitted = this.nullValue = '{}'
   }
 
   public set = (json: any) => {
@@ -86,30 +87,6 @@ class JsonProperty extends TextProperty {
     }
   }
 
-  public fromQuad = (quad: any) => {
-    const text: string = quad.object.id;
-    this.value = text.substring(1, text.lastIndexOf('"'));
-    this.uncommitted = this.value;
-  }
-
-  protected _getSparqlForDeletion = (graph: string, subject: string): string => {
-    let sparql: string = ''
-    // TODO: could same object values be stringified to different strings?
-    if (this.uncommitted !== this.value && this.value !== '{}') {
-      sparql = `DELETE WHERE { GRAPH <${graph}> { <${subject}> <${this.id}> ?o } };\n`;
-    }
-    return sparql
-  }
-
-  protected _getSparqlForInsertion = (graph: string, subject: string): string => {
-    let sparql = ''
-    if (this.uncommitted !== this.value && this.uncommitted !== '{}') {
-      let backSlashEscaped: string = this.uncommitted.replace(/\\/g, '\\\\');
-      let doubleQuoteEscaped: string = backSlashEscaped.replace(/"/g, '\\"');
-      sparql += `INSERT DATA { GRAPH <${graph}> { <${subject}> <${this.id}> "${doubleQuoteEscaped}"} };\n`;
-    }
-    return sparql;
-  }
 }
 
 export { Property, NamedNodeProperty, TextProperty, JsonProperty }

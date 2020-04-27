@@ -68,14 +68,14 @@ abstract class Subject {
     this._predicates['next'].set(next ? next.id : '')
   }
 
-  public getSparqlForUpdate = (graph: string): string => {
+  public getSparqlForUpdate = (graphId: string): string => {
     if (this._isDeleted) {
       // TODO: for non-persisted subjects, this clause should be empty
-      return `WITH <${graph}> DELETE { <${this._id}> ?p ?o } WHERE { <${this._id}> ?p ?o };\n`;
+      return `WITH <${graphId}> DELETE { <${this._id}> ?p ?o } WHERE { <${this._id}> ?p ?o };\n`;
     } else {
       let sparql = '';
-      Object.keys(this._predicates).forEach(key => {
-        sparql += this._predicates[key].getSparqlForUpdate(graph, this._id);
+      Object.values(this._predicates).forEach(predicate => {
+        sparql += predicate.getSparqlForUpdate(graphId, this._id);
       });
       return sparql;
     }
@@ -85,8 +85,8 @@ abstract class Subject {
     if (this._isDeleted) {
       throw new Error('A deleted subject should not be committed')
     }
-    Object.keys(this._predicates).forEach(key => {
-      this._predicates[key].commit();
+    Object.values(this._predicates).forEach(predicate => {
+      predicate.commit();
     });
     this._isFromPod = true
   }
@@ -96,8 +96,8 @@ abstract class Subject {
       throw new Error('A non-persisted subject should not be undone')
     }
     this._isDeleted = false
-    Object.keys(this._predicates).forEach(key => {
-      this._predicates[key].undo();
+    Object.values(this._predicates).forEach(predicate => {
+      predicate.undo();
     });
   }
 
