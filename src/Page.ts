@@ -1,4 +1,4 @@
-import { Root } from './Subject';
+import { Branch, Subject } from './Subject'
 import { Graph } from './Graph';
 import { Element, Node, Operation, transform, Path, Text } from './interface'
 import * as _ from 'lodash'
@@ -8,12 +8,28 @@ class Page extends Graph {
 
   constructor(id: string, turtle: string) {
     super(id, turtle);
-    const root = <Root>this.getRoot();
-    this._editor = root.toJsonRecursive(this._subjectMap)
+    this._editor = this._toJsonRecursive(this.getRoot())
   }
 
   public toJson = (): Element => {
     return this._editor
+  }
+
+  private _toJsonRecursive(head: Branch): Element {
+    let result: Element = head.toJson()
+
+    let child: Subject | undefined = this._subjectMap.get(head.get('firstChild'))
+
+    while (child) {
+      if (child instanceof Branch) {
+        result.children.push(this._toJsonRecursive(child))
+      } else {
+        result.children.push(child.toJson())
+      }
+      child = this._subjectMap.get(child.get('next'))
+    }
+
+    return result
   }
 
   public apply = (op: Operation) => {
@@ -40,7 +56,7 @@ class Page extends Graph {
         const curr = this.getSubject(currId);
         this._placeholderRecursive({
           id: <string>op.properties.id,
-          type: <string>curr.get('type'),
+          type: curr.get('type'),
           children: [], // TODO: this is a workaround
         }, nodesToInsert)
         break
@@ -108,8 +124,7 @@ class Page extends Graph {
 
   public undo() {
     super.undo();
-    const root = <Root>this.getRoot();
-    this._editor = root.toJsonRecursive(this._subjectMap)
+    this._editor = this._toJsonRecursive(this.getRoot())
   }
 
 }

@@ -1,4 +1,4 @@
-import { Subject, createSubject } from './Subject'
+import { Subject, Root, createSubject } from './Subject'
 import { Node } from './interface'
 import * as n3 from 'n3';
 
@@ -44,8 +44,8 @@ class Graph {
     })
   }
 
-  public getRoot = (): Subject => {
-    return this.getSubject(this._id)
+  public getRoot = (): Root => {
+    return <Root>this.getSubject(this._id)
   }
 
   public getSubject = (id: string): Subject => {

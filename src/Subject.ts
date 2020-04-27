@@ -1,6 +1,6 @@
 import { Property, NamedNodeProperty, TextProperty, JsonProperty } from './Property';
 import { idToKey } from '../config/ontology'
-import { Element, Text, Node } from './interface'
+import { Element, Node } from './interface'
 
 abstract class Subject {
   protected _id: string
@@ -26,13 +26,18 @@ abstract class Subject {
     this._predicates[key].fromQuad(quad)
   }
 
-  public toJson(): any {
-    let option = JSON.parse(this.get('option'))
-    return {
+  public toJson(): Node {
+    let result = {
       id: this._id,
       type: this.get('type'),
-      ...option
-    };
+      ...JSON.parse(this.get('option')),
+    }
+
+    Object.keys(this._predicates).forEach(key => {
+      key === 'next' || key === 'firstChild' || key === 'option' || (result[key] = this._predicates[key].get());
+    });
+
+    return result;
   }
 
   public get = (key: string): string => {
@@ -122,26 +127,10 @@ class Branch extends Subject {
   }
 
   public toJson(): Element {
-    let result = super.toJson();
-    result.children = []
-    return result
-  }
-
-  public toJsonRecursive(subjectMap: Map<string, Subject>): Element {
-    let result = this.toJson()
-
-    let child = subjectMap.get(this.get('firstChild'))
-
-    while (child) {
-      if (child instanceof Branch) {
-        result.children.push(child.toJsonRecursive(subjectMap))
-      } else {
-        result.children.push(child.toJson())
-      }
-      child = subjectMap.get(child.get('next'))
+    return {
+      ...super.toJson(),
+      children: [],
     }
-
-    return result
   }
 
   public set(node: Element, next?: Node) {
@@ -155,13 +144,6 @@ class Root extends Branch {
   constructor(id: string) {
     super(id);
     this._predicates.title = new TextProperty('http://purl.org/dc/terms/title', 'title');
-  }
-
-  public toJson(): Element {
-    return {
-      ...super.toJson(),
-      title: this.get('title')
-    }
   }
 
   public fromQuad(quad: any) {
@@ -178,7 +160,7 @@ class Root extends Branch {
     super.set(node)
   }
 
-  public delete = () => {
+  public delete() {
     throw new Error('The root is not removable :' + this._id);
   }
 
@@ -190,14 +172,6 @@ class Leaf extends Subject {
     super(id);
     this._predicates.text = new TextProperty('http://www.solidoc.net/ontologies#text', 'text');
   }
-
-  public toJson = (): Text => {
-    return {
-      ...super.toJson(),
-      text: this.get('text')
-    }
-  }
-
 }
 
 const createSubject = (json: Node, subjectMap: Map<string, Subject>): Subject => {

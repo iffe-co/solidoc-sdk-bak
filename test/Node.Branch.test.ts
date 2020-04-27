@@ -22,10 +22,6 @@ describe('Branch', () => {
     leaf[0].set(config.text[0], config.text[1])
     leaf[1].set(config.text[1], config.text[2])
   });
-
-  it('converts to Json', () => {
-    assert.deepStrictEqual(branch.toJsonRecursive(subjectMap), config.para[0])
-  });
   
   it('converts to blank Json', () => {
     assert.deepStrictEqual(branch.toJson(), {
@@ -33,9 +29,6 @@ describe('Branch', () => {
       children: []
     })
   })
-
-
-
 });
 
 
