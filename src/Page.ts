@@ -55,7 +55,7 @@ class Page extends Graph {
     }
     nodesToInsert.add(node)
 
-    if(Text.isText(node)) return;
+    if (Text.isText(node)) return;
 
     (<Element>node).children.forEach(child => {
       this._placeholderRecursive(child, nodesToInsert)
@@ -76,26 +76,21 @@ class Page extends Graph {
   private _updateSubjectsRecursive = (node: Node, path: Path, visited: Set<string>) => {
     let subject = this.getSubject(node.id);
 
-    subject.set(node);
-    !(subject instanceof Root) && subject.set({ next: this._getNodeId(Path.next(path)) });
+    subject.set(node, this._getNext(path));
 
     visited.add(node.id)
 
-    if (!node.children) return
-
-    subject.set({ firstChild: this._getNodeId([...path, 0]) });
-
-    node.children.forEach((child: Node, index: number) => {
+    node.children && node.children.forEach((child: Node, index: number) => {
       this._updateSubjectsRecursive(child, [...path, index], visited)
     });
   }
 
-  private _getNodeId = (path: Path): string => {
+  private _getNext = (path: Path): Node | undefined => {
     try {
-      const node: Node = Node.get(this._editor, path);
-      return node.id
+      const node: Node = Node.get(this._editor, Path.next(path));
+      return node
     } catch (e) {
-      return ''
+      return undefined
     }
   }
 

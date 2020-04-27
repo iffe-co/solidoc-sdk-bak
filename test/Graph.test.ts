@@ -98,7 +98,7 @@ describe('Graph', () => {
 
     it('undoes to recover #nextNode', () => {
       let branch0 = graph.getSubject(cfg.para[0].id)
-      branch0.set({ next: cfg.para[0].id }); // meaningless and illegal, but ok for test
+      branch0.set(cfg.para[0], cfg.para[0]); // meaningless and illegal, but ok for test
       graph.undo()
 
       assert.strictEqual(branch0.get('next'), cfg.para[1].id)

@@ -1,7 +1,9 @@
 import { Subject, Branch, createSubject } from '../src/Subject'
 import { ont } from '../config/ontology'
 import { config, turtle } from '../config/test'
+import { Element } from '../src/interface'
 import * as assert from 'power-assert';
+import * as _ from 'lodash'
 
 import * as n3 from 'n3';
 const parser = new n3.Parser();
@@ -13,11 +15,15 @@ const nodeMap = new Map<string, Subject>();
 describe('src/Subject.ts', () => {
   let branch1: Branch;
   let branch2: Branch;
+  let para1: Element
+  let para2: Element
   let quads: any[];
 
   beforeEach(() => {
     nodeMap.clear()
-    branch2 = <Branch>createSubject(config.para[2], nodeMap);
+    para1 = _.cloneDeep(config.para[1])
+    para2 = _.cloneDeep(config.para[2])
+    branch2 = <Branch>createSubject(para2, nodeMap);
   });
 
   describe('Create Node', () => {
@@ -26,7 +32,7 @@ describe('src/Subject.ts', () => {
       assert.strictEqual(branch2.get('id'), config.para[2].id)
       assert.strictEqual(branch2.get('type'), config.para[2].type)
       assert.strictEqual(branch2.get('next'), '')
-      assert.strictEqual(branch2.get('firstChild'), '')
+      assert.strictEqual(branch2.get('firstChild'), config.text[6].id)
       assert.strictEqual(branch2.get('option'), '{}')
       assert(!branch2.isDeleted())
       assert(!branch2.isFromPod())
@@ -64,7 +70,8 @@ describe('src/Subject.ts', () => {
   describe('Sets and gets', () => {
 
     it('sets and gets a known property', () => {
-      branch2.set({ type: ont.sdoc.numberedList });
+      para2.type = ont.sdoc.numberedList
+      branch2.set(para2);
 
       assert.strictEqual(branch2.get('type'), ont.sdoc.numberedList);
     });
@@ -75,16 +82,9 @@ describe('src/Subject.ts', () => {
       })
     })
 
-    it('ignores id and children properties', () => {
-      branch2.commit();
-      branch2.set({ id: 'fake id', children: ['something'] });
-
-      let sparql = branch2.getSparqlForUpdate(config.page.id);
-      assert.strictEqual(sparql, '')
-    })
-
     it('adds an optional property', () => {
-      branch2.set({ author: 'alice' });
+      para2.author = 'alice'
+      branch2.set(para2);
 
       assert.deepStrictEqual(JSON.parse(branch2.get('option')), {
         author: "alice",
@@ -92,9 +92,11 @@ describe('src/Subject.ts', () => {
     })
 
     it('deletes optional property', () => {
-      branch2.set({ author: "alice" })
+      para2.author = 'alice'
+      branch2.set(para2)
       branch2.commit()
-      branch2.set({ author: null })
+      para2.author = null
+      branch2.set(para2)
 
       let json: any = branch2.toJson();
       assert.strictEqual(json.author, undefined);
@@ -102,9 +104,11 @@ describe('src/Subject.ts', () => {
     });
 
     it('modifies optional property', () => {
-      branch2.set({ author: "alice" })
+      para2.author = 'alice'
+      branch2.set(para2)
       branch2.commit()
-      branch2.set({ author: "bob" })
+      para2.author = 'bob'
+      branch2.set(para2)
 
       let json: any = branch2.toJson();
       assert.strictEqual(json.author, 'bob');
@@ -113,13 +117,13 @@ describe('src/Subject.ts', () => {
 
   describe('#nextNode property', () => {
     beforeEach(() => {
-      branch1 = <Branch>createSubject(config.para[1], nodeMap);
+      branch1 = <Branch>createSubject(para1, nodeMap);
     })
 
     it('setNext() is together with set("next")', () => {
-      branch1.set({next: config.para[2].id})
+      branch1.set(para1, para2)
 
-      assert.strictEqual(branch1.get("next"), branch2.get('id'));
+      assert.strictEqual(branch1.get('next'), branch2.get('id'));
     });
 
     it('parses #nextNode from quads and synced with getNext()', () => {
@@ -131,9 +135,9 @@ describe('src/Subject.ts', () => {
     })
 
     it('unsets next', () => {
-      branch1.set({next: config.para[2].id})
+      branch1.set(para1, para2)
       branch1.commit()
-      branch1.set({next: ''})
+      branch1.set(para1)
       assert.strictEqual(branch1.get('next'), '')
     })
   });
@@ -150,7 +154,7 @@ describe('src/Subject.ts', () => {
 
     it('throws on setting a deleted node', () => {
       assert.throws(() => {
-        branch2.set({ type: ont.sdoc.numberedList });
+        branch2.set(para2);
       })
     })
 
@@ -165,7 +169,8 @@ describe('src/Subject.ts', () => {
   describe('commits', () => {
 
     it('commits attributes', () => {
-      branch2.set({ type: ont.sdoc.numberedList })
+      para2.type = ont.sdoc.numberedList
+      branch2.set(para2)
       branch2.commit()
       branch2.undo()
 
@@ -204,7 +209,8 @@ describe('src/Subject.ts', () => {
 
     it('undoes attributes', () => {
       branch2.commit() // so {type: Paragraph} becomes value
-      branch2.set({ type: ont.sdoc.numberedList })
+      para2.type = ont.sdoc.numberedList
+      branch2.set(para2)
       branch2.delete()
       branch2.undo()
 
@@ -213,7 +219,7 @@ describe('src/Subject.ts', () => {
 
     it('undoes next', () => {
       branch2.setFromPod()  // otherwise it disallows undo
-      branch2.set({next: config.para[1].id});
+      branch2.set(para2, para1);
       branch2.undo();
 
       assert.strictEqual(branch2.get('next'), '')

@@ -2,6 +2,7 @@ import { Subject, Root, createSubject } from '../src/Subject';
 import { ont } from '../config/ontology'
 import { config } from '../config/test'
 import * as assert from 'power-assert';
+import * as _ from 'lodash'
 
 import * as n3 from 'n3';
 const parser = new n3.Parser();
@@ -20,7 +21,9 @@ describe('Root', () => {
 
 
   it('sets title', () => {
-    root.set({ title: 'Welcome' })
+    let pageCloned = _.cloneDeep(page);
+    pageCloned.title = 'Welcome'
+    root.set(pageCloned)
 
     assert.strictEqual(root.get('title'), 'Welcome')
   })
@@ -36,7 +39,7 @@ describe('Root', () => {
 
   it('throws on set("next")', () => {
     assert.throws(() => {
-      root.set({next: config.para[0].id})
+      root.set(page, config.para[0])
     });
   })
 

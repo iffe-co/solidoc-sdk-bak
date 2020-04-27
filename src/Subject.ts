@@ -43,22 +43,24 @@ abstract class Subject {
     return this._predicates[key].get();
   }
 
-  public set(props: any) {
+  public set(node: Node, next?: Node) {
     if (this._isDeleted) {
       throw new Error('Trying to update a deleted subject: ' + this._id);
     }
 
     let option = {}
-    Object.keys(props).forEach(key => {
+    Object.keys(node).forEach(key => {
       if (key === 'id' || key === 'children') {
         //
       } else if (this._predicates[key]) {
-        this._predicates[key].set(props[key]);
+        this._predicates[key].set(node[key]);
       } else {
-        option[key] = props[key]
+        option[key] = node[key]
       }
     });
     (<JsonProperty>(this._predicates['option'])).set(option);
+
+    this._predicates['next'].set(next ? next.id : '')
   }
 
   public getSparqlForUpdate = (graph: string): string => {
@@ -142,6 +144,11 @@ class Branch extends Subject {
     return result
   }
 
+  public set(node: Element, next?: Node) {
+    super.set(node, next);
+
+    this._predicates['firstChild'].set(node.children[0] ? node.children[0].id : '')
+  }
 }
 
 class Root extends Branch {
@@ -164,11 +171,11 @@ class Root extends Branch {
     super.fromQuad(quad)
   }
 
-  public set(props: any) {
-    if (Object.keys(props).includes('next')) {
-      throw new Error('Cannot set "next" property for Root: ' + this._id);
+  public set(node: Element, next?: Node) {
+    if (next) {
+      throw new Error('Cannot set "next" property for Root: ' + node._id);
     }
-    super.set(props)
+    super.set(node)
   }
 
   public delete = () => {
