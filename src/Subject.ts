@@ -8,7 +8,7 @@ class Subject {
   protected _predicates: { [key: string]: Property } = {}
   private _isDeleted: boolean
   private _isFromPod: boolean
-  protected _next: Subject | undefined
+  public _next: Subject | undefined // TODO: not to use public
 
   constructor(id: string, graph: string) {
     this._id = id;
@@ -131,10 +131,19 @@ class Branch extends Subject {
   }
 
   public toJson(): Element {
-    return {
+    const result: Element = {
       ...super.toJson(),
       children: [],
     }
+
+    let child: Subject | undefined = this._firstChild
+
+    while (child) {
+      result.children.push(child.toJson())
+      child = child._next
+    }
+
+    return result
   }
 
   public fromQuad(quad: any, subjectMap: Map<string, Subject>) {
