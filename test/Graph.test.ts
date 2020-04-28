@@ -1,4 +1,4 @@
-import { config as cfg, turtle } from '../config/test'
+import { config as cfg, turtle, config } from '../config/test'
 import { ont } from '../config/ontology';
 import * as assert from 'power-assert';
 
@@ -48,7 +48,7 @@ describe('Graph', () => {
     it('does not construct a subject without type definition', () => {
       let tempId = cfg.page.id + '#temp';
       let turtleTemp = turtleAll + `<${tempId}> <${ont.sdoc.text}> "ABC".`
-      
+
       assert.throws(() => {
         new Graph(cfg.page.id, turtleTemp);
       });
@@ -63,6 +63,10 @@ describe('Graph', () => {
     it('does not construct a subject with an unknown type')
     it('handles a subject with multiple type definitions')
 
+    it('parses from an empty string', () => {
+      graph = new Graph(cfg.page.id, '');
+      assert.deepStrictEqual(graph.getRoot().getProperty('id'), config.page.id);
+    });
   })
 
   describe('Sparql-update', () => {

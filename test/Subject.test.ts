@@ -148,7 +148,6 @@ describe('test/Subject.test.ts', () => {
       para2.type = ont.sdoc.numberedList
       branch2.set(para2)
       branch2.commit()
-      branch2.undo()
 
       assert.strictEqual(branch2.getProperty('type'), ont.sdoc.numberedList)
       assert(!branch2.isInserted())
@@ -201,20 +200,31 @@ describe('test/Subject.test.ts', () => {
 
 
 describe('Root', () => {
-  const page = config.page
+  let page
   let root: Root;
 
   beforeEach(() => {
+    page = _.cloneDeep(config.page)
     root = <Root>createSubject(page, config.page.id);
   });
 
 
   it('sets title', () => {
-    let pageCloned = _.cloneDeep(page);
-    pageCloned.title = 'Welcome'
-    root.set(pageCloned)
+    page.title = 'Welcome'
+    root.set(page)
 
     assert.strictEqual(root.getProperty('title'), 'Welcome')
+  })
+
+  it('gets sparql', () => {
+    let quads = parser.parse(turtle.page)
+    quads.forEach(quad => {
+      root.fromQuad(quad)
+    })
+    root.setProperty('firstChild', '');
+    let sparql = root.getSparqlForUpdate();
+
+    assert(sparql.startsWith('DELETE WHERE'))
   })
 
   it('throws on parsing #nextNode predicate', () => {

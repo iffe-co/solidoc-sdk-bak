@@ -1,4 +1,4 @@
-import { NamedNodeProperty, TextProperty, JsonProperty } from '../src/Property';
+import { NamedNodeProperty, TextProperty, JsonProperty, Prop } from '../src/Property';
 import { ont } from '../config/ontology'
 import { config, turtle } from '../config/test'
 import * as assert from 'power-assert';
@@ -146,3 +146,13 @@ describe('Json Property', () => {
     });
   })
 });
+
+describe('Factory', () => {
+
+  it('throws on an unknown property', () => {
+    assert.throws(() => {
+      Prop.create('unknown', 'unknown', 'unknown')
+    }, /^Error: Unknown property type/)
+  })
+
+})

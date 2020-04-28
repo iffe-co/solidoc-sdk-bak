@@ -18,7 +18,7 @@ class Page extends Graph {
 
   public apply = (op: Operation) => {
     const opCloned = _.cloneDeep(op)
-    const { subjToInsert, subjToRemove } = this._placeholder(opCloned);
+    const { subjToInsert, subjToRemove } = this._preprocess(opCloned);
 
     transform(this._editor, opCloned)
 
@@ -34,26 +34,26 @@ class Page extends Graph {
 
   }
 
-  private _placeholder(op: Operation) {
+  private _preprocess(op: Operation) {
     const subjToInsert = new Set<Node>();
     const subjToRemove = new Set<string>();
 
     switch (op.type) {
       case 'insert_node':
-        this._placeholderRecursive(op.node, subjToInsert);
+        this._preInsertRecursive(op.node, subjToInsert);
         break
 
       case 'split_node':
         const currId = Node.get(this._editor, op.path).id;
         const curr = this.getSubject(currId);
-        this._placeholderRecursive({
+        this._preInsertRecursive({
           id: <string>op.properties.id,
           type: curr.getProperty('type'),
           children: [], // TODO: this is a workaround
         }, subjToInsert)
         break
       case 'remove_node':
-        this._removeRecursive(op.path, subjToRemove);
+        this._preRemoveRecursive(op.path, subjToRemove);
         break
       case 'merge_node':
         subjToRemove.add(Node.get(this._editor, op.path).id)
@@ -63,7 +63,7 @@ class Page extends Graph {
     return { subjToInsert, subjToRemove }
   }
 
-  private _placeholderRecursive = (node: Node, subjToInsert: Set<Node>) => {
+  private _preInsertRecursive = (node: Node, subjToInsert: Set<Node>) => {
     if (this._subjectMap.has(node.id)) {
       throw new Error('Duplicated node insertion: ' + node.id)
     }
@@ -72,18 +72,18 @@ class Page extends Graph {
     if (Text.isText(node)) return;
 
     (<Element>node).children.forEach(child => {
-      this._placeholderRecursive(child, subjToInsert)
+      this._preInsertRecursive(child, subjToInsert)
     });
   }
 
-  private _removeRecursive = (path: Path, subjToRemove: Set<string>) => {
+  private _preRemoveRecursive = (path: Path, subjToRemove: Set<string>) => {
     const node = Node.get(this._editor, path);
     subjToRemove.add(node.id);
 
     if (Text.isText(node)) return;
 
     (<Element>node).children.forEach((_child, index) => {
-      this._removeRecursive([...path, index], subjToRemove)
+      this._preRemoveRecursive([...path, index], subjToRemove)
     });
 
   }
@@ -99,10 +99,6 @@ class Page extends Graph {
     subject.setProperty('firstChild', firstChildId)
 
     node.children.forEach((childNode: Node, index: number) => {
-      const child = this._subjectMap.get(childNode.id)
-      if (!child) {
-        throw new Error('Child not found: ' + childNode.id)
-      }
       this._updateRecursive(childNode, node.children[index + 1])
     });
 
@@ -131,10 +127,6 @@ class Page extends Graph {
 
     return super.getSparqlForUpdate();
 
-  }
-
-  public commit() {
-    super.commit();
   }
 
   public undo() {

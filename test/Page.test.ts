@@ -18,11 +18,6 @@ describe('Create Page', () => {
     assert.deepStrictEqual(page.toJson(), cfg.page);
   });
 
-  it('parses from an empty string', () => {
-    page = new Page(cfg.page.id, '');
-    assert.deepStrictEqual(page.toJson(), page.getRoot().toJson());
-  });
-
 });
 
 
