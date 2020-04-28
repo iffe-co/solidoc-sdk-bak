@@ -25,8 +25,6 @@ describe('Graph', () => {
     it('constructs the root ', () => {
       assert(root instanceof Root)
       assert.strictEqual(root, graph.getSubject(cfg.page.id))
-      assert.strictEqual(root.isDeleted(), false)
-      assert.strictEqual(root.isFromPod(), true)
     })
 
     it('constructs branch subject', () => {
@@ -34,8 +32,8 @@ describe('Graph', () => {
       let branch2 = graph.getSubject(cfg.para[2].id)
 
       assert(branch0 instanceof Branch);
-      assert.strictEqual(branch0.get('next'), cfg.para[1].id)
-      assert.strictEqual(branch2.get('next'), '')
+      assert.strictEqual(branch0.getProperty('next'), cfg.para[1].id)
+      assert.strictEqual(branch2.getProperty('next'), '')
     })
 
     it('constructs leaf subject', () => {
@@ -43,8 +41,8 @@ describe('Graph', () => {
       let leaf2 = graph.getSubject(cfg.text[2].id)
 
       assert(leaf0 instanceof Leaf);
-      assert.strictEqual(leaf0.get('next'), cfg.text[1].id)
-      assert.strictEqual(leaf2.get('next'), '')
+      assert.strictEqual(leaf0.getProperty('next'), cfg.text[1].id)
+      assert.strictEqual(leaf2.getProperty('next'), '')
     })
 
     it('does not construct a subject without type definition', () => {
@@ -90,11 +88,12 @@ describe('Graph', () => {
 
     it('undoes to remove new subject from memory', () => {
       let tempId = cfg.page.id + '#temp';
-      graph.createSubject({
+      let subject = graph.createSubject({
         id: tempId,
         type: ont.sdoc.branch,
         children: []
       })
+      subject.insert()
       graph.undo();
 
       assert.throws(() => {
@@ -102,13 +101,13 @@ describe('Graph', () => {
       })
     })
 
-    it('undoes to recover #nextNode', () => {
-      let branch0 = graph.getSubject(cfg.para[0].id)
-      branch0.set(cfg.para[0], cfg.para[0]); // meaningless and illegal, but ok for test
-      graph.undo()
+    // it('undoes to recover #nextNode', () => {
+    //   let branch0 = graph.getSubject(cfg.para[0].id)
+    //   branch0.set(cfg.para[0], cfg.para[0]); // meaningless and illegal, but ok for test
+    //   graph.undo()
 
-      assert.strictEqual(branch0.get('next'), cfg.para[1].id)
-    })
+    //   assert.strictEqual(branch0.get('next'), cfg.para[1].id)
+    // })
 
   })
 

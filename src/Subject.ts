@@ -6,45 +6,39 @@ class Subject {
   protected _id: string
   protected _graph: string
   protected _predicates: { [key: string]: Property } = {}
-  private _isDeleted: boolean
-  private _isFromPod: boolean
-  public _next: Subject | undefined // TODO: not to use public
+  private _isDeleted: boolean = false
+  private _isInserted: boolean = false
 
   constructor(id: string, graph: string) {
     this._id = id;
     this._graph = graph
-    this._isDeleted = false
-    this._isFromPod = false
     this._predicates.type = Prop.create(ont.rdf.type, this._graph, this._id);
     this._predicates.option = Prop.create(ont.sdoc.option, this._graph, this._id);
   }
 
-  public fromQuad(quad: any, subjectMap: Map<string, Subject>) {
+  public fromQuad(quad: any) {
     let alias = idToAlias[quad.predicate.id];
     if (!alias || !this._predicates[alias]) {
       return;
     }
     this._predicates[alias].fromQuad(quad)
-    if (quad.predicate.id === ont.sdoc.next) {
-      this._next = subjectMap.get(quad.object.id)
-    }
   }
 
   public toJson(): Node {
     let result = {
       id: this._id,
-      type: this.get('type'),
-      ...JSON.parse(this.get('option')),
+      type: this.getProperty('type'),
+      ...JSON.parse(this.getProperty('option')),
     }
 
     Object.keys(this._predicates).forEach(alias => {
-      ['next', 'firstChild', 'option', 'type'].includes(alias) || (result[alias] = this.get(alias));
+      ['next', 'firstChild', 'option', 'type'].includes(alias) || (result[alias] = this.getProperty(alias));
     });
 
     return result;
   }
 
-  public get = (alias: string): string => {
+  public getProperty = (alias: string): string => {
     if (alias === 'id') return this._id;
     if (!this._predicates[alias]) { // TODO: get from options?
       throw new Error('Try to get an unknown property: ' + this._id + alias)
@@ -52,25 +46,26 @@ class Subject {
     return this._predicates[alias].get();
   }
 
-  public set(node: Node, next?: Subject, _firstChild?: Subject) {
+  public setProperty = (alias: string, value: string) => {
+    this._predicates[alias].set(value)
+  }
+
+  public set(node: Node) {
     if (this._isDeleted) {
       throw new Error('Trying to update a deleted subject: ' + this._id);
     }
 
-    let newOptions = {}
+    const newOptions = {}
     Object.keys(node).forEach(alias => {
       if (alias === 'id' || alias === 'children') {
         //
       } else if (this._predicates[alias]) {
-        this._predicates[alias].set(node[alias]);
+        this.setProperty(alias, node[alias])
       } else {
         newOptions[alias] = node[alias]
       }
     });
     this._predicates['option'].set(JSON.stringify(newOptions));
-
-    this._predicates['next'].set(next ? next._id : '')
-    this._next = next
   }
 
   public getSparqlForUpdate = (): string => {
@@ -89,11 +84,11 @@ class Subject {
 
     Object.values(this._predicates).map(Prop.commit)
 
-    this._isFromPod = true
+    this._isInserted = false
   }
 
   public undo() {
-    if (!this._isFromPod) {
+    if (this._isInserted) {
       throw new Error('A non-persisted subject should not be undone')
     }
 
@@ -110,19 +105,17 @@ class Subject {
     return this._isDeleted
   }
 
-  public isFromPod = (): boolean => {
-    return this._isFromPod
+  public isInserted = (): boolean => {
+    return this._isInserted
   }
 
-  public setFromPod = () => {
-    this._isFromPod = true
+  public insert = () => {
+    this._isInserted = true
   }
 
 }
 
 class Branch extends Subject {
-
-  protected _firstChild: Subject | undefined
 
   constructor(id: string, graph: string) {
     super(id, graph);
@@ -131,35 +124,12 @@ class Branch extends Subject {
   }
 
   public toJson(): Element {
-    const result: Element = {
+    return {
       ...super.toJson(),
       children: [],
     }
-
-    let child: Subject | undefined = this._firstChild
-
-    while (child) {
-      result.children.push(child.toJson())
-      child = child._next
-    }
-
-    return result
   }
 
-  public fromQuad(quad: any, subjectMap: Map<string, Subject>) {
-    if (quad.predicate.id === ont.sdoc.firstChild) {
-      this._firstChild = subjectMap.get(quad.object.id)
-      // this._predicates['firstChild'].set(this._firstChild ? this._firstChild.get('id') : '')
-    }
-    super.fromQuad(quad, subjectMap)
-  }
-
-  public set(node: Element, next?: Subject, firstChild?: Subject) {
-    super.set(node, next);
-
-    this._predicates['firstChild'].set(firstChild ? firstChild.get('id') : '')
-    this._firstChild = firstChild;
-  }
 }
 
 class Root extends Branch {
@@ -168,18 +138,18 @@ class Root extends Branch {
     this._predicates.title = Prop.create(ont.dct.title, this._graph, this._id);
   }
 
-  public fromQuad(quad: any, subjectMap: Map<string, Subject>) {
+  public fromQuad(quad: any) {
     if (quad.predicate.id === ont.sdoc.next) {
       throw new Error('fromQuad: The root may not have syblings: ' + this._id)
     }
-    super.fromQuad(quad, subjectMap)
+    super.fromQuad(quad)
   }
 
-  public set(node: Element, next?: Subject, firstChild?: Subject) {
-    if (next) {
-      throw new Error('Cannot set "next" property for Root: ' + node._id);
+  public setProperty = (alias: string, value: string) => {
+    if (alias === 'next') {
+      throw new Error('setProperty: The root may not have syblings: ' + this._id)
     }
-    super.set(node, undefined, firstChild)
+    this._predicates[alias].set(value)
   }
 
   public delete() {
@@ -211,7 +181,7 @@ const createSubject = (json: Node, graph: string): Subject => {
       subject = new Branch(json.id, graph)
       break
   }
-  subject.set(json)
+  // subject.set(json)
 
   return subject
 }

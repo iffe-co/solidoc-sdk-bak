@@ -1,14 +1,15 @@
-import { Subject } from './Subject'
+// import { Subject } from './Subject'
 import { Graph } from './Graph';
 import { Element, Node, Operation, transform, Path, Text } from './interface'
 import * as _ from 'lodash'
+import { Subject } from './Subject';
 
 class Page extends Graph {
   private _editor: Element
 
   constructor(id: string, turtle: string) {
     super(id, turtle);
-    this._editor = <Element>this.getRoot().toJson()
+    this._editor = <Element>this._toJsonRecursive(this.getRoot())
   }
 
   public toJson = (): Element => {
@@ -17,21 +18,29 @@ class Page extends Graph {
 
   public apply = (op: Operation) => {
     const opCloned = _.cloneDeep(op)
-    const nodesToInsert: Set<Node> = this._placeholder(opCloned);
+    const { subjToInsert, subjToRemove } = this._placeholder(opCloned);
 
     transform(this._editor, opCloned)
 
-    for (let node of nodesToInsert) {
-      this.createSubject(node);
+    for (let node of subjToInsert.values()) {
+      let subject = this.createSubject(node);
+      subject.insert() // TODO
     }
+
+    for (let nodeId of subjToRemove.values()) {
+      let subject = this.getSubject(nodeId)
+      subject.delete()
+    }
+
   }
 
-  private _placeholder(op: Operation): Set<Node> {
-    const nodesToInsert = new Set<Node>();
+  private _placeholder(op: Operation) {
+    const subjToInsert = new Set<Node>();
+    const subjToRemove = new Set<string>();
 
     switch (op.type) {
       case 'insert_node':
-        this._placeholderRecursive(op.node, nodesToInsert);
+        this._placeholderRecursive(op.node, subjToInsert);
         break
 
       case 'split_node':
@@ -39,75 +48,89 @@ class Page extends Graph {
         const curr = this.getSubject(currId);
         this._placeholderRecursive({
           id: <string>op.properties.id,
-          type: curr.get('type'),
+          type: curr.getProperty('type'),
           children: [], // TODO: this is a workaround
-        }, nodesToInsert)
+        }, subjToInsert)
+        break
+      case 'remove_node':
+        this._removeRecursive(op.path, subjToRemove);
+        break
+      case 'merge_node':
+        subjToRemove.add(Node.get(this._editor, op.path).id)
         break
 
     }
-    return nodesToInsert
+    return { subjToInsert, subjToRemove }
   }
 
-  private _placeholderRecursive = (node: Node, nodesToInsert: Set<Node>) => {
+  private _placeholderRecursive = (node: Node, subjToInsert: Set<Node>) => {
     if (this._subjectMap.has(node.id)) {
       throw new Error('Duplicated node insertion: ' + node.id)
     }
-    nodesToInsert.add(node)
+    subjToInsert.add(node)
 
     if (Text.isText(node)) return;
 
     (<Element>node).children.forEach(child => {
-      this._placeholderRecursive(child, nodesToInsert)
+      this._placeholderRecursive(child, subjToInsert)
     });
   }
 
+  private _removeRecursive = (path: Path, subjToRemove: Set<string>) => {
+    const node = Node.get(this._editor, path);
+    subjToRemove.add(node.id);
+
+    if (Text.isText(node)) return;
+
+    (<Element>node).children.forEach((_child, index) => {
+      this._removeRecursive([...path, index], subjToRemove)
+    });
+
+  }
+
+  private _updateRecursive(node: Node, nextNode?: Node) {
+    let subject = this.getSubject(node.id)
+    subject.set(node);
+    nextNode && subject.setProperty('next', nextNode.id)
+
+    if (!node.children) return;
+
+    const firstChildId = node.children[0] ? node.children[0].id : '';
+    subject.setProperty('firstChild', firstChildId)
+
+    node.children.forEach((childNode: Node, index: number) => {
+      const child = this._subjectMap.get(childNode.id)
+      if (!child) {
+        throw new Error('Child not found: ' + childNode.id)
+      }
+      this._updateRecursive(childNode, node.children[index + 1])
+    });
+
+  }
+
+  private _toJsonRecursive(subject: Subject): Node {
+    let result = subject.toJson()
+    if (!result.children) return result
+
+    let childId = subject.getProperty('firstChild')
+    let child: Subject | undefined = this._subjectMap.get(childId);
+
+    while (child) {
+      result.children.push(this._toJsonRecursive(child))
+      childId = child.getProperty('next')
+      child = this._subjectMap.get(childId);
+    }
+
+    return result
+  }
+
+
   public getSparqlForUpdate(): string {
-    const visited = new Set<string>();
 
-    this._updateSubjectsRecursive(this._editor, [], visited);
-
-    this._deleteSubjectsIfNot(visited);
+    this._updateRecursive(this._editor)
 
     return super.getSparqlForUpdate();
 
-  }
-
-  private _updateSubjectsRecursive = (node: Node, path: Path, visited: Set<string>) => {
-    let subject = this.getSubject(node.id);
-
-    subject.set(node, this._getNextSubject(path), this._getFirstChildSubject(path));
-
-    visited.add(node.id)
-
-    node.children && node.children.forEach((child: Node, index: number) => {
-      this._updateSubjectsRecursive(child, [...path, index], visited)
-    });
-  }
-
-  private _getNextSubject = (path: Path): Subject | undefined => {
-    try {
-      const node: Node = Node.get(this._editor, Path.next(path));
-      return this._subjectMap.get(node.id)
-    } catch (e) {
-      return undefined
-    }
-  }
-
-  private _getFirstChildSubject = (path: Path): Subject | undefined => {
-    try {
-      const node: Node = Node.get(this._editor, [...path, 0]);
-      return this._subjectMap.get(node.id)
-    } catch (e) {
-      return undefined
-    }
-  }
-
-  private _deleteSubjectsIfNot(visited: Set<string>) {
-    for (let [nodeId, subject] of this._subjectMap.entries()) {
-      if (!visited.has(nodeId)) {
-        subject.delete();
-      }
-    }
   }
 
   public commit() {
@@ -116,7 +139,7 @@ class Page extends Graph {
 
   public undo() {
     super.undo();
-    this._editor = <Element>this.getRoot().toJson()
+    this._editor = <Element>this._toJsonRecursive(this.getRoot())
   }
 
 }

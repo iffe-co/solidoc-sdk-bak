@@ -19,29 +19,27 @@ class Graph {
     const quads: any[] = parser.parse(turtle);
     quads.forEach(quad => {
       if (quad.predicate.id === ont.rdf.type) {
-        let subject = this.createSubject({
+        this.createSubject({
           id: quad.subject.id,
           type: quad.object.id, // TODO: should only createSubject for known types
           children: [], // TODO: this is a workaround to deceive the type check
         });
-        subject.setFromPod();
       }
     })
 
     // Should always create the root
     if (!this._subjectMap.get(this._id)) {
-      let root = this.createSubject({
+      this.createSubject({
         id: this._id,
         type: ont.sdoc.root,
         children: [],
       });
-      root.setFromPod()
     }
 
     quads.forEach(quad => {
       // TODO: should it throw on an unknown subject?
       let subject = this.getSubject(quad.subject.id)
-      subject.fromQuad(quad, this._subjectMap)
+      subject.fromQuad(quad)
     })
   }
 
@@ -86,7 +84,7 @@ class Graph {
 
   public undo() {
     for (let [id, subject] of this._subjectMap.entries()) {
-      if (!subject.isFromPod()) {
+      if (subject.isInserted()) {
         this._subjectMap.delete(id)
       } else {
         subject.undo();

@@ -1,20 +1,22 @@
-import { Branch, Root, createSubject } from '../src/Subject'
+import { Branch, Root, Leaf, createSubject } from '../src/Subject'
 import { ont } from '../config/ontology'
-import { config } from '../config/test'
+import { config, turtle } from '../config/test'
 import { Element } from '../src/interface'
 import * as assert from 'power-assert';
 import * as _ from 'lodash'
 
-// import * as n3 from 'n3';
-// const parser = new n3.Parser();
+import * as n3 from 'n3';
+const parser = new n3.Parser();
+let quads: any[];
 
 
-describe('src/Subject.ts', () => {
+describe('test/Subject.test.ts', () => {
   let branch1: Branch;
-  let branch2: Branch;
   let para1: Element
+
+  let branch2: Branch;
   let para2: Element
-  // let quads: any[];
+
 
   beforeEach(() => {
     para1 = _.cloneDeep(config.para[1])
@@ -25,36 +27,37 @@ describe('src/Subject.ts', () => {
   describe('Create Node', () => {
 
     it('constructs an empty node', () => {
-      assert.strictEqual(branch2.get('id'), config.para[2].id)
-      assert.strictEqual(branch2.get('type'), config.para[2].type)
-      assert.strictEqual(branch2.get('next'), '')
-      assert.strictEqual(branch2.get('firstChild'), '')
-      assert.strictEqual(branch2.get('option'), '{}')
+      assert.strictEqual(branch2.getProperty('id'), para2.id)
+      assert.strictEqual(branch2.getProperty('type'), '')
+      assert.strictEqual(branch2.getProperty('next'), '')
+      assert.strictEqual(branch2.getProperty('firstChild'), '')
+      assert.strictEqual(branch2.getProperty('option'), '{}')
       assert(!branch2.isDeleted())
-      assert(!branch2.isFromPod())
+      assert(!branch2.isInserted())
     })
 
     it('translates to Json', () => {
+      branch2.set(para2)
       assert.deepStrictEqual(branch2.toJson(), {
-        ...config.para[2],
+        ...para2,
         children: [],
       });
     });
 
-    // it('parses from quads', () => {
-    //   quads = parser.parse(turtle.para[2]);
-    //   quads.forEach(quad => branch2.fromQuad(quad));
+    it('parses from quads', () => {
+      quads = parser.parse(turtle.para[2]);
+      quads.forEach(quad => branch2.fromQuad(quad));
 
-    //   assert.equal(branch2.get('firstChild'), config.para[2].children[0].id);
-    // })
+      assert.equal(branch2.getProperty('firstChild'), config.para[2].children[0].id);
+    })
 
-    // it('discards an unknown quad', () => {
-    //   let turtle = `<${config.para[2].id}> <${ont.sdoc.text}> "abc".`;
-    //   let quads = parser.parse(turtle)
-    //   branch2.fromQuad(quads[0])
+    it('discards an unknown quad', () => {
+      let turtle = `<${config.para[2].id}> <${ont.sdoc.text}> "abc".`;
+      let quads = parser.parse(turtle)
+      branch2.fromQuad(quads[0])
 
-    //   assert(!branch2.isFromPod())
-    // });
+      assert(!branch2.isInserted())
+    });
 
   })
 
@@ -64,12 +67,12 @@ describe('src/Subject.ts', () => {
       para2.type = ont.sdoc.numberedList
       branch2.set(para2);
 
-      assert.strictEqual(branch2.get('type'), ont.sdoc.numberedList);
+      assert.strictEqual(branch2.getProperty('type'), ont.sdoc.numberedList);
     });
 
     it('throws on getting an unkown property', () => {
       assert.throws(() => {
-        branch2.get('unknown')
+        branch2.getProperty('unknown')
       })
     })
 
@@ -77,7 +80,7 @@ describe('src/Subject.ts', () => {
       para2.author = 'alice'
       branch2.set(para2);
 
-      assert.deepStrictEqual(JSON.parse(branch2.get('option')), {
+      assert.deepStrictEqual(JSON.parse(branch2.getProperty('option')), {
         author: "alice",
       })
     })
@@ -100,25 +103,19 @@ describe('src/Subject.ts', () => {
     })
 
     it('setNext() is together with set("next")', () => {
-      branch1.set(para1, branch2)
+      branch1.setProperty('next', para2.id)
 
-      assert.strictEqual(branch1.get('next'), branch2.get('id'));
+      assert.strictEqual(branch1.getProperty('next'), branch2.getProperty('id'));
     });
 
-    // it('parses #nextNode from quads and synced with getNext()', () => {
-    //   let quads = parser.parse(turtle.para[1])
-    //   // note the index of quads
-    //   branch1.fromQuad(quads[1])
+    it('parses #nextNode from quads and synced with getNext()', () => {
+      let quads = parser.parse(turtle.para[1])
+      // note the index of quads
+      branch1.fromQuad(quads[1])
 
-    //   assert.strictEqual(branch1.get('next'), config.para[2].id)
-    // })
-
-    it('unsets next', () => {
-      branch1.set(para1, branch2)
-      branch1.commit()
-      branch1.set(para1)
-      assert.strictEqual(branch1.get('next'), '')
+      assert.strictEqual(branch1.getProperty('next'), config.para[2].id)
     })
+
   });
 
   describe('performs deletion', () => {
@@ -153,8 +150,8 @@ describe('src/Subject.ts', () => {
       branch2.commit()
       branch2.undo()
 
-      assert.strictEqual(branch2.get('type'), ont.sdoc.numberedList)
-      assert(branch2.isFromPod())
+      assert.strictEqual(branch2.getProperty('type'), ont.sdoc.numberedList)
+      assert(!branch2.isInserted())
     })
 
     it('disallows committing a deleted node', () => {
@@ -173,13 +170,13 @@ describe('src/Subject.ts', () => {
     })
 
     it('disallows undoing a non-existOnPod node', () => {
+      branch2.insert()
       assert.throws(() => {
         branch2.undo()
       });
     })
 
     it('undoes deletion', () => {
-      branch2.setFromPod()  // otherwise it disallows undo
       branch2.delete();
       branch2.undo();
 
@@ -187,22 +184,16 @@ describe('src/Subject.ts', () => {
     });
 
     it('undoes attributes', () => {
+      branch2.set(para2)
       branch2.commit() // so {type: Paragraph} becomes value
       para2.type = ont.sdoc.numberedList
       branch2.set(para2)
       branch2.delete()
       branch2.undo()
 
-      assert.strictEqual(branch2.get('type'), config.para[2].type)
+      assert.strictEqual(branch2.getProperty('type'), config.para[2].type)
     })
 
-    it('undoes next', () => {
-      branch2.setFromPod()  // otherwise it disallows undo
-      branch2.set(para2, branch1);
-      branch2.undo();
-
-      assert.strictEqual(branch2.get('next'), '')
-    })
   });
 
 });
@@ -223,22 +214,22 @@ describe('Root', () => {
     pageCloned.title = 'Welcome'
     root.set(pageCloned)
 
-    assert.strictEqual(root.get('title'), 'Welcome')
+    assert.strictEqual(root.getProperty('title'), 'Welcome')
   })
 
-  // it('throws on parsing #nextNode predicate', () => {
-  //   let turtle = `<${page.id}> <${ont.sdoc.next}> <${config.para[0].id}>.`;
-  //   let quads = parser.parse(turtle)
+  it('throws on parsing #nextNode predicate', () => {
+    let turtle = `<${page.id}> <${ont.sdoc.next}> <${config.para[0].id}>.`;
+    let quads = parser.parse(turtle)
 
-  //   assert.throws(() => {
-  //     root.fromQuad(quads[0])
-  //   })
-  // })
+    assert.throws(() => {
+      root.fromQuad(quads[0])
+    }, /^Error: fromQuad: The root may not have syblings/)
+  })
 
   it('throws on set("next")', () => {
     assert.throws(() => {
-      root.set(page, config.para[0])
-    });
+      root.setProperty('next', config.para[1].id)
+    }, /^Error: setProperty: The root may not have syblings/);
   })
 
   it('disallows deletion', () => {
@@ -251,24 +242,24 @@ describe('Root', () => {
 
 
 
-// describe('Leaf', () => {
-//   let leaf: Leaf;
-//   const text = config.text[8]
-//   const quads: any[] = parser.parse(turtle.text[8]);
-  
-//   beforeEach(() => {
-//     leaf = <Leaf>createSubject(text, config.page.id);
-//     quads.forEach(quad => leaf.fromQuad(quad));
-//   });
+describe('Leaf', () => {
+  let leaf: Leaf;
+  const text = config.text[8]
+  const quads: any[] = parser.parse(turtle.text[8]);
 
-//   it('parses from quads', () => {
-//     assert.strictEqual(leaf.get('id'), text.id)
-//     assert.strictEqual(leaf.get('type'), text.type)
-//     assert.strictEqual(leaf.get('text'), text.text)
-//   });
-  
-//   it('translate to Json', () => {
-//     assert.deepStrictEqual(leaf.toJson(), text);
-//   })
+  beforeEach(() => {
+    leaf = <Leaf>createSubject(text, config.page.id);
+    quads.forEach(quad => leaf.fromQuad(quad));
+  });
 
-// });
+  it('parses from quads', () => {
+    assert.strictEqual(leaf.getProperty('id'), text.id)
+    assert.strictEqual(leaf.getProperty('type'), text.type)
+    assert.strictEqual(leaf.getProperty('text'), text.text)
+  });
+
+  it('translate to Json', () => {
+    assert.deepStrictEqual(leaf.toJson(), text);
+  })
+
+});
