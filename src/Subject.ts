@@ -1,6 +1,6 @@
 import { Property, Prop } from './Property';
 import { ont, idToAlias } from '../config/ontology';
-import { Element, Node } from './interface';
+import { Element, Node, Text } from './interface';
 
 class Subject {
   protected _id: string;
@@ -8,6 +8,9 @@ class Subject {
   protected _predicates: { [key: string]: Property } = {};
   private _isDeleted: boolean = false;
   private _isInserted: boolean = false;
+
+  protected _valuesUpdated: Node;
+  protected _valuesFromPod: Node;
 
   constructor(id: string, graph: string) {
     this._id = id;
@@ -121,6 +124,9 @@ class Subject {
 }
 
 class Branch extends Subject {
+  protected _valuesUpdated: Element;
+  protected _valuesFromPod: Element;
+
   constructor(id: string, graph: string) {
     super(id, graph);
     this._predicates.firstChild = Prop.create(
@@ -129,6 +135,13 @@ class Branch extends Subject {
       this._id,
     );
     this._predicates.next = Prop.create(ont.sdoc.next, this._graph, this._id);
+    this._valuesUpdated = this._valuesFromPod = {
+      id: id,
+      type: ont.sdoc.text,
+      options: '{}',
+      next: '',
+      children: [],
+    };
   }
 
   public toJson(): Element {
@@ -143,6 +156,13 @@ class Root extends Branch {
   constructor(id: string, graph: string) {
     super(id, graph);
     this._predicates.title = Prop.create(ont.dct.title, this._graph, this._id);
+    this._valuesUpdated = this._valuesFromPod = {
+      id: id,
+      type: ont.sdoc.text,
+      title: '',
+      options: '{}',
+      children: [],
+    };
   }
 
   /**
@@ -176,11 +196,21 @@ class Root extends Branch {
 }
 
 class Leaf extends Subject {
+  protected _valuesUpdated: Text;
+  protected _valuesFromPod: Text;
+
   constructor(id: string, graph: string) {
     // TODO: using blank nodes
     super(id, graph);
     this._predicates.text = Prop.create(ont.sdoc.text, this._graph, this._id);
     this._predicates.next = Prop.create(ont.sdoc.next, this._graph, this._id);
+    this._valuesUpdated = this._valuesFromPod = {
+      id: id,
+      type: ont.sdoc.text,
+      text: '',
+      options: '{}',
+      next: '',
+    };
   }
 }
 
