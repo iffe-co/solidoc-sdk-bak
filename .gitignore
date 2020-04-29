@@ -5,7 +5,6 @@ dist
 .vscode
 *.swp
 *.lock
-*.js
 .nyc_output
 
 app/**/*.js
