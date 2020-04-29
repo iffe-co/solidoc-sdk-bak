@@ -1,6 +1,7 @@
 import { Property, Prop } from './Property';
 import { ont, idToAlias } from '../config/ontology';
-import { Element, Node, Text } from './interface';
+import { Element, Node } from './interface';
+import * as _ from 'lodash';
 
 class Subject {
   protected _id: string;
@@ -9,8 +10,8 @@ class Subject {
   private _isDeleted: boolean = false;
   private _isInserted: boolean = false;
 
-  protected _valuesUpdated: Node;
-  protected _valuesFromPod: Node;
+  protected _valuesUpdated: any;
+  protected _valuesFromPod: any;
 
   constructor(id: string, graph: string) {
     this._id = id;
@@ -28,7 +29,11 @@ class Subject {
     if (!alias || !this._predicates[alias]) {
       return;
     }
-    this._predicates[alias].fromQuad(quad);
+    this._predicates[alias].fromQuad(
+      quad,
+      this._valuesUpdated,
+      this._valuesFromPod,
+    );
   }
 
   public toJson(): Node {
@@ -46,18 +51,21 @@ class Subject {
     return result;
   }
 
-  public getProperty = (alias: string): string => {
-    if (alias === 'id') return this._id;
+  public getProperty(alias: string): string {
+    if (alias !== 'id' && !this._predicates[alias]) {
+      // TODO: get from options?
+      throw new Error('Try to get an unknown property: ' + this._id + alias);
+    }
+    return this._valuesUpdated[alias];
+  }
+
+  public setProperty(alias: string, value: string) {
     if (!this._predicates[alias]) {
       // TODO: get from options?
       throw new Error('Try to get an unknown property: ' + this._id + alias);
     }
-    return this._predicates[alias].get();
-  };
-
-  public setProperty = (alias: string, value: string) => {
-    this._predicates[alias].set(value);
-  };
+    this._valuesUpdated[alias] = value;
+  }
 
   public set(node: Node) {
     if (this._isDeleted) {
@@ -74,7 +82,7 @@ class Subject {
         newOptions[alias] = node[alias];
       }
     });
-    this._predicates['option'].set(JSON.stringify(newOptions));
+    this.setProperty('option', JSON.stringify(newOptions));
   }
 
   public getSparqlForUpdate = (): string => {
@@ -82,7 +90,15 @@ class Subject {
       // TODO: for non-persisted subjects, this clause should be empty
       return `DELETE WHERE { GRAPH <${this._graph}> { <${this._id}> ?p ?o } };\n`;
     } else {
-      return Object.values(this._predicates).reduce(Prop.getSparql, '');
+      // return Object.values(this._predicates).reduce(Prop.getSparql, '');
+      let sparql = '';
+      Object.values(this._predicates).forEach(predicate => {
+        sparql += predicate.getSparqlForUpdate(
+          this._valuesUpdated,
+          this._valuesFromPod,
+        );
+      });
+      return sparql;
     }
   };
 
@@ -91,7 +107,8 @@ class Subject {
       throw new Error('A deleted subject should not be committed');
     }
 
-    Object.values(this._predicates).map(Prop.commit);
+    // Object.values(this._predicates).map(Prop.commit);
+    this._valuesFromPod = _.cloneDeep(this._valuesUpdated);
 
     this._isInserted = false;
   };
@@ -101,7 +118,8 @@ class Subject {
       throw new Error('A non-persisted subject should not be undone');
     }
 
-    Object.values(this._predicates).map(Prop.undo);
+    // Object.values(this._predicates).map(Prop.undo);
+    this._valuesUpdated = _.cloneDeep(this._valuesFromPod);
 
     this._isDeleted = false;
   }
@@ -124,9 +142,6 @@ class Subject {
 }
 
 class Branch extends Subject {
-  protected _valuesUpdated: Element;
-  protected _valuesFromPod: Element;
-
   constructor(id: string, graph: string) {
     super(id, graph);
     this._predicates.firstChild = Prop.create(
@@ -135,12 +150,19 @@ class Branch extends Subject {
       this._id,
     );
     this._predicates.next = Prop.create(ont.sdoc.next, this._graph, this._id);
-    this._valuesUpdated = this._valuesFromPod = {
+    this._valuesUpdated = {
       id: id,
-      type: ont.sdoc.text,
-      options: '{}',
+      type: '',
+      option: '{}',
       next: '',
-      children: [],
+      firstChild: '',
+    };
+    this._valuesFromPod = {
+      id: id,
+      type: '',
+      option: '{}',
+      next: '',
+      firstChild: '',
     };
   }
 
@@ -156,12 +178,19 @@ class Root extends Branch {
   constructor(id: string, graph: string) {
     super(id, graph);
     this._predicates.title = Prop.create(ont.dct.title, this._graph, this._id);
-    this._valuesUpdated = this._valuesFromPod = {
+    this._valuesUpdated = {
       id: id,
-      type: ont.sdoc.text,
+      type: '',
       title: '',
-      options: '{}',
-      children: [],
+      option: '{}',
+      firstChild: '',
+    };
+    this._valuesFromPod = {
+      id: id,
+      type: '',
+      title: '',
+      option: '{}',
+      firstChild: '',
     };
   }
 
@@ -178,14 +207,14 @@ class Root extends Branch {
   /**
    * Override to prevent setting "next"
    */
-  public setProperty = (alias: string, value: string) => {
+  public setProperty(alias: string, value: string) {
     if (alias === 'next') {
       throw new Error(
         'setProperty: The root may not have syblings: ' + this._id,
       );
     }
-    this._predicates[alias].set(value);
-  };
+    super.setProperty(alias, value);
+  }
 
   /**
    * Override to prevent deletion
@@ -196,19 +225,23 @@ class Root extends Branch {
 }
 
 class Leaf extends Subject {
-  protected _valuesUpdated: Text;
-  protected _valuesFromPod: Text;
-
   constructor(id: string, graph: string) {
     // TODO: using blank nodes
     super(id, graph);
     this._predicates.text = Prop.create(ont.sdoc.text, this._graph, this._id);
     this._predicates.next = Prop.create(ont.sdoc.next, this._graph, this._id);
-    this._valuesUpdated = this._valuesFromPod = {
+    this._valuesUpdated = {
       id: id,
-      type: ont.sdoc.text,
+      type: '',
       text: '',
-      options: '{}',
+      option: '{}',
+      next: '',
+    };
+    this._valuesFromPod = {
+      id: id,
+      type: '',
+      text: '',
+      option: '{}',
       next: '',
     };
   }
