@@ -1,18 +1,18 @@
-import { Subject, createSubject } from './Subject'
-import { ont } from '../config/ontology'
-import { Node } from './interface'
+import { Subject, createSubject } from './Subject';
+import { ont } from '../config/ontology';
+import { Node } from './interface';
 import * as n3 from 'n3';
 
 const parser = new n3.Parser();
 
 // a graph could be a page or a database
 class Graph {
-  protected _id: string
+  protected _id: string = '';
   protected _subjectMap = new Map<string, Subject>();
 
   constructor(id: string, turtle: string) {
     this._id = id;
-    this._parseTurtle(turtle)
+    this._parseTurtle(turtle);
   }
 
   private _parseTurtle = (turtle: string) => {
@@ -25,7 +25,7 @@ class Graph {
           children: [], // TODO: this is a workaround to deceive the type check
         });
       }
-    })
+    });
 
     // Should always create the root
     if (!this._subjectMap.get(this._id)) {
@@ -38,31 +38,31 @@ class Graph {
 
     quads.forEach(quad => {
       // TODO: should it throw on an unknown subject?
-      let subject = this.getSubject(quad.subject.id)
-      subject.fromQuad(quad)
-    })
-  }
+      let subject = this.getSubject(quad.subject.id);
+      subject.fromQuad(quad);
+    });
+  };
 
   public getRoot = (): Subject => {
-    return this.getSubject(this._id)
-  }
+    return this.getSubject(this._id);
+  };
 
   public getSubject = (id: string): Subject => {
-    const subject = this._subjectMap.get(id)
+    const subject = this._subjectMap.get(id);
     if (!subject) {
-      throw new Error('Subject not found: ' + id)
+      throw new Error('Subject not found: ' + id);
     }
-    return subject
-  }
+    return subject;
+  };
 
   public createSubject = (json: Node): Subject => {
     if (this._subjectMap.get(json.id)) {
-      throw new Error('duplicated subject creation: ' + json.id)
+      throw new Error('duplicated subject creation: ' + json.id);
     }
-    let subject = createSubject(json, this._id)
-    this._subjectMap.set(json.id, subject)
-    return subject
-  }
+    let subject = createSubject(json, this._id);
+    this._subjectMap.set(json.id, subject);
+    return subject;
+  };
 
   public getSparqlForUpdate(): string {
     let sparql = '';
@@ -85,7 +85,7 @@ class Graph {
   public undo() {
     for (let [id, subject] of this._subjectMap.entries()) {
       if (subject.isInserted()) {
-        this._subjectMap.delete(id)
+        this._subjectMap.delete(id);
       } else {
         subject.undo();
       }
@@ -93,4 +93,4 @@ class Graph {
   }
 }
 
-export { Graph }
+export { Graph };

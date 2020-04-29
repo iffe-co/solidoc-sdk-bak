@@ -4,7 +4,7 @@ const idToAlias = {
   'http://www.solidoc.net/ontologies#firstChild': 'firstChild',
   'http://www.solidoc.net/ontologies#nextNode': 'next',
   'http://www.solidoc.net/ontologies#option': 'option',
-  'http://www.solidoc.net/ontologies#text': 'text'
+  'http://www.solidoc.net/ontologies#text': 'text',
 };
 
 const idToType = {
@@ -13,7 +13,7 @@ const idToType = {
   'http://www.solidoc.net/ontologies#firstChild': 'NamedNode',
   'http://www.solidoc.net/ontologies#nextNode': 'NamedNode',
   'http://www.solidoc.net/ontologies#option': 'Json',
-  'http://www.solidoc.net/ontologies#text': 'Text'
+  'http://www.solidoc.net/ontologies#text': 'Text',
 };
 
 const ont = {
@@ -33,7 +33,7 @@ const ont = {
     branch: 'http://www.solidoc.net/ontologies#Branch',
     paragraph: 'http://www.solidoc.net/ontologies#Paragraph',
     numberedList: 'http://www.solidoc.net/ontologies#NumberedList',
-  }
-}
+  },
+};
 
-export { ont, idToAlias, idToType }
+export { ont, idToAlias, idToType };

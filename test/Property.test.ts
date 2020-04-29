@@ -1,13 +1,18 @@
-import { NamedNodeProperty, TextProperty, JsonProperty, Prop } from '../src/Property';
-import { ont } from '../config/ontology'
-import { config, turtle } from '../config/test'
+import {
+  NamedNodeProperty,
+  TextProperty,
+  JsonProperty,
+  Prop,
+} from '../src/Property';
+import { ont } from '../config/ontology';
+import { config, turtle } from '../config/test';
 import * as assert from 'power-assert';
 
 import * as n3 from 'n3';
 const parser = new n3.Parser();
 
-const node = config.text[8]
-const page = config.page
+const node = config.text[8];
+const page = config.page;
 
 const quads: any[] = parser.parse(turtle.text[8]);
 
@@ -45,7 +50,7 @@ describe('Type: a NamedNode Property', () => {
 
   it('generate sparql for a just-set property', () => {
     type.set('');
-    type.commit()
+    type.commit();
     type.set(ont.sdoc.paragraph);
     const sparql: string = type.getSparqlForUpdate();
     assert.strictEqual(sparql, insertClause);
@@ -108,13 +113,16 @@ describe('Json Property', () => {
   });
 
   it('before init', () => {
-    assert.strictEqual(option.get(), '{}')
+    assert.strictEqual(option.get(), '{}');
   });
 
   it('gets sparql after set from null', () => {
-    option.set(JSON.stringify({ name: 'alice' }))
+    option.set(JSON.stringify({ name: 'alice' }));
     const sparql: string = option.getSparqlForUpdate();
-    assert.strictEqual(sparql, `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.option}> "{\\"name\\":\\"alice\\"}"} };\n`);
+    assert.strictEqual(
+      sparql,
+      `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.option}> "{\\"name\\":\\"alice\\"}"} };\n`,
+    );
   });
 
   describe('after init', () => {
@@ -123,7 +131,7 @@ describe('Json Property', () => {
 
     beforeEach(() => {
       option.fromQuad(quads[2]);
-    })
+    });
 
     it('parses quad as json', () => {
       assert.deepStrictEqual(JSON.parse(option.get()), { bold: true });
@@ -133,26 +141,27 @@ describe('Json Property', () => {
     });
 
     it('gets sparql after reseting a property', () => {
-      option.set('{}')
+      option.set('{}');
 
-      assert.deepStrictEqual(JSON.parse(option.get()), {})
-      assert.strictEqual(option.getSparqlForUpdate(), deleteClause)
+      assert.deepStrictEqual(JSON.parse(option.get()), {});
+      assert.strictEqual(option.getSparqlForUpdate(), deleteClause);
     });
 
     it('gets sparql after changing a property', () => {
-      option.set(JSON.stringify({ bold: true, size: 25 }))
+      option.set(JSON.stringify({ bold: true, size: 25 }));
 
-      assert.strictEqual(option.getSparqlForUpdate(), deleteClause + insertClause)
+      assert.strictEqual(
+        option.getSparqlForUpdate(),
+        deleteClause + insertClause,
+      );
     });
-  })
+  });
 });
 
 describe('Factory', () => {
-
   it('throws on an unknown property', () => {
     assert.throws(() => {
-      Prop.create('unknown', 'unknown', 'unknown')
-    }, /^Error: Unknown property type/)
-  })
-
-})
+      Prop.create('unknown', 'unknown', 'unknown');
+    }, /^Error: Unknown property type/);
+  });
+});
