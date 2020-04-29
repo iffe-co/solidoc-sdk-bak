@@ -3,6 +3,15 @@ import { ont, idToAlias } from '../config/ontology';
 import { Element, Node } from './interface';
 import * as _ from 'lodash';
 
+const createValueTemplate = () => {
+  return {
+    id: '',
+    type: '',
+    option: '{}',
+    next: '',
+  };
+};
+
 class Subject {
   protected _id: string;
   protected _graph: string;
@@ -10,17 +19,33 @@ class Subject {
   private _isDeleted: boolean = false;
   private _isInserted: boolean = false;
 
-  protected _valuesUpdated: any;
-  protected _valuesFromPod: any;
+  protected _valuesUpdated: any = createValueTemplate();
+  protected _valuesFromPod: any = createValueTemplate();
 
   constructor(id: string, graph: string) {
     this._id = id;
     this._graph = graph;
-    this._predicates.type = Prop.create(ont.rdf.type, this._graph, this._id);
+    this._valuesUpdated.id = this._valuesFromPod.id = id;
+    this._predicates.type = Prop.create(
+      ont.rdf.type,
+      this._graph,
+      this._id,
+      this._valuesUpdated,
+      this._valuesFromPod,
+    );
     this._predicates.option = Prop.create(
       ont.sdoc.option,
       this._graph,
       this._id,
+      this._valuesUpdated,
+      this._valuesFromPod,
+    );
+    this._predicates.next = Prop.create(
+      ont.sdoc.next,
+      this._graph,
+      this._id,
+      this._valuesUpdated,
+      this._valuesFromPod,
     );
   }
 
@@ -29,11 +54,7 @@ class Subject {
     if (!alias || !this._predicates[alias]) {
       return;
     }
-    this._predicates[alias].fromQuad(
-      quad,
-      this._valuesUpdated,
-      this._valuesFromPod,
-    );
+    this._predicates[alias].fromQuad(quad);
   }
 
   public toJson(): Node {
@@ -90,15 +111,7 @@ class Subject {
       // TODO: for non-persisted subjects, this clause should be empty
       return `DELETE WHERE { GRAPH <${this._graph}> { <${this._id}> ?p ?o } };\n`;
     } else {
-      // return Object.values(this._predicates).reduce(Prop.getSparql, '');
-      let sparql = '';
-      Object.values(this._predicates).forEach(predicate => {
-        sparql += predicate.getSparqlForUpdate(
-          this._valuesUpdated,
-          this._valuesFromPod,
-        );
-      });
-      return sparql;
+      return Object.values(this._predicates).reduce(Prop.getSparql, '');
     }
   };
 
@@ -107,7 +120,6 @@ class Subject {
       throw new Error('A deleted subject should not be committed');
     }
 
-    // Object.values(this._predicates).map(Prop.commit);
     this._valuesFromPod = _.cloneDeep(this._valuesUpdated);
 
     this._isInserted = false;
@@ -118,7 +130,6 @@ class Subject {
       throw new Error('A non-persisted subject should not be undone');
     }
 
-    // Object.values(this._predicates).map(Prop.undo);
     this._valuesUpdated = _.cloneDeep(this._valuesFromPod);
 
     this._isDeleted = false;
@@ -144,26 +155,14 @@ class Subject {
 class Branch extends Subject {
   constructor(id: string, graph: string) {
     super(id, graph);
+    this._valuesUpdated.firstChild = this._valuesFromPod.firstChild = '';
     this._predicates.firstChild = Prop.create(
       ont.sdoc.firstChild,
       this._graph,
       this._id,
+      this._valuesUpdated,
+      this._valuesFromPod,
     );
-    this._predicates.next = Prop.create(ont.sdoc.next, this._graph, this._id);
-    this._valuesUpdated = {
-      id: id,
-      type: '',
-      option: '{}',
-      next: '',
-      firstChild: '',
-    };
-    this._valuesFromPod = {
-      id: id,
-      type: '',
-      option: '{}',
-      next: '',
-      firstChild: '',
-    };
   }
 
   public toJson(): Element {
@@ -177,21 +176,14 @@ class Branch extends Subject {
 class Root extends Branch {
   constructor(id: string, graph: string) {
     super(id, graph);
-    this._predicates.title = Prop.create(ont.dct.title, this._graph, this._id);
-    this._valuesUpdated = {
-      id: id,
-      type: '',
-      title: '',
-      option: '{}',
-      firstChild: '',
-    };
-    this._valuesFromPod = {
-      id: id,
-      type: '',
-      title: '',
-      option: '{}',
-      firstChild: '',
-    };
+    this._valuesUpdated.title = this._valuesFromPod.title = '';
+    this._predicates.title = Prop.create(
+      ont.dct.title,
+      this._graph,
+      this._id,
+      this._valuesUpdated,
+      this._valuesFromPod,
+    );
   }
 
   /**
@@ -228,22 +220,14 @@ class Leaf extends Subject {
   constructor(id: string, graph: string) {
     // TODO: using blank nodes
     super(id, graph);
-    this._predicates.text = Prop.create(ont.sdoc.text, this._graph, this._id);
-    this._predicates.next = Prop.create(ont.sdoc.next, this._graph, this._id);
-    this._valuesUpdated = {
-      id: id,
-      type: '',
-      text: '',
-      option: '{}',
-      next: '',
-    };
-    this._valuesFromPod = {
-      id: id,
-      type: '',
-      text: '',
-      option: '{}',
-      next: '',
-    };
+    this._valuesUpdated.text = this._valuesFromPod.text = '';
+    this._predicates.text = Prop.create(
+      ont.sdoc.text,
+      this._graph,
+      this._id,
+      this._valuesUpdated,
+      this._valuesFromPod,
+    );
   }
 }
 

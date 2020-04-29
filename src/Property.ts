@@ -5,108 +5,87 @@ abstract class Property {
   protected id: string;
   protected graph: string;
   protected subject: string;
-  protected value = '';
-  protected uncommitted = '';
+  protected valuesFromPod: any;
+  protected valuesUpdated: any;
   protected nil = '';
 
-  constructor(id: string, graph: string, subject: string) {
+  constructor(
+    id: string,
+    graph: string,
+    subject: string,
+    valuesUpdated: any,
+    valuesFromPod: any,
+  ) {
     this.id = id;
     this.graph = graph;
     this.subject = subject;
+    this.valuesFromPod = valuesFromPod;
+    this.valuesUpdated = valuesUpdated;
   }
 
-  public fromQuad(_quad: any, valuesUpdated?: any, valuesFromPod?: any) {
-    const alias = idToAlias[this.id];
-    if (valuesFromPod && valuesUpdated) {
-      valuesFromPod[alias] = valuesUpdated[alias] = this.value;
-    }
-  }
+  public abstract fromQuad(_quad: any);
 
-  public set = (value: string) => {
-    this.uncommitted = value;
-  };
-  public get = (): string => {
-    return this.uncommitted;
-  };
-
-  protected _deletionClause = (
-    valuesUpdated?: any,
-    valuesFromPod?: any,
-  ): string => {
+  protected _deletionClause = (): string => {
     let sparql: string = '';
     let alias = idToAlias[this.id];
 
     if (
-      valuesUpdated[alias] !== valuesFromPod[alias] &&
-      valuesFromPod[alias] !== this.nil
+      this.valuesUpdated[alias] !== this.valuesFromPod[alias] &&
+      this.valuesFromPod[alias] !== this.nil
     ) {
       sparql = `DELETE WHERE { GRAPH <${this.graph}> { <${this.subject}> <${this.id}> ?o } };\n`;
     }
     return sparql;
   };
-  protected abstract _insertionClause(valuesUpdated, valuesFromPod): string;
+  protected abstract _insertionClause(): string;
 
-  public getSparqlForUpdate = (
-    valuesUpdated: any,
-    valuesFromPod: any,
-  ): string => {
-    return (
-      this._deletionClause(valuesUpdated, valuesFromPod) +
-      this._insertionClause(valuesUpdated, valuesFromPod)
-    );
-  };
-
-  public commit = () => {
-    this.value = this.uncommitted;
-  };
-
-  public undo = () => {
-    this.uncommitted = this.value;
+  public getSparqlForUpdate = (): string => {
+    return this._deletionClause() + this._insertionClause();
   };
 }
 
 class NamedNodeProperty extends Property {
-  public fromQuad(quad: any, valuesUpdated?: any, valuesFromPod?: any) {
-    this.value = quad.object.id;
-    this.uncommitted = this.value;
-    super.fromQuad(quad, valuesUpdated, valuesFromPod);
+  public fromQuad(quad: any) {
+    const alias = idToAlias[this.id];
+    this.valuesUpdated[alias] = this.valuesFromPod[alias] = quad.object.id;
   }
-  protected _insertionClause = (
-    valuesUpdated?: any,
-    valuesFromPod?: any,
-  ): string => {
+
+  protected _insertionClause = (): string => {
     let sparql = '';
     let alias = idToAlias[this.id];
 
     if (
-      valuesUpdated[alias] !== valuesFromPod[alias] &&
-      valuesUpdated[alias] !== this.nil
+      this.valuesUpdated[alias] !== this.valuesFromPod[alias] &&
+      this.valuesUpdated[alias] !== this.nil
     ) {
-      sparql += `INSERT DATA { GRAPH <${this.graph}> { <${this.subject}> <${this.id}> <${this.uncommitted}>} };\n`;
+      sparql += `INSERT DATA { GRAPH <${this.graph}> { <${this.subject}> <${this.id}> <${this.valuesUpdated[alias]}>} };\n`;
     }
+
     return sparql;
   };
 }
 
 class TextProperty extends Property {
-  public fromQuad(quad: any, valuesUpdated?: any, valuesFromPod?: any) {
+  public fromQuad(quad: any) {
     const text: string = quad.object.id;
-    this.value = text.substring(1, text.lastIndexOf('"'));
-    this.uncommitted = this.value;
-    super.fromQuad(quad, valuesUpdated, valuesFromPod);
+    const alias = idToAlias[this.id];
+    this.valuesUpdated[alias] = this.valuesFromPod[alias] = text.substring(
+      1,
+      text.lastIndexOf('"'),
+    );
   }
-  protected _insertionClause = (
-    valuesUpdated?: any,
-    valuesFromPod?: any,
-  ): string => {
+  protected _insertionClause = (): string => {
     let sparql = '';
     let alias = idToAlias[this.id];
 
     if (
-      valuesUpdated[alias] !== valuesFromPod[alias] &&
-      valuesUpdated[alias] !== this.nil
+      this.valuesUpdated[alias] !== this.valuesFromPod[alias] &&
+      this.valuesUpdated[alias] !== this.nil
     ) {
-      let backSlashEscaped: string = this.uncommitted.replace(/\\/g, '\\\\');
+      let backSlashEscaped: string = this.valuesUpdated[alias].replace(
+        /\\/g,
+        '\\\\',
+      );
       let doubleQuoteEscaped: string = backSlashEscaped.replace(/"/g, '\\"');
       sparql += `INSERT DATA { GRAPH <${this.graph}> { <${this.subject}> <${this.id}> "${doubleQuoteEscaped}"} };\n`;
     }
@@ -115,45 +94,67 @@ class TextProperty extends Property {
 }
 
 class JsonProperty extends TextProperty {
-  constructor(id: string, graph: string, subject: string) {
-    super(id, graph, subject);
-    this.value = this.uncommitted = this.nil = '{}';
-  }
+  protected nil = '{}';
 
   public set = (value: string) => {
-    let json = JSON.parse(value);
-    if (!_.isEqual(json, JSON.parse(this.uncommitted))) {
-      this.uncommitted = value;
+    const json = JSON.parse(value);
+    const alias = idToAlias[this.id];
+    if (!_.isEqual(json, JSON.parse(this.valuesUpdated[alias]))) {
+      this.valuesUpdated[alias] = value;
     }
   };
 }
 
 const Prop = {
-  create: (id: string, graph: string, subject: string): Property => {
+  create: (
+    id: string,
+    graph: string,
+    subject: string,
+    valuesUpdated: any,
+    valuesFromPod: any,
+  ): Property => {
     const type = idToType[id];
     switch (type) {
       case 'NamedNode':
-        return new NamedNodeProperty(id, graph, subject);
+        return new NamedNodeProperty(
+          id,
+          graph,
+          subject,
+          valuesUpdated,
+          valuesFromPod,
+        );
       case 'Text':
-        return new TextProperty(id, graph, subject);
+        return new TextProperty(
+          id,
+          graph,
+          subject,
+          valuesUpdated,
+          valuesFromPod,
+        );
       case 'Json':
-        return new JsonProperty(id, graph, subject);
+        return new JsonProperty(
+          id,
+          graph,
+          subject,
+          valuesUpdated,
+          valuesFromPod,
+        );
       default:
         throw new Error('Unknown property type: ' + type);
     }
   },
 
-  commit: (prop: Property) => {
-    prop.commit();
-  },
-
-  undo: (prop: Property) => {
-    prop.undo();
-  },
-
-  // getSparql: (sparql: string, prop: Property): string => {
-  //   return sparql + prop.getSparqlForUpdate();
+  // commit: (prop: Property) => {
+  //   prop.commit();
   // },
+
+  // undo: (prop: Property) => {
+  //   prop.undo();
+  // },
+
+  getSparql: (sparql: string, prop: Property): string => {
+    return sparql + prop.getSparqlForUpdate();
+  },
 };
 
 export { Property, NamedNodeProperty, TextProperty, JsonProperty, Prop };

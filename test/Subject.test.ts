@@ -43,7 +43,9 @@ describe('test/Subject.test.ts', () => {
 
     it('parses from quads', () => {
       quads = parser.parse(turtle.para[2]);
-      quads.forEach(quad => branch2.fromQuad(quad));
+      quads.forEach(quad => {
+        branch2.fromQuad(quad);
+      });
 
       assert.equal(
         branch2.getProperty('firstChild'),
