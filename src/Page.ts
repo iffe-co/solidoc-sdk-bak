@@ -39,6 +39,7 @@ class Page extends Graph {
     let currId: string;
     let curr: Subject;
 
+    // TODO: should operation on a deleted subject allowed?
     switch (op.type) {
       case 'insert_node':
         this._preInsertRecursive(op.node, subjToInsert);
@@ -90,6 +91,10 @@ class Page extends Graph {
     });
   };
 
+  public update() {
+    this._updateRecursive(this._editor);
+  }
+
   private _updateRecursive(node: Node, nextNode?: Node) {
     let subject = this.getSubject(node.id);
     subject.set(node);
@@ -103,6 +108,11 @@ class Page extends Graph {
     node.children.forEach((childNode: Node, index: number) => {
       this._updateRecursive(childNode, node.children[index + 1]);
     });
+  }
+
+  public undo() {
+    super.undo();
+    this._editor = <Element>this._toJsonRecursive(this.getRoot());
   }
 
   private _toJsonRecursive(subject: Subject): Node {
@@ -119,17 +129,6 @@ class Page extends Graph {
     }
 
     return result;
-  }
-
-  public getSparqlForUpdate(): string {
-    this._updateRecursive(this._editor);
-
-    return super.getSparqlForUpdate();
-  }
-
-  public undo() {
-    super.undo();
-    this._editor = <Element>this._toJsonRecursive(this.getRoot());
   }
 }
 
