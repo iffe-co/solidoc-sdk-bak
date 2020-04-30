@@ -236,10 +236,10 @@ class Leaf extends Subject {
 const createSubject = (json: Node, graph: string): Subject => {
   let subject: Subject;
   switch (json.type) {
-    case 'http://www.solidoc.net/ontologies#Root':
+    case ont.sdoc.root:
       subject = new Root(json.id, graph);
       break;
-    case 'http://www.solidoc.net/ontologies#Leaf':
+    case ont.sdoc.leaf:
       subject = new Leaf(json.id, graph);
       break;
     default:

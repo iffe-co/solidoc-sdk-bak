@@ -38,19 +38,20 @@ class Property {
   };
 
   private _insertClause = (updated: string, initial: string): string => {
-    const escaped: string = this._escape(updated);
     return updated === initial || updated === this._default
       ? ''
-      : `INSERT DATA { GRAPH <${this._graph}> { <${this._subject}> <${this._id}> "${escaped}"} };\n`;
+      : `INSERT DATA { GRAPH <${this._graph}> { <${this._subject}> <${
+          this._id
+        }> ${this._escape(updated)}} };\n`;
   };
 
   private _escape(value: string): string {
     if (this._type === 'Text' || this._type === 'Json') {
       const backSlashEscaped: string = value.replace(/\\/g, '\\\\');
       const quoteEscaped: string = backSlashEscaped.replace(/"/g, '\\"');
-      return quoteEscaped;
+      return `"${quoteEscaped}"`;
     }
-    return value;
+    return `<${value}>`;
   }
 
   public fromQuad(quad: any): string {

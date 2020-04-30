@@ -1,167 +1,124 @@
-// import {
-//   NamedNodeProperty,
-//   TextProperty,
-//   JsonProperty,
-//   Prop,
-// } from '../src/Property';
-// import { ont } from '../config/ontology';
-// import { config, turtle } from '../config/test';
-// import * as assert from 'power-assert';
+import { Property } from '../src/Property';
+import { ont } from '../config/ontology';
+import { config, turtle } from '../config/test';
+import * as assert from 'power-assert';
 
-// import * as n3 from 'n3';
-// const parser = new n3.Parser();
+import * as n3 from 'n3';
+const parser = new n3.Parser();
 
-// const node = config.text[8];
-// const page = config.page;
+const node = config.text[8];
+const page = config.page;
 
-// const quads: any[] = parser.parse(turtle.text[8]);
+const quads: any[] = parser.parse(turtle.text[8]);
 
-// describe('Type: a NamedNode Property', () => {
-//   let type: NamedNodeProperty;
+describe('Type: a NamedNode Property', () => {
+  let type: Property;
 
-//   const deleteClause = `DELETE WHERE { GRAPH <${page.id}> { <${node.id}> <${ont.rdf.type}> ?o } };\n`;
-//   const insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.rdf.type}> <${ont.sdoc.paragraph}>} };\n`;
+  const deleteClause = `DELETE WHERE { GRAPH <${page.id}> { <${node.id}> <${ont.rdf.type}> ?o } };\n`;
+  const insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.rdf.type}> <${ont.sdoc.paragraph}>} };\n`;
 
-//   beforeEach(() => {
-//     type = new NamedNodeProperty(ont.rdf.type, page.id, node.id);
-//     type.fromQuad(quads[0]);
-//   });
+  beforeEach(() => {
+    type = new Property(ont.rdf.type, 'NamedNode', page.id, node.id);
+  });
 
-//   it('parses quad as a named node', () => {
-//     assert.strictEqual(type.get(), node.type);
-//   });
+  it('parses quad as a named node', () => {
+    assert.strictEqual(type.fromQuad(quads[0]), node.type);
+  });
 
-//   it('generates null sparql for a new property', () => {
-//     const sparql: string = type.getSparqlForUpdate();
-//     assert.strictEqual(sparql, '');
-//   });
+  it('generates null sparql if no changes applied', () => {
+    const sparql: string = type.getSparql(node.type, node.type);
+    assert.strictEqual(sparql, '');
+  });
 
-//   it('generate sparql for updated property', () => {
-//     type.set(ont.sdoc.paragraph);
-//     const sparql: string = type.getSparqlForUpdate();
-//     assert.strictEqual(sparql, deleteClause + insertClause);
-//   });
+  it('generate sparql for updated property', () => {
+    const sparql: string = type.getSparql(ont.sdoc.paragraph, node.type);
+    assert.strictEqual(sparql, deleteClause + insertClause);
+  });
 
-//   it('generate sparql for deleted property', () => {
-//     type.set('');
-//     const sparql: string = type.getSparqlForUpdate();
-//     assert.strictEqual(sparql, deleteClause);
-//   });
+  it('generate sparql for deleted property', () => {
+    const sparql: string = type.getSparql('', node.type);
+    assert.strictEqual(sparql, deleteClause);
+  });
 
-//   it('generate sparql for a just-set property', () => {
-//     type.set('');
-//     type.commit();
-//     type.set(ont.sdoc.paragraph);
-//     const sparql: string = type.getSparqlForUpdate();
-//     assert.strictEqual(sparql, insertClause);
-//   });
+  it('generate sparql for a just-set property', () => {
+    const sparql: string = type.getSparql(ont.sdoc.paragraph, '');
+    assert.strictEqual(sparql, insertClause);
+  });
+});
 
-//   it('commits correctly', () => {
-//     type.set(ont.sdoc.paragraph);
-//     type.commit();
-//     assert.strictEqual(type.get(), ont.sdoc.paragraph);
-//   });
+describe('Text Property', () => {
+  let text: Property;
 
-//   it('undoes correctly', () => {
-//     type.set(ont.sdoc.paragraph);
-//     type.undo();
-//     assert.strictEqual(type.get(), node.type);
-//   });
-// });
+  const deleteClause = `DELETE WHERE { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.text}> ?o } };\n`;
+  const insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.text}> "Hello world!"} };\n`;
 
-// describe('Text Property', () => {
-//   let text: TextProperty;
+  beforeEach(() => {
+    text = new Property(ont.sdoc.text, 'Text', page.id, node.id);
+  });
 
-//   const deleteClause = `DELETE WHERE { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.text}> ?o } };\n`;
-//   const insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.text}> "Hello world!"} };\n`;
+  it('parses quad as text', () => {
+    assert.strictEqual(text.fromQuad(quads[1]), node.text);
+  });
 
-//   beforeEach(() => {
-//     text = new TextProperty(ont.sdoc.text, page.id, node.id);
-//     text.fromQuad(quads[1]);
-//   });
+  it('generates sparql for update', async () => {
+    const sparql: string = text.getSparql(node.text, node.text);
+    assert.strictEqual(sparql, '');
+  });
 
-//   it('parses quad as text', () => {
-//     assert.strictEqual(text.get(), node.text);
-//   });
+  it('generates sparql for update', async () => {
+    const sparql: string = text.getSparql('Hello world!', node.text);
+    assert.strictEqual(sparql, deleteClause + insertClause);
+  });
 
-//   it('generates sparql for update', async () => {
-//     text.set('Hello world!');
-//     const sparql: string = text.getSparqlForUpdate();
-//     assert.strictEqual(sparql, deleteClause + insertClause);
-//   });
+  it('generates sparql for deletion only', async () => {
+    const sparql: string = text.getSparql('', node.text);
+    assert.strictEqual(sparql, deleteClause);
+  });
 
-//   it('generates sparql for deletion only', async () => {
-//     text.set('');
-//     const sparql: string = text.getSparqlForUpdate();
-//     assert.strictEqual(sparql, deleteClause);
-//   });
+  it('generates sparql for insertion only', async () => {
+    const sparql: string = text.getSparql('Hello world!', '');
+    assert.strictEqual(sparql, insertClause);
+  });
+});
 
-//   it('generates sparql for insertion only', async () => {
-//     text.set('');
-//     text.commit();
-//     text.set('Hello world!');
-//     const sparql: string = text.getSparqlForUpdate();
-//     assert.strictEqual(sparql, insertClause);
-//   });
-// });
+describe('Json Property', () => {
+  let options: Property;
 
-// describe('Json Property', () => {
-//   let options: JsonProperty;
+  // let deleteClause = `DELETE WHERE { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.options}> ?o } };\n`;
+  // let insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.options}> "{\\"bold\\":true,\\"size\\":25}"} };\n`;
 
-//   beforeEach(() => {
-//     options = new JsonProperty(ont.sdoc.options, page.id, node.id);
-//   });
+  beforeEach(() => {
+    options = new Property(ont.sdoc.options, 'Json', page.id, node.id);
+  });
 
-//   it('before init', () => {
-//     assert.strictEqual(options.get(), '{}');
-//   });
+  it('gets sparql after set from null', () => {
+    const sparql: string = options.getSparql(
+      JSON.stringify({ name: 'alice' }),
+      JSON.stringify({}),
+    );
+    assert.strictEqual(
+      sparql,
+      `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.options}> "{\\"name\\":\\"alice\\"}"} };\n`,
+    );
+  });
 
-//   it('gets sparql after set from null', () => {
-//     options.set(JSON.stringify({ name: 'alice' }));
-//     const sparql: string = options.getSparqlForUpdate();
-//     assert.strictEqual(
-//       sparql,
-//       `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.options}> "{\\"name\\":\\"alice\\"}"} };\n`,
-//     );
-//   });
+  // it('parses quad as json', () => {
+  //   assert.deepStrictEqual(JSON.parse(options.get()), { bold: true });
+  //   const sparql: string = options.getSparql();
 
-//   describe('after init', () => {
-//     let deleteClause = `DELETE WHERE { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.options}> ?o } };\n`;
-//     let insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.options}> "{\\"bold\\":true,\\"size\\":25}"} };\n`;
+  //   assert.strictEqual(sparql, '');
+  // });
 
-//     beforeEach(() => {
-//       options.fromQuad(quads[2]);
-//     });
+  // it('gets sparql after reseting a property', () => {
+  //   options.set('{}');
 
-//     it('parses quad as json', () => {
-//       assert.deepStrictEqual(JSON.parse(options.get()), { bold: true });
-//       const sparql: string = options.getSparqlForUpdate();
+  //   assert.deepStrictEqual(JSON.parse(options.get()), {});
+  //   assert.strictEqual(options.getSparql(), deleteClause);
+  // });
 
-//       assert.strictEqual(sparql, '');
-//     });
+  // it('gets sparql after changing a property', () => {
+  //   options.set(JSON.stringify({ bold: true, size: 25 }));
 
-//     it('gets sparql after reseting a property', () => {
-//       options.set('{}');
-
-//       assert.deepStrictEqual(JSON.parse(options.get()), {});
-//       assert.strictEqual(options.getSparqlForUpdate(), deleteClause);
-//     });
-
-//     it('gets sparql after changing a property', () => {
-//       options.set(JSON.stringify({ bold: true, size: 25 }));
-
-//       assert.strictEqual(
-//         options.getSparqlForUpdate(),
-//         deleteClause + insertClause,
-//       );
-//     });
-//   });
-// });
-
-// describe('Factory', () => {
-//   it('throws on an unknown property', () => {
-//     assert.throws(() => {
-//       Prop.create('unknown', 'unknown', 'unknown');
-//     }, /^Error: Unknown property type/);
-//   });
-// });
+  //   assert.strictEqual(options.getSparql(), deleteClause + insertClause);
+  // });
+});
