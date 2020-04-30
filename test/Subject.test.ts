@@ -1,4 +1,4 @@
-import { Branch, Root, Subject, createSubject } from '../src/Subject';
+import { Root, Subject, createSubject } from '../src/Subject';
 import { ont } from '../config/ontology';
 import { config, turtle } from '../config/test';
 import { Element } from '../src/interface';
@@ -10,16 +10,16 @@ const parser = new n3.Parser();
 let quads: any[];
 
 describe('test/Subject.test.ts', () => {
-  let branch1: Branch;
+  let branch1: Subject;
   let para1: Element;
 
-  let branch2: Branch;
+  let branch2: Subject;
   let para2: Element;
 
   beforeEach(() => {
     para1 = _.cloneDeep(config.para[1]);
     para2 = _.cloneDeep(config.para[2]);
-    branch2 = <Branch>createSubject(para2, config.page.id);
+    branch2 = createSubject(para2, config.page.id);
   });
 
   describe('Create Node', () => {
@@ -99,7 +99,7 @@ describe('test/Subject.test.ts', () => {
 
   describe('#nextNode property', () => {
     beforeEach(() => {
-      branch1 = <Branch>createSubject(para1, config.page.id);
+      branch1 = createSubject(para1, config.page.id);
     });
 
     it('setNext() is together with set("next")', () => {
@@ -166,7 +166,7 @@ describe('test/Subject.test.ts', () => {
 
   describe('undoes', () => {
     beforeEach(() => {
-      branch1 = <Branch>createSubject(config.para[1], config.page.id);
+      branch1 = createSubject(config.para[1], config.page.id);
     });
 
     it('disallows undoing a non-existOnPod node', () => {

@@ -3,7 +3,7 @@ import { ont } from '../config/ontology';
 import * as assert from 'power-assert';
 
 import { Graph } from '../src/Graph';
-import { Subject, Root, Branch } from '../src/Subject';
+import { Subject } from '../src/Subject';
 
 describe('Graph', () => {
   let graph: Graph;
@@ -20,7 +20,6 @@ describe('Graph', () => {
 
   describe('Constructor', () => {
     it('constructs the root ', () => {
-      assert(root instanceof Root);
       assert.strictEqual(root, graph.getSubject(cfg.page.id));
     });
 
@@ -28,7 +27,6 @@ describe('Graph', () => {
       let branch0 = graph.getSubject(cfg.para[0].id);
       let branch2 = graph.getSubject(cfg.para[2].id);
 
-      assert(branch0 instanceof Branch);
       assert.strictEqual(branch0.getProperty('next'), cfg.para[1].id);
       assert.strictEqual(branch2.getProperty('next'), '');
     });
@@ -37,7 +35,6 @@ describe('Graph', () => {
       let leaf0 = graph.getSubject(cfg.text[0].id);
       let leaf2 = graph.getSubject(cfg.text[2].id);
 
-      assert(leaf0 instanceof Subject);
       assert.strictEqual(leaf0.getProperty('next'), cfg.text[1].id);
       assert.strictEqual(leaf2.getProperty('next'), '');
     });

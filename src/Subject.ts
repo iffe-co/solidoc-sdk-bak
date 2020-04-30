@@ -5,7 +5,7 @@ import {
   predIdToAlias,
   predIdToType,
 } from '../config/ontology';
-import { Element, Node } from './interface';
+import { Node } from './interface';
 import * as _ from 'lodash';
 
 const createValueTemplate = () => {
@@ -67,6 +67,12 @@ class Subject {
       ...JSON.parse(this.getProperty('options')),
     };
 
+    if (Object.keys(this._predicates).includes('firstChild')) {
+      result = {
+        ...result,
+        children: [],
+      };
+    }
     Object.keys(this._predicates).forEach(alias => {
       ['next', 'firstChild', 'options', 'type'].includes(alias) ||
         (result[alias] = this.getProperty(alias));
@@ -162,16 +168,16 @@ class Subject {
   };
 }
 
-class Branch extends Subject {
-  public toJson(): Element {
-    return {
-      ...super.toJson(),
-      children: [],
-    };
-  }
-}
+// class Branch extends Subject {
+//   public toJson(): Element {
+//     return {
+//       ...super.toJson(),
+//       children: [],
+//     };
+//   }
+// }
 
-class Root extends Branch {
+class Root extends Subject {
   /**
    * Override to reject #nextNode Predicate
    */
@@ -212,7 +218,7 @@ const createSubject = (json: Node, graph: string): Subject => {
       subject = new Subject(json.id, json.type, graph);
       break;
     default:
-      subject = new Branch(json.id, json.type, graph);
+      subject = new Subject(json.id, json.type, graph);
       break;
   }
   // subject.set(json)
@@ -220,4 +226,4 @@ const createSubject = (json: Node, graph: string): Subject => {
   return subject;
 };
 
-export { Subject, Branch, Root, createSubject };
+export { Subject, Root, createSubject };
