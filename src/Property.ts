@@ -32,13 +32,13 @@ class Property {
   }
 
   private _deleteClause = (updated: string, initial: string): string => {
-    return updated === initial || initial === this._default
+    return this._equal(updated, initial) || this._equal(initial, this._default)
       ? ''
       : `DELETE WHERE { GRAPH <${this._graph}> { <${this._subject}> <${this._id}> ?o } };\n`;
   };
 
   private _insertClause = (updated: string, initial: string): string => {
-    return updated === initial || updated === this._default
+    return this._equal(updated, initial) || this._equal(updated, this._default)
       ? ''
       : `INSERT DATA { GRAPH <${this._graph}> { <${this._subject}> <${
           this._id
@@ -52,6 +52,16 @@ class Property {
       return `"${quoteEscaped}"`;
     }
     return `<${value}>`;
+  }
+
+  private _equal(a: string, b: string): boolean {
+    if (this._type === 'Json') {
+      const aJson = JSON.parse(a);
+      const bJson = JSON.parse(b);
+      return _.isEqual(aJson, bJson);
+    } else {
+      return a === b;
+    }
   }
 
   public fromQuad(quad: any): string {

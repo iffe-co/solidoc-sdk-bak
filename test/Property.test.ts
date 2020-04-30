@@ -40,7 +40,7 @@ describe('Type: a NamedNode Property', () => {
     assert.strictEqual(sparql, deleteClause);
   });
 
-  it('generate sparql for a just-set property', () => {
+  it('generate sparql for a just-added property', () => {
     const sparql: string = type.getSparql(ont.sdoc.paragraph, '');
     assert.strictEqual(sparql, insertClause);
   });
@@ -60,7 +60,7 @@ describe('Text Property', () => {
     assert.strictEqual(text.fromQuad(quads[1]), node.text);
   });
 
-  it('generates sparql for update', async () => {
+  it('generates null sparql', async () => {
     const sparql: string = text.getSparql(node.text, node.text);
     assert.strictEqual(sparql, '');
   });
@@ -84,41 +84,44 @@ describe('Text Property', () => {
 describe('Json Property', () => {
   let options: Property;
 
-  // let deleteClause = `DELETE WHERE { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.options}> ?o } };\n`;
-  // let insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.options}> "{\\"bold\\":true,\\"size\\":25}"} };\n`;
+  let deleteClause = `DELETE WHERE { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.options}> ?o } };\n`;
+  let insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.options}> "{\\"name\\":\\"alice\\",\\"age\\":25}"} };\n`;
 
   beforeEach(() => {
     options = new Property(ont.sdoc.options, 'Json', page.id, node.id);
   });
 
-  it('gets sparql after set from null', () => {
-    const sparql: string = options.getSparql(
-      JSON.stringify({ name: 'alice' }),
-      JSON.stringify({}),
-    );
-    assert.strictEqual(
-      sparql,
-      `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.options}> "{\\"name\\":\\"alice\\"}"} };\n`,
-    );
+  it('parses quad as Json', () => {
+    const parsed = JSON.parse(options.fromQuad(quads[2]));
+    assert.strictEqual(parsed.bold, node.bold);
   });
 
-  // it('parses quad as json', () => {
-  //   assert.deepStrictEqual(JSON.parse(options.get()), { bold: true });
-  //   const sparql: string = options.getSparql();
+  it('treats inputs equal in object point of view', () => {
+    const sparql: string = options.getSparql(
+      '{"name":"alice","age":25}',
+      '{"age":25,"name":"alice"}',
+    );
+    assert.strictEqual(sparql, '');
+  });
 
-  //   assert.strictEqual(sparql, '');
-  // });
+  it('gets sparql after set from null', () => {
+    const sparql: string = options.getSparql('{"name":"alice","age":25}', '{}');
+    assert.strictEqual(sparql, insertClause);
+  });
 
-  // it('gets sparql after reseting a property', () => {
-  //   options.set('{}');
+  it('gets sparql after deteting', () => {
+    const sparql: string = options.getSparql(
+      '{}',
+      '{ "name": "alice", "age": 25 }',
+    );
+    assert.strictEqual(sparql, deleteClause);
+  });
 
-  //   assert.deepStrictEqual(JSON.parse(options.get()), {});
-  //   assert.strictEqual(options.getSparql(), deleteClause);
-  // });
-
-  // it('gets sparql after changing a property', () => {
-  //   options.set(JSON.stringify({ bold: true, size: 25 }));
-
-  //   assert.strictEqual(options.getSparql(), deleteClause + insertClause);
-  // });
+  it('gets sparql after changing a property', () => {
+    const sparql: string = options.getSparql(
+      '{"name":"alice","age":25}',
+      '{"name":"alice"}',
+    );
+    assert.strictEqual(sparql, deleteClause + insertClause);
+  });
 });
