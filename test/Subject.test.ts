@@ -1,4 +1,4 @@
-import { Subject, createSubject } from '../src/Subject';
+import { Subject } from '../src/Subject';
 import { ont } from '../config/ontology';
 import { config, turtle } from '../config/test';
 import { Element } from '../src/interface';
@@ -19,7 +19,7 @@ describe('test/Subject.test.ts', () => {
   beforeEach(() => {
     para1 = _.cloneDeep(config.para[1]);
     para2 = _.cloneDeep(config.para[2]);
-    branch2 = createSubject(para2, config.page.id);
+    branch2 = new Subject(para2.id, para2.type, config.page.id);
   });
 
   describe('Create Node', () => {
@@ -99,7 +99,7 @@ describe('test/Subject.test.ts', () => {
 
   describe('#nextNode property', () => {
     beforeEach(() => {
-      branch1 = createSubject(para1, config.page.id);
+      branch1 = new Subject(para1.id, para1.type, config.page.id);
     });
 
     it('setNext() is together with set("next")', () => {
@@ -166,7 +166,11 @@ describe('test/Subject.test.ts', () => {
 
   describe('undoes', () => {
     beforeEach(() => {
-      branch1 = createSubject(config.para[1], config.page.id);
+      branch1 = new Subject(
+        config.para[1].id,
+        config.para[1].type,
+        config.page.id,
+      );
     });
 
     it('disallows undoing a non-existOnPod node', () => {
@@ -202,7 +206,7 @@ describe('Root', () => {
 
   beforeEach(() => {
     page = _.cloneDeep(config.page);
-    root = createSubject(page, config.page.id);
+    root = new Subject(page.id, page.type, config.page.id);
   });
 
   it('sets title', () => {
@@ -251,7 +255,7 @@ describe('Leaf', () => {
   const quads: any[] = parser.parse(turtle.text[8]);
 
   beforeEach(() => {
-    leaf = createSubject(text, config.page.id);
+    leaf = new Subject(text.id, text.type, config.page.id);
     quads.forEach(quad => leaf.fromQuad(quad));
   });
 

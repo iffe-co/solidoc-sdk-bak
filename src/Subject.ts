@@ -1,6 +1,5 @@
 import { Predicate } from './Predicate';
 import {
-  ont,
   subjTypeToPredArray,
   predIdToAlias,
   predIdToType,
@@ -171,22 +170,4 @@ class Subject {
   };
 }
 
-const createSubject = (json: Node, graph: string): Subject => {
-  let subject: Subject;
-  switch (json.type) {
-    case ont.sdoc.root:
-      subject = new Subject(json.id, json.type, graph);
-      break;
-    case ont.sdoc.leaf:
-      subject = new Subject(json.id, json.type, graph);
-      break;
-    default:
-      subject = new Subject(json.id, json.type, graph);
-      break;
-  }
-  // subject.set(json)
-
-  return subject;
-};
-
-export { Subject, createSubject };
+export { Subject };

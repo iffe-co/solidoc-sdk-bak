@@ -1,4 +1,4 @@
-import { Subject, createSubject } from './Subject';
+import { Subject } from './Subject';
 import { ont } from '../config/ontology';
 import { Node } from './interface';
 import * as n3 from 'n3';
@@ -55,12 +55,12 @@ class Graph {
     return subject;
   };
 
-  public createSubject = (json: Node): Subject => {
-    if (this._subjectMap.get(json.id)) {
-      throw new Error('duplicated subject creation: ' + json.id);
+  public createSubject = (node: Node): Subject => {
+    if (this._subjectMap.get(node.id)) {
+      throw new Error('duplicated subject creation: ' + node.id);
     }
-    let subject = createSubject(json, this._id);
-    this._subjectMap.set(json.id, subject);
+    let subject = new Subject(node.id, node.type, this._id);
+    this._subjectMap.set(node.id, subject);
     return subject;
   };
 
