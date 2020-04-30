@@ -92,7 +92,7 @@ class Subject {
   public setProperty(alias: string, value: string) {
     if (!this._predicates[alias]) {
       // TODO: get from options?
-      throw new Error('Try to get an unknown Predicate: ' + this._id + alias);
+      throw new Error('Try to set an unknown Predicate: ' + this._id + alias);
     }
     this._valuesUpdated[alias] = value;
   }
@@ -152,6 +152,9 @@ class Subject {
   }
 
   public delete() {
+    if (this._id === this._graph) {
+      throw new Error('The root is not removable :' + this._id);
+    }
     this._isDeleted = true;
   }
 
@@ -168,51 +171,11 @@ class Subject {
   };
 }
 
-// class Branch extends Subject {
-//   public toJson(): Element {
-//     return {
-//       ...super.toJson(),
-//       children: [],
-//     };
-//   }
-// }
-
-class Root extends Subject {
-  /**
-   * Override to reject #nextNode Predicate
-   */
-  public fromQuad(quad: any) {
-    if (quad.predicate.id === ont.sdoc.next) {
-      throw new Error('fromQuad: The root may not have syblings: ' + this._id);
-    }
-    super.fromQuad(quad);
-  }
-
-  /**
-   * Override to prevent setting "next"
-   */
-  public setProperty(alias: string, value: string) {
-    if (alias === 'next') {
-      throw new Error(
-        'setProperty: The root may not have syblings: ' + this._id,
-      );
-    }
-    super.setProperty(alias, value);
-  }
-
-  /**
-   * Override to prevent deletion
-   */
-  public delete() {
-    throw new Error('The root is not removable :' + this._id);
-  }
-}
-
 const createSubject = (json: Node, graph: string): Subject => {
   let subject: Subject;
   switch (json.type) {
     case ont.sdoc.root:
-      subject = new Root(json.id, json.type, graph);
+      subject = new Subject(json.id, json.type, graph);
       break;
     case ont.sdoc.leaf:
       subject = new Subject(json.id, json.type, graph);
@@ -226,4 +189,4 @@ const createSubject = (json: Node, graph: string): Subject => {
   return subject;
 };
 
-export { Subject, Root, createSubject };
+export { Subject, createSubject };

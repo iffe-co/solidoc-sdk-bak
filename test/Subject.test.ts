@@ -1,4 +1,4 @@
-import { Root, Subject, createSubject } from '../src/Subject';
+import { Subject, createSubject } from '../src/Subject';
 import { ont } from '../config/ontology';
 import { config, turtle } from '../config/test';
 import { Element } from '../src/interface';
@@ -198,11 +198,11 @@ describe('test/Subject.test.ts', () => {
 
 describe('Root', () => {
   let page;
-  let root: Root;
+  let root: Subject;
 
   beforeEach(() => {
     page = _.cloneDeep(config.page);
-    root = <Root>createSubject(page, config.page.id);
+    root = createSubject(page, config.page.id);
   });
 
   it('sets title', () => {
@@ -227,15 +227,15 @@ describe('Root', () => {
     let turtle = `<${page.id}> <${ont.sdoc.next}> <${config.para[0].id}>.`;
     let quads = parser.parse(turtle);
 
-    assert.throws(() => {
+    assert.doesNotThrow(() => {
       root.fromQuad(quads[0]);
-    }, /^Error: fromQuad: The root may not have syblings/);
+    });
   });
 
   it('throws on set("next")', () => {
     assert.throws(() => {
       root.setProperty('next', config.para[1].id);
-    }, /^Error: setProperty: The root may not have syblings/);
+    }, /^Error: Try to set an unknown Predicate/);
   });
 
   it('disallows deletion', () => {
