@@ -1,5 +1,10 @@
 import { Predicate } from './Predicate';
-import { ont, predIdToAlias } from '../config/ontology';
+import {
+  ont,
+  subjTypeToPredArray,
+  predIdToAlias,
+  predIdToType,
+} from '../config/ontology';
 import { Element, Node } from './interface';
 import * as _ from 'lodash';
 
@@ -14,6 +19,7 @@ const createValueTemplate = () => {
 
 class Subject {
   protected _id: string;
+  protected _type: string;
   protected _graph: string;
   protected _predicates: { [key: string]: Predicate } = {};
   private _isDeleted: boolean = false;
@@ -22,28 +28,28 @@ class Subject {
   protected _valuesUpdated: any = createValueTemplate();
   protected _valuesFromPod: any = createValueTemplate();
 
-  constructor(id: string, graph: string) {
+  constructor(id: string, type: string, graph: string) {
     this._id = id;
+    this._type = type;
     this._graph = graph;
     this._valuesUpdated.id = this._valuesFromPod.id = id;
-    this._predicates.type = new Predicate(
-      ont.rdf.type,
-      'NamedNode',
-      this._graph,
-      this._id,
-    );
-    this._predicates.options = new Predicate(
-      ont.sdoc.options,
-      'Json',
-      this._graph,
-      this._id,
-    );
-    this._predicates.next = new Predicate(
-      ont.sdoc.next,
-      'NamedNode',
-      this._graph,
-      this._id,
-    );
+    this._createPredicates();
+  }
+
+  private _createPredicates() {
+    const predIdArray: string[] = subjTypeToPredArray[this._type];
+    this._predicates = {};
+    predIdArray.forEach(predId => {
+      const alias = predIdToAlias[predId];
+      this._valuesFromPod[alias] = this._valuesUpdated[alias] =
+        predIdToType[predId] === 'Json' ? '{}' : '';
+      this._predicates[alias] = new Predicate(
+        predId,
+        predIdToType[predId],
+        this._graph,
+        this._id,
+      );
+    });
   }
 
   public fromQuad(quad: any) {
@@ -158,17 +164,6 @@ class Subject {
 }
 
 class Branch extends Subject {
-  constructor(id: string, graph: string) {
-    super(id, graph);
-    this._valuesUpdated.firstChild = this._valuesFromPod.firstChild = '';
-    this._predicates.firstChild = new Predicate(
-      ont.sdoc.firstChild,
-      'NamedNode',
-      this._graph,
-      this._id,
-    );
-  }
-
   public toJson(): Element {
     return {
       ...super.toJson(),
@@ -178,17 +173,6 @@ class Branch extends Subject {
 }
 
 class Root extends Branch {
-  constructor(id: string, graph: string) {
-    super(id, graph);
-    this._valuesUpdated.title = this._valuesFromPod.title = '';
-    this._predicates.title = new Predicate(
-      ont.dct.title,
-      'Text',
-      this._graph,
-      this._id,
-    );
-  }
-
   /**
    * Override to reject #nextNode Predicate
    */
@@ -219,31 +203,19 @@ class Root extends Branch {
   }
 }
 
-class Leaf extends Subject {
-  constructor(id: string, graph: string) {
-    // TODO: using blank nodes
-    super(id, graph);
-    this._valuesUpdated.text = this._valuesFromPod.text = '';
-    this._predicates.text = new Predicate(
-      ont.sdoc.text,
-      'Text',
-      this._graph,
-      this._id,
-    );
-  }
-}
+class Leaf extends Subject {}
 
 const createSubject = (json: Node, graph: string): Subject => {
   let subject: Subject;
   switch (json.type) {
     case ont.sdoc.root:
-      subject = new Root(json.id, graph);
+      subject = new Root(json.id, json.type, graph);
       break;
     case ont.sdoc.leaf:
-      subject = new Leaf(json.id, graph);
+      subject = new Leaf(json.id, json.type, graph);
       break;
     default:
-      subject = new Branch(json.id, graph);
+      subject = new Branch(json.id, json.type, graph);
       break;
   }
   // subject.set(json)
