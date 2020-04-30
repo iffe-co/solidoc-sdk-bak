@@ -1,5 +1,5 @@
 import { Predicate } from './Predicate';
-import { ont, idToAlias } from '../config/ontology';
+import { ont, predIdToAlias } from '../config/ontology';
 import { Element, Node } from './interface';
 import * as _ from 'lodash';
 
@@ -47,7 +47,7 @@ class Subject {
   }
 
   public fromQuad(quad: any) {
-    const alias = idToAlias[quad.predicate.id];
+    const alias = predIdToAlias[quad.predicate.id];
     if (!alias || !this._predicates[alias]) {
       return;
     }

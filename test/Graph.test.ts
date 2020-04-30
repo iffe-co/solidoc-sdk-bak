@@ -89,7 +89,7 @@ describe('Graph', () => {
       let tempId = cfg.page.id + '#temp';
       let subject = graph.createSubject({
         id: tempId,
-        type: ont.sdoc.branch,
+        type: ont.sdoc.paragraph,
         children: [],
       });
       subject.insert();
