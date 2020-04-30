@@ -1,4 +1,4 @@
-import { Property } from './Property';
+import { Predicate } from './Predicate';
 import { ont, idToAlias } from '../config/ontology';
 import { Element, Node } from './interface';
 import * as _ from 'lodash';
@@ -15,7 +15,7 @@ const createValueTemplate = () => {
 class Subject {
   protected _id: string;
   protected _graph: string;
-  protected _predicates: { [key: string]: Property } = {};
+  protected _predicates: { [key: string]: Predicate } = {};
   private _isDeleted: boolean = false;
   private _isInserted: boolean = false;
 
@@ -26,19 +26,19 @@ class Subject {
     this._id = id;
     this._graph = graph;
     this._valuesUpdated.id = this._valuesFromPod.id = id;
-    this._predicates.type = new Property(
+    this._predicates.type = new Predicate(
       ont.rdf.type,
       'NamedNode',
       this._graph,
       this._id,
     );
-    this._predicates.options = new Property(
+    this._predicates.options = new Predicate(
       ont.sdoc.options,
       'Json',
       this._graph,
       this._id,
     );
-    this._predicates.next = new Property(
+    this._predicates.next = new Predicate(
       ont.sdoc.next,
       'NamedNode',
       this._graph,
@@ -73,7 +73,7 @@ class Subject {
   public getProperty(alias: string): string {
     if (alias !== 'id' && !this._predicates[alias]) {
       // TODO: get from options?
-      throw new Error('Try to get an unknown property: ' + this._id + alias);
+      throw new Error('Try to get an unknown Predicate: ' + this._id + alias);
     }
     return this._valuesUpdated[alias];
   }
@@ -81,7 +81,7 @@ class Subject {
   public setProperty(alias: string, value: string) {
     if (!this._predicates[alias]) {
       // TODO: get from options?
-      throw new Error('Try to get an unknown property: ' + this._id + alias);
+      throw new Error('Try to get an unknown Predicate: ' + this._id + alias);
     }
     this._valuesUpdated[alias] = value;
   }
@@ -161,7 +161,7 @@ class Branch extends Subject {
   constructor(id: string, graph: string) {
     super(id, graph);
     this._valuesUpdated.firstChild = this._valuesFromPod.firstChild = '';
-    this._predicates.firstChild = new Property(
+    this._predicates.firstChild = new Predicate(
       ont.sdoc.firstChild,
       'NamedNode',
       this._graph,
@@ -181,7 +181,7 @@ class Root extends Branch {
   constructor(id: string, graph: string) {
     super(id, graph);
     this._valuesUpdated.title = this._valuesFromPod.title = '';
-    this._predicates.title = new Property(
+    this._predicates.title = new Predicate(
       ont.dct.title,
       'Text',
       this._graph,
@@ -190,7 +190,7 @@ class Root extends Branch {
   }
 
   /**
-   * Override to reject #nextNode property
+   * Override to reject #nextNode Predicate
    */
   public fromQuad(quad: any) {
     if (quad.predicate.id === ont.sdoc.next) {
@@ -224,7 +224,7 @@ class Leaf extends Subject {
     // TODO: using blank nodes
     super(id, graph);
     this._valuesUpdated.text = this._valuesFromPod.text = '';
-    this._predicates.text = new Property(
+    this._predicates.text = new Predicate(
       ont.sdoc.text,
       'Text',
       this._graph,

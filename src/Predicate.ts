@@ -1,6 +1,6 @@
 import * as _ from 'lodash';
 
-class Property {
+class Predicate {
   private _id: string;
   private _type: 'NamedNode' | 'Text' | 'Json';
   private _graph: string;
@@ -73,4 +73,4 @@ class Property {
   }
 }
 
-export { Property };
+export { Predicate };

@@ -1,4 +1,4 @@
-import { Property } from '../src/Property';
+import { Predicate } from '../src/Predicate';
 import { ont } from '../config/ontology';
 import { config, turtle } from '../config/test';
 import * as assert from 'power-assert';
@@ -11,14 +11,14 @@ const page = config.page;
 
 const quads: any[] = parser.parse(turtle.text[8]);
 
-describe('Type: a NamedNode Property', () => {
-  let type: Property;
+describe('Type: a NamedNode Predicate', () => {
+  let type: Predicate;
 
   const deleteClause = `DELETE WHERE { GRAPH <${page.id}> { <${node.id}> <${ont.rdf.type}> ?o } };\n`;
   const insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.rdf.type}> <${ont.sdoc.paragraph}>} };\n`;
 
   beforeEach(() => {
-    type = new Property(ont.rdf.type, 'NamedNode', page.id, node.id);
+    type = new Predicate(ont.rdf.type, 'NamedNode', page.id, node.id);
   });
 
   it('parses quad as a named node', () => {
@@ -30,30 +30,30 @@ describe('Type: a NamedNode Property', () => {
     assert.strictEqual(sparql, '');
   });
 
-  it('generate sparql for updated property', () => {
+  it('generate sparql for updated Predicate', () => {
     const sparql: string = type.getSparql(ont.sdoc.paragraph, node.type);
     assert.strictEqual(sparql, deleteClause + insertClause);
   });
 
-  it('generate sparql for deleted property', () => {
+  it('generate sparql for deleted Predicate', () => {
     const sparql: string = type.getSparql('', node.type);
     assert.strictEqual(sparql, deleteClause);
   });
 
-  it('generate sparql for a just-added property', () => {
+  it('generate sparql for a just-added Predicate', () => {
     const sparql: string = type.getSparql(ont.sdoc.paragraph, '');
     assert.strictEqual(sparql, insertClause);
   });
 });
 
-describe('Text Property', () => {
-  let text: Property;
+describe('Text Predicate', () => {
+  let text: Predicate;
 
   const deleteClause = `DELETE WHERE { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.text}> ?o } };\n`;
   const insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.text}> "Hello world!"} };\n`;
 
   beforeEach(() => {
-    text = new Property(ont.sdoc.text, 'Text', page.id, node.id);
+    text = new Predicate(ont.sdoc.text, 'Text', page.id, node.id);
   });
 
   it('parses quad as text', () => {
@@ -81,14 +81,14 @@ describe('Text Property', () => {
   });
 });
 
-describe('Json Property', () => {
-  let options: Property;
+describe('Json Predicate', () => {
+  let options: Predicate;
 
   let deleteClause = `DELETE WHERE { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.options}> ?o } };\n`;
   let insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.options}> "{\\"name\\":\\"alice\\",\\"age\\":25}"} };\n`;
 
   beforeEach(() => {
-    options = new Property(ont.sdoc.options, 'Json', page.id, node.id);
+    options = new Predicate(ont.sdoc.options, 'Json', page.id, node.id);
   });
 
   it('parses quad as Json', () => {
@@ -117,7 +117,7 @@ describe('Json Property', () => {
     assert.strictEqual(sparql, deleteClause);
   });
 
-  it('gets sparql after changing a property', () => {
+  it('gets sparql after changing a Predicate', () => {
     const sparql: string = options.getSparql(
       '{"name":"alice","age":25}',
       '{"name":"alice"}',
