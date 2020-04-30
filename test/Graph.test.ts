@@ -3,7 +3,7 @@ import { ont } from '../config/ontology';
 import * as assert from 'power-assert';
 
 import { Graph } from '../src/Graph';
-import { Subject, Root, Branch, Leaf } from '../src/Subject';
+import { Subject, Root, Branch } from '../src/Subject';
 
 describe('Graph', () => {
   let graph: Graph;
@@ -37,7 +37,7 @@ describe('Graph', () => {
       let leaf0 = graph.getSubject(cfg.text[0].id);
       let leaf2 = graph.getSubject(cfg.text[2].id);
 
-      assert(leaf0 instanceof Leaf);
+      assert(leaf0 instanceof Subject);
       assert.strictEqual(leaf0.getProperty('next'), cfg.text[1].id);
       assert.strictEqual(leaf2.getProperty('next'), '');
     });

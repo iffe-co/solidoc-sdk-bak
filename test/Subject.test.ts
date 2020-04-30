@@ -1,4 +1,4 @@
-import { Branch, Root, Leaf, createSubject } from '../src/Subject';
+import { Branch, Root, Subject, createSubject } from '../src/Subject';
 import { ont } from '../config/ontology';
 import { config, turtle } from '../config/test';
 import { Element } from '../src/interface';
@@ -246,12 +246,12 @@ describe('Root', () => {
 });
 
 describe('Leaf', () => {
-  let leaf: Leaf;
+  let leaf: Subject;
   const text = config.text[8];
   const quads: any[] = parser.parse(turtle.text[8]);
 
   beforeEach(() => {
-    leaf = <Leaf>createSubject(text, config.page.id);
+    leaf = createSubject(text, config.page.id);
     quads.forEach(quad => leaf.fromQuad(quad));
   });
 

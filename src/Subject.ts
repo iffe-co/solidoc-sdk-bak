@@ -13,7 +13,6 @@ const createValueTemplate = () => {
     id: '',
     type: '',
     options: '{}',
-    next: '',
   };
 };
 
@@ -203,8 +202,6 @@ class Root extends Branch {
   }
 }
 
-class Leaf extends Subject {}
-
 const createSubject = (json: Node, graph: string): Subject => {
   let subject: Subject;
   switch (json.type) {
@@ -212,7 +209,7 @@ const createSubject = (json: Node, graph: string): Subject => {
       subject = new Root(json.id, json.type, graph);
       break;
     case ont.sdoc.leaf:
-      subject = new Leaf(json.id, json.type, graph);
+      subject = new Subject(json.id, json.type, graph);
       break;
     default:
       subject = new Branch(json.id, json.type, graph);
@@ -223,4 +220,4 @@ const createSubject = (json: Node, graph: string): Subject => {
   return subject;
 };
 
-export { Subject, Branch, Root, Leaf, createSubject };
+export { Subject, Branch, Root, createSubject };
