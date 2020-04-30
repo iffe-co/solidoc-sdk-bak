@@ -128,8 +128,12 @@ const predIdToAlias = {
   'http://purl.org/dc/terms/title': 'title',
   'http://www.solidoc.net/ontologies#firstChild': 'firstChild',
   'http://www.solidoc.net/ontologies#nextNode': 'next',
-  'http://www.solidoc.net/ontologies#options': 'options',
   'http://www.solidoc.net/ontologies#text': 'text',
+  'http://www.solidoc.net/ontologies#options': 'options',
+  'http://www.solidoc.net/ontologies#checked': 'checked',
+  'http://www.solidoc.net/ontologies#language': 'language',
+  'http://www.solidoc.net/ontologies#formula': 'formula',
+  'http://www.solidoc.net/ontologies#hintState': 'hintState',
 };
 
 const predIdToType = {
@@ -137,8 +141,12 @@ const predIdToType = {
   'http://purl.org/dc/terms/title': 'Text',
   'http://www.solidoc.net/ontologies#firstChild': 'NamedNode',
   'http://www.solidoc.net/ontologies#nextNode': 'NamedNode',
-  'http://www.solidoc.net/ontologies#options': 'Json',
   'http://www.solidoc.net/ontologies#text': 'Text',
+  'http://www.solidoc.net/ontologies#options': 'Json',
+  'http://www.solidoc.net/ontologies#checked': 'Boolean',
+  'http://www.solidoc.net/ontologies#language': 'Text', // TODO: better be NamedNode
+  'http://www.solidoc.net/ontologies#formula': 'Text',
+  'http://www.solidoc.net/ontologies#hintState': 'Text',
 };
 
 export { ont, predIdToAlias, predIdToType, subjTypeToPredArray };
