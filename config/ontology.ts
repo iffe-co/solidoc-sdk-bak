@@ -3,7 +3,7 @@ const idToAlias = {
   'http://purl.org/dc/terms/title': 'title',
   'http://www.solidoc.net/ontologies#firstChild': 'firstChild',
   'http://www.solidoc.net/ontologies#nextNode': 'next',
-  'http://www.solidoc.net/ontologies#option': 'option',
+  'http://www.solidoc.net/ontologies#options': 'options',
   'http://www.solidoc.net/ontologies#text': 'text',
 };
 
@@ -12,7 +12,7 @@ const idToType = {
   'http://purl.org/dc/terms/title': 'Text',
   'http://www.solidoc.net/ontologies#firstChild': 'NamedNode',
   'http://www.solidoc.net/ontologies#nextNode': 'NamedNode',
-  'http://www.solidoc.net/ontologies#option': 'Json',
+  'http://www.solidoc.net/ontologies#options': 'Json',
   'http://www.solidoc.net/ontologies#text': 'Text',
 };
 
@@ -27,7 +27,7 @@ const ont = {
     firstChild: 'http://www.solidoc.net/ontologies#firstChild',
     next: 'http://www.solidoc.net/ontologies#nextNode',
     text: 'http://www.solidoc.net/ontologies#text',
-    option: 'http://www.solidoc.net/ontologies#option',
+    options: 'http://www.solidoc.net/ontologies#options',
     root: 'http://www.solidoc.net/ontologies#Root',
     leaf: 'http://www.solidoc.net/ontologies#Leaf',
     branch: 'http://www.solidoc.net/ontologies#Branch',

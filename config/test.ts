@@ -63,5 +63,5 @@ for (let i = 0; i < 9; i++) {
     turtle.text[i] += `  <${ont.sdoc.next}> <${config.text[i + 1].id}>;`;
   }
   turtle.text[i] += `  <${ont.sdoc.text}> '${config.text[i].text}';`;
-  turtle.text[i] += `  <${ont.sdoc.option}> '{"bold":true}'.`;
+  turtle.text[i] += `  <${ont.sdoc.options}> '{"bold":true}'.`;
 }

@@ -7,7 +7,7 @@ const createValueTemplate = () => {
   return {
     id: '',
     type: '',
-    option: '{}',
+    options: '{}',
     next: '',
   };
 };
@@ -32,8 +32,8 @@ class Subject {
       this._graph,
       this._id,
     );
-    this._predicates.option = new Property(
-      ont.sdoc.option,
+    this._predicates.options = new Property(
+      ont.sdoc.options,
       'Json',
       this._graph,
       this._id,
@@ -59,11 +59,11 @@ class Subject {
     let result = {
       id: this._id,
       type: this.getProperty('type'),
-      ...JSON.parse(this.getProperty('option')),
+      ...JSON.parse(this.getProperty('options')),
     };
 
     Object.keys(this._predicates).forEach(alias => {
-      ['next', 'firstChild', 'option', 'type'].includes(alias) ||
+      ['next', 'firstChild', 'options', 'type'].includes(alias) ||
         (result[alias] = this.getProperty(alias));
     });
 
@@ -101,7 +101,7 @@ class Subject {
         newOptions[alias] = node[alias];
       }
     });
-    this.setProperty('option', JSON.stringify(newOptions));
+    this.setProperty('options', JSON.stringify(newOptions));
   }
 
   public getSparqlForUpdate = (): string => {

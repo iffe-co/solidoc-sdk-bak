@@ -106,52 +106,52 @@
 // });
 
 // describe('Json Property', () => {
-//   let option: JsonProperty;
+//   let options: JsonProperty;
 
 //   beforeEach(() => {
-//     option = new JsonProperty(ont.sdoc.option, page.id, node.id);
+//     options = new JsonProperty(ont.sdoc.options, page.id, node.id);
 //   });
 
 //   it('before init', () => {
-//     assert.strictEqual(option.get(), '{}');
+//     assert.strictEqual(options.get(), '{}');
 //   });
 
 //   it('gets sparql after set from null', () => {
-//     option.set(JSON.stringify({ name: 'alice' }));
-//     const sparql: string = option.getSparqlForUpdate();
+//     options.set(JSON.stringify({ name: 'alice' }));
+//     const sparql: string = options.getSparqlForUpdate();
 //     assert.strictEqual(
 //       sparql,
-//       `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.option}> "{\\"name\\":\\"alice\\"}"} };\n`,
+//       `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.options}> "{\\"name\\":\\"alice\\"}"} };\n`,
 //     );
 //   });
 
 //   describe('after init', () => {
-//     let deleteClause = `DELETE WHERE { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.option}> ?o } };\n`;
-//     let insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.option}> "{\\"bold\\":true,\\"size\\":25}"} };\n`;
+//     let deleteClause = `DELETE WHERE { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.options}> ?o } };\n`;
+//     let insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.options}> "{\\"bold\\":true,\\"size\\":25}"} };\n`;
 
 //     beforeEach(() => {
-//       option.fromQuad(quads[2]);
+//       options.fromQuad(quads[2]);
 //     });
 
 //     it('parses quad as json', () => {
-//       assert.deepStrictEqual(JSON.parse(option.get()), { bold: true });
-//       const sparql: string = option.getSparqlForUpdate();
+//       assert.deepStrictEqual(JSON.parse(options.get()), { bold: true });
+//       const sparql: string = options.getSparqlForUpdate();
 
 //       assert.strictEqual(sparql, '');
 //     });
 
 //     it('gets sparql after reseting a property', () => {
-//       option.set('{}');
+//       options.set('{}');
 
-//       assert.deepStrictEqual(JSON.parse(option.get()), {});
-//       assert.strictEqual(option.getSparqlForUpdate(), deleteClause);
+//       assert.deepStrictEqual(JSON.parse(options.get()), {});
+//       assert.strictEqual(options.getSparqlForUpdate(), deleteClause);
 //     });
 
 //     it('gets sparql after changing a property', () => {
-//       option.set(JSON.stringify({ bold: true, size: 25 }));
+//       options.set(JSON.stringify({ bold: true, size: 25 }));
 
 //       assert.strictEqual(
-//         option.getSparqlForUpdate(),
+//         options.getSparqlForUpdate(),
 //         deleteClause + insertClause,
 //       );
 //     });
