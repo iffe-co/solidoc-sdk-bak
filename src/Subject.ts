@@ -119,11 +119,11 @@ class Subject {
       return `DELETE WHERE { GRAPH <${this._graph}> { <${this._id}> ?p ?o } };\n`;
     } else {
       let sparql = '';
-      Object.keys(this._predicates).forEach(predId => {
-        sparql += this._predicates[predId].getSparql(
+      Object.values(this._predicates).forEach(pred => {
+        sparql += pred.getSparql(
           this._id,
-          this._valuesUpdated[predId],
-          this._valuesFromPod[predId],
+          this._valuesUpdated[pred.id],
+          this._valuesFromPod[pred.id],
         );
       });
       return sparql;

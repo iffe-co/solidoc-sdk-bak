@@ -12,6 +12,14 @@ class Predicate {
     this.setType(type);
   }
 
+  public get id(): string {
+    return this._id;
+  }
+
+  public get default(): string {
+    return this._default;
+  }
+
   public setType(type: 'NamedNode' | 'Text') {
     this._type = type;
     this._default = '';
