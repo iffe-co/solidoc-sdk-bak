@@ -3,6 +3,7 @@ import {
   subjTypeToPredArray,
   predIdToAlias,
   predIdToType,
+  ont,
 } from '../config/ontology';
 import { Node } from './interface';
 import * as _ from 'lodash';
@@ -34,7 +35,7 @@ class Subject {
   }
 
   private _createPredicates() {
-    const predIdArray: string[] = subjTypeToPredArray[this._type];
+    const predIdArray: string[] = subjTypeToPredArray;
     this._predicates = {};
     predIdArray.forEach(predId => {
       const alias = predIdToAlias[predId];
@@ -65,11 +66,12 @@ class Subject {
       children: [],
     };
 
-    if (!Object.keys(this._predicates).includes('firstChild')) {
+    if (this._type === ont.sdoc.leaf) {
       delete result.children;
     }
     Object.keys(this._predicates).forEach(alias => {
       ['next', 'firstChild', 'type'].includes(alias) ||
+        this.getProperty(alias) === '' ||
         (result[alias] = this.getProperty(alias));
     });
 
@@ -87,6 +89,7 @@ class Subject {
     if (!this._predicates[alias]) {
       throw new Error('Try to set an unknown Predicate: ' + this._id + alias);
     }
+    // TODO: should throw on getting 'next' for Root?
     this._valuesUpdated[alias] = value;
   }
 

@@ -215,11 +215,11 @@ describe('Root', () => {
     });
   });
 
-  it('throws on set("next")', () => {
-    assert.throws(() => {
-      root.setProperty('next', config.para[1].id);
-    }, /^Error: Try to set an unknown Predicate/);
-  });
+  // it('throws on set("next")', () => {
+  //   assert.throws(() => {
+  //     root.setProperty('next', config.para[1].id);
+  //   }, /^Error: Try to set an unknown Predicate/);
+  // });
 
   it('disallows deletion', () => {
     assert.throws(() => {

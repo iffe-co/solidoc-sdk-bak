@@ -31,82 +31,17 @@ const ont = {
   },
 };
 
-const subjTypeToPredArray = {
-  'http://www.solidoc.net/ontologies#Root': [
-    ont.rdf.type,
-    ont.dct.title,
-    ont.sdoc.firstChild,
-  ],
-  'http://www.solidoc.net/ontologies#Leaf': [
-    ont.rdf.type,
-    ont.sdoc.text,
-    ont.sdoc.next,
-  ],
-  'http://www.solidoc.net/ontologies#Heading1': [
-    ont.rdf.type,
-    ont.sdoc.firstChild,
-    ont.sdoc.next,
-  ],
-  'http://www.solidoc.net/ontologies#Heading2': [
-    ont.rdf.type,
-    ont.sdoc.firstChild,
-    ont.sdoc.next,
-  ],
-  'http://www.solidoc.net/ontologies#Heading3': [
-    ont.rdf.type,
-    ont.sdoc.firstChild,
-    ont.sdoc.next,
-  ],
-  'http://www.solidoc.net/ontologies#Paragraph': [
-    ont.rdf.type,
-    ont.sdoc.firstChild,
-    ont.sdoc.next,
-  ],
-  'http://www.solidoc.net/ontologies#NumberedList': [
-    ont.rdf.type,
-    ont.sdoc.firstChild,
-    ont.sdoc.next,
-  ],
-  'http://www.solidoc.net/ontologies#BulletedList': [
-    ont.rdf.type,
-    ont.sdoc.firstChild,
-    ont.sdoc.next,
-  ],
-  'http://www.solidoc.net/ontologies#TaskList': [
-    ont.rdf.type,
-    ont.sdoc.firstChild,
-    ont.sdoc.next,
-    ont.sdoc.checked,
-  ],
-  'http://www.solidoc.net/ontologies#MathEquation': [
-    ont.rdf.type,
-    ont.sdoc.firstChild,
-    ont.sdoc.next,
-    ont.sdoc.formula,
-  ],
-  'http://www.solidoc.net/ontologies#Pre': [
-    ont.rdf.type,
-    ont.sdoc.firstChild,
-    ont.sdoc.next,
-    ont.sdoc.language,
-  ],
-  'http://www.solidoc.net/ontologies#Quote': [
-    ont.rdf.type,
-    ont.sdoc.firstChild,
-    ont.sdoc.next,
-  ],
-  'http://www.solidoc.net/ontologies#Hint': [
-    ont.rdf.type,
-    ont.sdoc.firstChild,
-    ont.sdoc.next,
-    ont.sdoc.hintState,
-  ],
-  'http://www.solidoc.net/ontologies#Divider': [
-    ont.rdf.type,
-    ont.sdoc.firstChild,
-    ont.sdoc.next,
-  ],
-};
+const subjTypeToPredArray = [
+  ont.rdf.type,
+  ont.dct.title,
+  ont.sdoc.firstChild,
+  ont.sdoc.next,
+  ont.sdoc.text,
+  ont.sdoc.checked,
+  ont.sdoc.language,
+  ont.sdoc.formula,
+  ont.sdoc.hintState,
+];
 
 const predIdToAlias = {
   'http://www.w3.org/1999/02/22-rdf-syntax-ns#type': 'type',
@@ -126,7 +61,7 @@ const predIdToType = {
   'http://www.solidoc.net/ontologies#firstChild': 'NamedNode',
   'http://www.solidoc.net/ontologies#nextNode': 'NamedNode',
   'http://www.solidoc.net/ontologies#text': 'Text',
-  'http://www.solidoc.net/ontologies#checked': 'Boolean',
+  'http://www.solidoc.net/ontologies#checked': 'Text', // TODO: should be Boolean
   'http://www.solidoc.net/ontologies#language': 'Text', // TODO: better be NamedNode
   'http://www.solidoc.net/ontologies#formula': 'Text',
   'http://www.solidoc.net/ontologies#hintState': 'Text',
