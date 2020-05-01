@@ -51,11 +51,10 @@ class Subject {
   };
 
   public fromQuad(quad: any) {
-    const alias = predIdToAlias[quad.predicate.id];
-    if (!alias || !this._predicates[alias]) {
+    if (!this._predicates[quad.predicate.id]) {
       return;
     }
-    const value: string = this._predicates[alias].fromQuad(quad);
+    const value: string = this._predicates[quad.predicate.id].fromQuad(quad);
     this._valuesFromPod[quad.predicate.id] = value;
     this._valuesUpdated[quad.predicate.id] = value;
   }
@@ -70,9 +69,9 @@ class Subject {
     if (this._type === ont.sdoc.leaf) {
       delete result.children;
     }
-    Object.keys(this._predicates).forEach(alias => {
-      const predId = aliasToPredId[alias];
-      ['next', 'firstChild', 'type'].includes(alias) ||
+    Object.keys(this._predicates).forEach(predId => {
+      const alias = predIdToAlias[predId];
+      [ont.sdoc.next, ont.sdoc.firstChild, ont.rdf.type].includes(predId) ||
         this.getProperty(predId) === '' ||
         (result[alias] = this.getProperty(predId));
     });
@@ -84,17 +83,15 @@ class Subject {
     if (predId === 'id') {
       return this._id;
     }
-    const alias = predIdToAlias[predId];
-    if (alias !== 'id' && !this._predicates[alias]) {
-      throw new Error('Try to get an unknown Predicate: ' + this._id + alias);
+    if (!this._predicates[predId]) {
+      throw new Error('Try to get an unknown Predicate: ' + this._id + predId);
     }
     return this._valuesUpdated[predId];
   }
 
   public setProperty(predId: string, value: string) {
-    const alias = predIdToAlias[predId];
-    if (!this._predicates[alias]) {
-      throw new Error('Try to set an unknown Predicate: ' + this._id + alias);
+    if (!this._predicates[predId]) {
+      throw new Error('Try to set an unknown Predicate: ' + this._id + predId);
     }
     // TODO: should throw on getting 'next' for Root?
     this._valuesUpdated[predId] = value;
@@ -108,7 +105,7 @@ class Subject {
     Object.keys(node).forEach(alias => {
       if (alias === 'id' || alias === 'children') {
         //
-      } else if (this._predicates[alias]) {
+      } else {
         const predId = aliasToPredId[alias];
         this.setProperty(predId, node[alias]);
       }
@@ -121,9 +118,8 @@ class Subject {
       return `DELETE WHERE { GRAPH <${this._graph}> { <${this._id}> ?p ?o } };\n`;
     } else {
       let sparql = '';
-      Object.keys(this._predicates).forEach(alias => {
-        const predId = aliasToPredId[alias];
-        sparql += this._predicates[alias].getSparql(
+      Object.keys(this._predicates).forEach(predId => {
+        sparql += this._predicates[predId].getSparql(
           this._id,
           this._valuesUpdated[predId],
           this._valuesFromPod[predId],

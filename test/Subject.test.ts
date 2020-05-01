@@ -1,11 +1,6 @@
 import { Subject } from '../src/Subject';
 import { Predicate } from '../src/Predicate';
-import {
-  ont,
-  subjTypeToPredArray,
-  predIdToAlias,
-  predIdToType,
-} from '../config/ontology';
+import { ont, subjTypeToPredArray, predIdToType } from '../config/ontology';
 import { config, turtle } from '../config/test';
 import { Element } from '../src/interface';
 import * as assert from 'power-assert';
@@ -19,8 +14,7 @@ const predicates: { [key: string]: Predicate } = {};
 const createPredicates = () => {
   const predIdArray: string[] = subjTypeToPredArray;
   predIdArray.forEach(predId => {
-    const alias = predIdToAlias[predId];
-    predicates[alias] = new Predicate(
+    predicates[predId] = new Predicate(
       predId,
       predIdToType[predId],
       config.page._id,

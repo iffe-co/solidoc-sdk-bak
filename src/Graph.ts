@@ -1,10 +1,5 @@
 import { Subject } from './Subject';
-import {
-  subjTypeToPredArray,
-  predIdToAlias,
-  predIdToType,
-  ont,
-} from '../config/ontology';
+import { subjTypeToPredArray, predIdToType, ont } from '../config/ontology';
 import { Predicate } from './Predicate';
 import { Node } from './interface';
 import * as n3 from 'n3';
@@ -26,8 +21,8 @@ class Graph {
   private createPredicates = () => {
     const predIdArray: string[] = subjTypeToPredArray;
     predIdArray.forEach(predId => {
-      const alias = predIdToAlias[predId];
-      this._predicates[alias] = new Predicate(
+      // const alias = predIdToAlias[predId];
+      this._predicates[predId] = new Predicate(
         predId,
         predIdToType[predId],
         this._id,
