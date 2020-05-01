@@ -11,7 +11,6 @@ const createValueTemplate = () => {
   return {
     id: '',
     type: '',
-    options: '{}',
   };
 };
 
@@ -63,17 +62,14 @@ class Subject {
     let result = {
       id: this._id,
       type: this.getProperty('type'),
-      ...JSON.parse(this.getProperty('options')),
+      children: [],
     };
 
-    if (Object.keys(this._predicates).includes('firstChild')) {
-      result = {
-        ...result,
-        children: [],
-      };
+    if (!Object.keys(this._predicates).includes('firstChild')) {
+      delete result.children;
     }
     Object.keys(this._predicates).forEach(alias => {
-      ['next', 'firstChild', 'options', 'type'].includes(alias) ||
+      ['next', 'firstChild', 'type'].includes(alias) ||
         (result[alias] = this.getProperty(alias));
     });
 
@@ -82,7 +78,6 @@ class Subject {
 
   public getProperty(alias: string): string {
     if (alias !== 'id' && !this._predicates[alias]) {
-      // TODO: get from options?
       throw new Error('Try to get an unknown Predicate: ' + this._id + alias);
     }
     return this._valuesUpdated[alias];
@@ -90,7 +85,6 @@ class Subject {
 
   public setProperty(alias: string, value: string) {
     if (!this._predicates[alias]) {
-      // TODO: get from options?
       throw new Error('Try to set an unknown Predicate: ' + this._id + alias);
     }
     this._valuesUpdated[alias] = value;
@@ -101,17 +95,13 @@ class Subject {
       throw new Error('Trying to update a deleted subject: ' + this._id);
     }
 
-    const newOptions = {};
     Object.keys(node).forEach(alias => {
       if (alias === 'id' || alias === 'children') {
         //
       } else if (this._predicates[alias]) {
         this.setProperty(alias, node[alias]);
-      } else {
-        newOptions[alias] = node[alias];
       }
     });
-    this.setProperty('options', JSON.stringify(newOptions));
   }
 
   public getSparqlForUpdate = (): string => {

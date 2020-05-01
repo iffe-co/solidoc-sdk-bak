@@ -28,7 +28,6 @@ describe('test/Subject.test.ts', () => {
       assert.strictEqual(branch2.getProperty('type'), '');
       assert.strictEqual(branch2.getProperty('next'), '');
       assert.strictEqual(branch2.getProperty('firstChild'), '');
-      assert.strictEqual(branch2.getProperty('options'), '{}');
       assert(!branch2.isDeleted());
       assert(!branch2.isInserted());
     });
@@ -74,26 +73,6 @@ describe('test/Subject.test.ts', () => {
       assert.throws(() => {
         branch2.getProperty('unknown');
       });
-    });
-
-    it('adds an optional property', () => {
-      para2.author = 'alice';
-      branch2.set(para2);
-
-      assert.deepStrictEqual(JSON.parse(branch2.getProperty('options')), {
-        author: 'alice',
-      });
-    });
-
-    it('modifies optional property', () => {
-      para2.author = 'alice';
-      branch2.set(para2);
-      branch2.commit();
-      para2.author = 'bob';
-      branch2.set(para2);
-
-      let json: any = branch2.toJson();
-      assert.strictEqual(json.author, 'bob');
     });
   });
 

@@ -2,14 +2,14 @@ import * as _ from 'lodash';
 
 class Predicate {
   private _id: string;
-  private _type: 'NamedNode' | 'Text' | 'Json';
+  private _type: 'NamedNode' | 'Text';
   private _graph: string;
   private _subject: string;
   private _default: string = '';
 
   constructor(
     id: string,
-    type: 'NamedNode' | 'Text' | 'Json',
+    type: 'NamedNode' | 'Text',
     graph: string,
     subject: string,
   ) {
@@ -19,9 +19,9 @@ class Predicate {
     this.setType(type);
   }
 
-  public setType(type: 'NamedNode' | 'Text' | 'Json') {
+  public setType(type: 'NamedNode' | 'Text') {
     this._type = type;
-    this._default = this._type === 'Json' ? '{}' : '';
+    this._default = '';
   }
 
   public getSparql(updated, initial): string {
@@ -46,7 +46,7 @@ class Predicate {
   };
 
   private _escape(value: string): string {
-    if (this._type === 'Text' || this._type === 'Json') {
+    if (this._type === 'Text') {
       const backSlashEscaped: string = value.replace(/\\/g, '\\\\');
       const quoteEscaped: string = backSlashEscaped.replace(/"/g, '\\"');
       return `"${quoteEscaped}"`;
@@ -55,13 +55,7 @@ class Predicate {
   }
 
   private _equal(a: string, b: string): boolean {
-    if (this._type === 'Json') {
-      const aJson = JSON.parse(a);
-      const bJson = JSON.parse(b);
-      return _.isEqual(aJson, bJson);
-    } else {
-      return a === b;
-    }
+    return a === b;
   }
 
   public fromQuad(quad: any): string {
