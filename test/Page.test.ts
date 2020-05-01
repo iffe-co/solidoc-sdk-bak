@@ -62,7 +62,10 @@ describe('Insert Node', () => {
     page.apply(op0);
     page.update();
 
-    assert(page.getRoot().getProperty(ont.sdoc.firstChild), cfg.para[0].id);
+    assert(
+      page.getRoot().getProperty(page.getPredicate(ont.sdoc.firstChild)),
+      cfg.para[0].id,
+    );
     assert(page.getSubject(cfg.para[0].id).toJson(), cfg.para[0]);
   });
 
@@ -166,7 +169,9 @@ describe('Remove Node', () => {
     page.update();
 
     assert.strictEqual(
-      page.getSubject(config.para[0].id).getProperty(ont.sdoc.firstChild),
+      page
+        .getSubject(config.para[0].id)
+        .getProperty(page.getPredicate(ont.sdoc.firstChild)),
       '',
     );
   });

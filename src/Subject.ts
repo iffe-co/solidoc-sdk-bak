@@ -69,11 +69,11 @@ class Subject {
     if (this._type === ont.sdoc.leaf) {
       delete result.children;
     }
-    Object.keys(this._predicates).forEach(predId => {
-      const alias = predIdToAlias[predId];
-      [ont.sdoc.next, ont.sdoc.firstChild, ont.rdf.type].includes(predId) ||
-        this.getProperty(predId) === '' ||
-        (result[alias] = this.getProperty(predId));
+    Object.values(this._predicates).forEach(pred => {
+      const alias = predIdToAlias[pred.id];
+      [ont.sdoc.next, ont.sdoc.firstChild, ont.rdf.type].includes(pred.id) ||
+        this.getProperty(pred) === pred.default ||
+        (result[alias] = this.getProperty(pred));
     });
 
     return result;
@@ -83,19 +83,14 @@ class Subject {
     return this._id;
   }
 
-  public getProperty(predId: string): string {
-    if (!this._predicates[predId]) {
-      throw new Error('Try to get an unknown Predicate: ' + this._id + predId);
-    }
-    return this._valuesUpdated[predId];
+  public getProperty(pred: Predicate): string {
+    return this._valuesUpdated[pred.id] || pred.default;
   }
 
-  public setProperty(predId: string, value: string) {
-    if (!this._predicates[predId]) {
-      throw new Error('Try to set an unknown Predicate: ' + this._id + predId);
-    }
+  public setProperty(pred: Predicate, value: string) {
     // TODO: should throw on getting 'next' for Root?
-    this._valuesUpdated[predId] = value;
+    this._valuesUpdated[pred.id] = value;
+    value === pred.default && delete this._valuesUpdated[pred.id];
   }
 
   public set(node: Node) {
@@ -108,7 +103,7 @@ class Subject {
         //
       } else {
         const predId = aliasToPredId[alias];
-        this.setProperty(predId, node[alias]);
+        this.setProperty(this._predicates[predId], node[alias]);
       }
     });
   }

@@ -38,9 +38,12 @@ describe('test/Subject.test.ts', () => {
 
   describe('Create Node', () => {
     it('constructs an empty node', () => {
-      assert.strictEqual(branch2.getProperty(ont.rdf.type), '');
-      assert.strictEqual(branch2.getProperty(ont.sdoc.next), '');
-      assert.strictEqual(branch2.getProperty(ont.sdoc.firstChild), '');
+      assert.strictEqual(branch2.getProperty(predicates[ont.rdf.type]), '');
+      assert.strictEqual(branch2.getProperty(predicates[ont.sdoc.next]), '');
+      assert.strictEqual(
+        branch2.getProperty(predicates[ont.sdoc.firstChild]),
+        '',
+      );
       assert(!branch2.isDeleted());
       assert(!branch2.isInserted());
     });
@@ -60,7 +63,7 @@ describe('test/Subject.test.ts', () => {
       });
 
       assert.equal(
-        branch2.getProperty(ont.sdoc.firstChild),
+        branch2.getProperty(predicates[ont.sdoc.firstChild]),
         config.para[2].children[0].id,
       );
     });
@@ -80,15 +83,9 @@ describe('test/Subject.test.ts', () => {
       branch2.set(para2);
 
       assert.strictEqual(
-        branch2.getProperty(ont.rdf.type),
+        branch2.getProperty(predicates[ont.rdf.type]),
         ont.sdoc.numberedList,
       );
-    });
-
-    it('throws on getting an unkown property', () => {
-      assert.throws(() => {
-        branch2.getProperty('unknown');
-      });
     });
   });
 
@@ -98,9 +95,12 @@ describe('test/Subject.test.ts', () => {
     });
 
     it('setNext() is together with set("next")', () => {
-      branch1.setProperty(ont.sdoc.next, para2.id);
+      branch1.setProperty(predicates[ont.sdoc.next], para2.id);
 
-      assert.strictEqual(branch1.getProperty(ont.sdoc.next), branch2.id);
+      assert.strictEqual(
+        branch1.getProperty(predicates[ont.sdoc.next]),
+        branch2.id,
+      );
     });
 
     it('parses #nextNode from quads and synced with getNext()', () => {
@@ -108,7 +108,10 @@ describe('test/Subject.test.ts', () => {
       // note the index of quads
       branch1.fromQuad(quads[1]);
 
-      assert.strictEqual(branch1.getProperty(ont.sdoc.next), config.para[2].id);
+      assert.strictEqual(
+        branch1.getProperty(predicates[ont.sdoc.next]),
+        config.para[2].id,
+      );
     });
   });
 
@@ -144,7 +147,7 @@ describe('test/Subject.test.ts', () => {
       branch2.commit();
 
       assert.strictEqual(
-        branch2.getProperty(ont.rdf.type),
+        branch2.getProperty(predicates[ont.rdf.type]),
         ont.sdoc.numberedList,
       );
       assert(!branch2.isInserted());
@@ -192,7 +195,7 @@ describe('test/Subject.test.ts', () => {
       branch2.undo();
 
       assert.strictEqual(
-        branch2.getProperty(ont.rdf.type),
+        branch2.getProperty(predicates[ont.rdf.type]),
         config.para[2].type,
       );
     });
@@ -212,7 +215,7 @@ describe('Root', () => {
     page.title = 'Welcome';
     root.set(page);
 
-    assert.strictEqual(root.getProperty(ont.dct.title), 'Welcome');
+    assert.strictEqual(root.getProperty(predicates[ont.dct.title]), 'Welcome');
   });
 
   it('gets sparql', () => {
@@ -220,7 +223,7 @@ describe('Root', () => {
     quads.forEach(quad => {
       root.fromQuad(quad);
     });
-    root.setProperty(ont.sdoc.firstChild, '');
+    root.setProperty(predicates[ont.sdoc.firstChild], '');
     let sparql = root.getSparqlForUpdate();
 
     assert(sparql.startsWith('DELETE WHERE'));
@@ -259,8 +262,8 @@ describe('Leaf', () => {
   });
 
   it('parses from quads', () => {
-    assert.strictEqual(leaf.getProperty(ont.rdf.type), text.type);
-    assert.strictEqual(leaf.getProperty(ont.sdoc.text), text.text);
+    assert.strictEqual(leaf.getProperty(predicates[ont.rdf.type]), text.type);
+    assert.strictEqual(leaf.getProperty(predicates[ont.sdoc.text]), text.text);
   });
 
   it('translate to Json', () => {

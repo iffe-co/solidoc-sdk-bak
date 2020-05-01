@@ -51,7 +51,7 @@ class Page extends Graph {
         this._preInsertRecursive(
           {
             id: <string>op.properties.id,
-            type: curr.getProperty(ont.rdf.type),
+            type: curr.getProperty(this.getPredicate(ont.rdf.type)),
             children: [], // TODO: this is a workaround
           },
           subjToInsert,
@@ -98,12 +98,13 @@ class Page extends Graph {
   private _updateRecursive(node: Node, nextNode?: Node) {
     let subject = this.getSubject(node.id);
     subject.set(node);
-    nextNode && subject.setProperty(ont.sdoc.next, nextNode.id);
+    nextNode &&
+      subject.setProperty(this.getPredicate(ont.sdoc.next), nextNode.id);
 
     if (!node.children) return;
 
     const firstChildId = node.children[0] ? node.children[0].id : '';
-    subject.setProperty(ont.sdoc.firstChild, firstChildId);
+    subject.setProperty(this.getPredicate(ont.sdoc.firstChild), firstChildId);
 
     node.children.forEach((childNode: Node, index: number) => {
       this._updateRecursive(childNode, node.children[index + 1]);
@@ -119,12 +120,12 @@ class Page extends Graph {
     let result = subject.toJson();
     if (!result.children) return result;
 
-    let childId = subject.getProperty(ont.sdoc.firstChild);
+    let childId = subject.getProperty(this.getPredicate(ont.sdoc.firstChild));
     let child: Subject | undefined = this._subjectMap.get(childId);
 
     while (child) {
       result.children.push(this._toJsonRecursive(child));
-      childId = child.getProperty(ont.sdoc.next);
+      childId = child.getProperty(this.getPredicate(ont.sdoc.next));
       child = this._subjectMap.get(childId);
     }
 

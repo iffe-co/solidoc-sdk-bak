@@ -70,6 +70,14 @@ class Graph {
     return subject;
   };
 
+  public getPredicate = (id: string): Predicate => {
+    const predicate = this._predicates[id];
+    if (!predicate) {
+      throw new Error('Predicate not found: ' + id);
+    }
+    return predicate;
+  };
+
   public createSubject = (node: Node): Subject => {
     if (this._subjectMap.get(node.id)) {
       throw new Error('duplicated subject creation: ' + node.id);
