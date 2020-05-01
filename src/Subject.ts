@@ -91,12 +91,12 @@ class Subject {
     return this._valuesUpdated[predId];
   }
 
-  public setProperty(alias: string, value: string) {
+  public setProperty(predId: string, value: string) {
+    const alias = predIdToAlias[predId];
     if (!this._predicates[alias]) {
       throw new Error('Try to set an unknown Predicate: ' + this._id + alias);
     }
     // TODO: should throw on getting 'next' for Root?
-    const predId = aliasToPredId[alias];
     this._valuesUpdated[predId] = value;
   }
 
@@ -109,7 +109,8 @@ class Subject {
       if (alias === 'id' || alias === 'children') {
         //
       } else if (this._predicates[alias]) {
-        this.setProperty(alias, node[alias]);
+        const predId = aliasToPredId[alias];
+        this.setProperty(predId, node[alias]);
       }
     });
   }

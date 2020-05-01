@@ -98,12 +98,12 @@ class Page extends Graph {
   private _updateRecursive(node: Node, nextNode?: Node) {
     let subject = this.getSubject(node.id);
     subject.set(node);
-    nextNode && subject.setProperty('next', nextNode.id);
+    nextNode && subject.setProperty(ont.sdoc.next, nextNode.id);
 
     if (!node.children) return;
 
     const firstChildId = node.children[0] ? node.children[0].id : '';
-    subject.setProperty('firstChild', firstChildId);
+    subject.setProperty(ont.sdoc.firstChild, firstChildId);
 
     node.children.forEach((childNode: Node, index: number) => {
       this._updateRecursive(childNode, node.children[index + 1]);

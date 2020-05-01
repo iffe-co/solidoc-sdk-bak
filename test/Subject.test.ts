@@ -104,7 +104,7 @@ describe('test/Subject.test.ts', () => {
     });
 
     it('setNext() is together with set("next")', () => {
-      branch1.setProperty('next', para2.id);
+      branch1.setProperty(ont.sdoc.next, para2.id);
 
       assert.strictEqual(
         branch1.getProperty(ont.sdoc.next),
@@ -229,7 +229,7 @@ describe('Root', () => {
     quads.forEach(quad => {
       root.fromQuad(quad);
     });
-    root.setProperty('firstChild', '');
+    root.setProperty(ont.sdoc.firstChild, '');
     let sparql = root.getSparqlForUpdate();
 
     assert(sparql.startsWith('DELETE WHERE'));
