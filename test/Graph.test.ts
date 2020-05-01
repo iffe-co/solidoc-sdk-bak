@@ -59,7 +59,7 @@ describe('Graph', () => {
 
     it('parses from an empty string', () => {
       graph = new Graph(cfg.page.id, '');
-      assert.deepStrictEqual(graph.getRoot().getProperty('id'), config.page.id);
+      assert.deepStrictEqual(graph.getRoot().id, config.page.id);
     });
   });
 

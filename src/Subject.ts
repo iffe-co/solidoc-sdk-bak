@@ -79,10 +79,11 @@ class Subject {
     return result;
   }
 
+  public get id(): string {
+    return this._id;
+  }
+
   public getProperty(predId: string): string {
-    if (predId === 'id') {
-      return this._id;
-    }
     if (!this._predicates[predId]) {
       throw new Error('Try to get an unknown Predicate: ' + this._id + predId);
     }

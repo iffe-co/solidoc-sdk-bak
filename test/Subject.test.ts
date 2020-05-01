@@ -100,10 +100,7 @@ describe('test/Subject.test.ts', () => {
     it('setNext() is together with set("next")', () => {
       branch1.setProperty(ont.sdoc.next, para2.id);
 
-      assert.strictEqual(
-        branch1.getProperty(ont.sdoc.next),
-        branch2.getProperty('id'),
-      );
+      assert.strictEqual(branch1.getProperty(ont.sdoc.next), branch2.id);
     });
 
     it('parses #nextNode from quads and synced with getNext()', () => {
