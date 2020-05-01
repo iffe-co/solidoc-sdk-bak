@@ -37,9 +37,9 @@ class Predicate {
     updated: string,
     initial: string,
   ): string => {
-    return this._equal(updated, initial) || this._equal(initial, this._default)
-      ? ''
-      : `DELETE WHERE { GRAPH <${this._graph}> { <${subject}> <${this._id}> ?o } };\n`;
+    return this._shouldDelete(updated, initial)
+      ? `DELETE WHERE { GRAPH <${this._graph}> { <${subject}> <${this._id}> ?o } };\n`
+      : '';
   };
 
   private _insertClause = (
@@ -47,12 +47,24 @@ class Predicate {
     updated: string,
     initial: string,
   ): string => {
-    return this._equal(updated, initial) || this._equal(updated, this._default)
-      ? ''
-      : `INSERT DATA { GRAPH <${this._graph}> { <${subject}> <${
+    return this._shouldInsert(updated, initial)
+      ? `INSERT DATA { GRAPH <${this._graph}> { <${subject}> <${
           this._id
-        }> ${this._escape(updated)}} };\n`;
+        }> ${this._escape(updated)}} };\n`
+      : '';
   };
+
+  private _shouldDelete(updated: string, initial: string): boolean {
+    return (
+      updated !== initial && initial !== this._default && initial !== undefined
+    );
+  }
+
+  private _shouldInsert(updated: string, initial: string): boolean {
+    return (
+      updated !== initial && updated !== this._default && updated !== undefined
+    );
+  }
 
   private _escape(value: string): string {
     if (this._type === 'Text') {
@@ -61,10 +73,6 @@ class Predicate {
       return `"${quoteEscaped}"`;
     }
     return `<${value}>`;
-  }
-
-  private _equal(a: string, b: string): boolean {
-    return a === b;
   }
 
   public fromQuad(quad: any): string {
