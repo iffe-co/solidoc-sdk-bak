@@ -45,7 +45,6 @@ class Subject {
         predId,
         predIdToType[predId],
         this._graph,
-        this._id,
       );
     });
   }
@@ -115,6 +114,7 @@ class Subject {
       let sparql = '';
       Object.keys(this._predicates).forEach(alias => {
         sparql += this._predicates[alias].getSparql(
+          this._id,
           this._valuesUpdated[alias],
           this._valuesFromPod[alias],
         );

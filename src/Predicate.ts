@@ -4,18 +4,11 @@ class Predicate {
   private _id: string;
   private _type: 'NamedNode' | 'Text';
   private _graph: string;
-  private _subject: string;
   private _default: string = '';
 
-  constructor(
-    id: string,
-    type: 'NamedNode' | 'Text',
-    graph: string,
-    subject: string,
-  ) {
+  constructor(id: string, type: 'NamedNode' | 'Text', graph: string) {
     this._id = id;
     this._graph = graph;
-    this._subject = subject;
     this.setType(type);
   }
 
@@ -24,23 +17,31 @@ class Predicate {
     this._default = '';
   }
 
-  public getSparql(updated, initial): string {
+  public getSparql(subject: string, updated: string, initial: string): string {
     return (
-      this._deleteClause(updated, initial) +
-      this._insertClause(updated, initial)
+      this._deleteClause(subject, updated, initial) +
+      this._insertClause(subject, updated, initial)
     );
   }
 
-  private _deleteClause = (updated: string, initial: string): string => {
+  private _deleteClause = (
+    subject: string,
+    updated: string,
+    initial: string,
+  ): string => {
     return this._equal(updated, initial) || this._equal(initial, this._default)
       ? ''
-      : `DELETE WHERE { GRAPH <${this._graph}> { <${this._subject}> <${this._id}> ?o } };\n`;
+      : `DELETE WHERE { GRAPH <${this._graph}> { <${subject}> <${this._id}> ?o } };\n`;
   };
 
-  private _insertClause = (updated: string, initial: string): string => {
+  private _insertClause = (
+    subject: string,
+    updated: string,
+    initial: string,
+  ): string => {
     return this._equal(updated, initial) || this._equal(updated, this._default)
       ? ''
-      : `INSERT DATA { GRAPH <${this._graph}> { <${this._subject}> <${
+      : `INSERT DATA { GRAPH <${this._graph}> { <${subject}> <${
           this._id
         }> ${this._escape(updated)}} };\n`;
   };

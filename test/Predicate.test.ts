@@ -18,7 +18,7 @@ describe('Type: a NamedNode Predicate', () => {
   const insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.rdf.type}> <${ont.sdoc.paragraph}>} };\n`;
 
   beforeEach(() => {
-    type = new Predicate(ont.rdf.type, 'NamedNode', page.id, node.id);
+    type = new Predicate(ont.rdf.type, 'NamedNode', page.id);
   });
 
   it('parses quad as a named node', () => {
@@ -26,22 +26,26 @@ describe('Type: a NamedNode Predicate', () => {
   });
 
   it('generates null sparql if no changes applied', () => {
-    const sparql: string = type.getSparql(node.type, node.type);
+    const sparql: string = type.getSparql(node.id, node.type, node.type);
     assert.strictEqual(sparql, '');
   });
 
   it('generate sparql for updated Predicate', () => {
-    const sparql: string = type.getSparql(ont.sdoc.paragraph, node.type);
+    const sparql: string = type.getSparql(
+      node.id,
+      ont.sdoc.paragraph,
+      node.type,
+    );
     assert.strictEqual(sparql, deleteClause + insertClause);
   });
 
   it('generate sparql for deleted Predicate', () => {
-    const sparql: string = type.getSparql('', node.type);
+    const sparql: string = type.getSparql(node.id, '', node.type);
     assert.strictEqual(sparql, deleteClause);
   });
 
   it('generate sparql for a just-added Predicate', () => {
-    const sparql: string = type.getSparql(ont.sdoc.paragraph, '');
+    const sparql: string = type.getSparql(node.id, ont.sdoc.paragraph, '');
     assert.strictEqual(sparql, insertClause);
   });
 });
@@ -53,7 +57,7 @@ describe('Text Predicate', () => {
   const insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.text}> "Hello world!"} };\n`;
 
   beforeEach(() => {
-    text = new Predicate(ont.sdoc.text, 'Text', page.id, node.id);
+    text = new Predicate(ont.sdoc.text, 'Text', page.id);
   });
 
   it('parses quad as text', () => {
@@ -61,22 +65,22 @@ describe('Text Predicate', () => {
   });
 
   it('generates null sparql', async () => {
-    const sparql: string = text.getSparql(node.text, node.text);
+    const sparql: string = text.getSparql(node.id, node.text, node.text);
     assert.strictEqual(sparql, '');
   });
 
   it('generates sparql for update', async () => {
-    const sparql: string = text.getSparql('Hello world!', node.text);
+    const sparql: string = text.getSparql(node.id, 'Hello world!', node.text);
     assert.strictEqual(sparql, deleteClause + insertClause);
   });
 
   it('generates sparql for deletion only', async () => {
-    const sparql: string = text.getSparql('', node.text);
+    const sparql: string = text.getSparql(node.id, '', node.text);
     assert.strictEqual(sparql, deleteClause);
   });
 
   it('generates sparql for insertion only', async () => {
-    const sparql: string = text.getSparql('Hello world!', '');
+    const sparql: string = text.getSparql(node.id, 'Hello world!', '');
     assert.strictEqual(sparql, insertClause);
   });
 });
