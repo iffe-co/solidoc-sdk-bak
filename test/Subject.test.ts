@@ -1,5 +1,11 @@
 import { Subject } from '../src/Subject';
-import { ont } from '../config/ontology';
+import { Predicate } from '../src/Predicate';
+import {
+  ont,
+  subjTypeToPredArray,
+  predIdToAlias,
+  predIdToType,
+} from '../config/ontology';
 import { config, turtle } from '../config/test';
 import { Element } from '../src/interface';
 import * as assert from 'power-assert';
@@ -8,6 +14,20 @@ import * as _ from 'lodash';
 import * as n3 from 'n3';
 const parser = new n3.Parser();
 let quads: any[];
+
+const predicates: { [key: string]: Predicate } = {};
+const createPredicates = () => {
+  const predIdArray: string[] = subjTypeToPredArray;
+  predIdArray.forEach(predId => {
+    const alias = predIdToAlias[predId];
+    predicates[alias] = new Predicate(
+      predId,
+      predIdToType[predId],
+      config.page._id,
+    );
+  });
+};
+createPredicates();
 
 describe('test/Subject.test.ts', () => {
   let branch1: Subject;
@@ -19,7 +39,7 @@ describe('test/Subject.test.ts', () => {
   beforeEach(() => {
     para1 = _.cloneDeep(config.para[1]);
     para2 = _.cloneDeep(config.para[2]);
-    branch2 = new Subject(para2.id, para2.type, config.page.id);
+    branch2 = new Subject(para2.id, para2.type, config.page.id, predicates);
   });
 
   describe('Create Node', () => {
@@ -78,7 +98,7 @@ describe('test/Subject.test.ts', () => {
 
   describe('#nextNode property', () => {
     beforeEach(() => {
-      branch1 = new Subject(para1.id, para1.type, config.page.id);
+      branch1 = new Subject(para1.id, para1.type, config.page.id, predicates);
     });
 
     it('setNext() is together with set("next")', () => {
@@ -149,6 +169,7 @@ describe('test/Subject.test.ts', () => {
         config.para[1].id,
         config.para[1].type,
         config.page.id,
+        predicates,
       );
     });
 
@@ -185,7 +206,7 @@ describe('Root', () => {
 
   beforeEach(() => {
     page = _.cloneDeep(config.page);
-    root = new Subject(page.id, page.type, config.page.id);
+    root = new Subject(page.id, page.type, config.page.id, predicates);
   });
 
   it('sets title', () => {
@@ -234,7 +255,7 @@ describe('Leaf', () => {
   const quads: any[] = parser.parse(turtle.text[8]);
 
   beforeEach(() => {
-    leaf = new Subject(text.id, text.type, config.page.id);
+    leaf = new Subject(text.id, text.type, config.page.id, predicates);
     quads.forEach(quad => leaf.fromQuad(quad));
   });
 

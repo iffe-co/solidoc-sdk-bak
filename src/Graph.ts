@@ -1,5 +1,11 @@
 import { Subject } from './Subject';
-import { ont } from '../config/ontology';
+import {
+  subjTypeToPredArray,
+  predIdToAlias,
+  predIdToType,
+  ont,
+} from '../config/ontology';
+import { Predicate } from './Predicate';
 import { Node } from './interface';
 import * as n3 from 'n3';
 
@@ -9,11 +15,25 @@ const parser = new n3.Parser();
 class Graph {
   protected _id: string = '';
   protected _subjectMap = new Map<string, Subject>();
+  protected _predicates: { [key: string]: Predicate } = {};
 
   constructor(id: string, turtle: string) {
     this._id = id;
+    this.createPredicates();
     this._parseTurtle(turtle);
   }
+
+  private createPredicates = () => {
+    const predIdArray: string[] = subjTypeToPredArray;
+    predIdArray.forEach(predId => {
+      const alias = predIdToAlias[predId];
+      this._predicates[alias] = new Predicate(
+        predId,
+        predIdToType[predId],
+        this._id,
+      );
+    });
+  };
 
   private _parseTurtle = (turtle: string) => {
     const quads: any[] = parser.parse(turtle);
@@ -59,7 +79,7 @@ class Graph {
     if (this._subjectMap.get(node.id)) {
       throw new Error('duplicated subject creation: ' + node.id);
     }
-    let subject = new Subject(node.id, node.type, this._id);
+    let subject = new Subject(node.id, node.type, this._id, this._predicates);
     this._subjectMap.set(node.id, subject);
     return subject;
   };

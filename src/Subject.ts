@@ -1,10 +1,5 @@
 import { Predicate } from './Predicate';
-import {
-  subjTypeToPredArray,
-  predIdToAlias,
-  predIdToType,
-  ont,
-} from '../config/ontology';
+import { subjTypeToPredArray, predIdToAlias, ont } from '../config/ontology';
 import { Node } from './interface';
 import * as _ from 'lodash';
 
@@ -19,35 +14,36 @@ class Subject {
   protected _id: string;
   protected _type: string;
   protected _graph: string;
-  protected _predicates: { [key: string]: Predicate } = {};
+  protected _predicates: { [key: string]: Predicate };
   private _isDeleted: boolean = false;
   private _isInserted: boolean = false;
 
   protected _valuesUpdated: any = createValueTemplate();
   protected _valuesFromPod: any = createValueTemplate();
 
-  constructor(id: string, type: string, graph: string) {
+  constructor(
+    id: string,
+    type: string,
+    graph: string,
+    predicates: { [key: string]: Predicate },
+  ) {
     this._id = id;
     this._type = type;
     this._graph = graph;
     this._valuesUpdated.id = this._valuesFromPod.id = id;
-    this._createPredicates();
+    this._predicates = predicates;
+    this._assignInitValues();
   }
 
-  private _createPredicates() {
+  private _assignInitValues = () => {
     const predIdArray: string[] = subjTypeToPredArray;
-    this._predicates = {};
     predIdArray.forEach(predId => {
       const alias = predIdToAlias[predId];
-      this._valuesFromPod[alias] = this._valuesUpdated[alias] =
-        predIdToType[predId] === 'Json' ? '{}' : '';
-      this._predicates[alias] = new Predicate(
-        predId,
-        predIdToType[predId],
-        this._graph,
-      );
+
+      // TODO: initial value set to default
+      this._valuesFromPod[alias] = this._valuesUpdated[alias] = '';
     });
-  }
+  };
 
   public fromQuad(quad: any) {
     const alias = predIdToAlias[quad.predicate.id];
