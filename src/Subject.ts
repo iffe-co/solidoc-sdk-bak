@@ -63,7 +63,7 @@ class Subject {
   public toJson(): Node {
     let result = {
       id: this._id,
-      type: this.getProperty('type'),
+      type: this._type,
       children: [],
     };
 
@@ -71,23 +71,23 @@ class Subject {
       delete result.children;
     }
     Object.keys(this._predicates).forEach(alias => {
-      // const predId = aliasToPredId[alias];
+      const predId = aliasToPredId[alias];
       ['next', 'firstChild', 'type'].includes(alias) ||
-        this.getProperty(alias) === '' ||
-        (result[alias] = this.getProperty(alias));
+        this.getProperty(predId) === '' ||
+        (result[alias] = this.getProperty(predId));
     });
 
     return result;
   }
 
-  public getProperty(alias: string): string {
-    if (alias === 'id') {
+  public getProperty(predId: string): string {
+    if (predId === 'id') {
       return this._id;
     }
+    const alias = predIdToAlias[predId];
     if (alias !== 'id' && !this._predicates[alias]) {
       throw new Error('Try to get an unknown Predicate: ' + this._id + alias);
     }
-    const predId = aliasToPredId[alias];
     return this._valuesUpdated[predId];
   }
 

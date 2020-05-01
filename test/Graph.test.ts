@@ -27,16 +27,16 @@ describe('Graph', () => {
       let branch0 = graph.getSubject(cfg.para[0].id);
       let branch2 = graph.getSubject(cfg.para[2].id);
 
-      assert.strictEqual(branch0.getProperty('next'), cfg.para[1].id);
-      assert.strictEqual(branch2.getProperty('next'), '');
+      assert.strictEqual(branch0.getProperty(ont.sdoc.next), cfg.para[1].id);
+      assert.strictEqual(branch2.getProperty(ont.sdoc.next), '');
     });
 
     it('constructs leaf subject', () => {
       let leaf0 = graph.getSubject(cfg.text[0].id);
       let leaf2 = graph.getSubject(cfg.text[2].id);
 
-      assert.strictEqual(leaf0.getProperty('next'), cfg.text[1].id);
-      assert.strictEqual(leaf2.getProperty('next'), '');
+      assert.strictEqual(leaf0.getProperty(ont.sdoc.next), cfg.text[1].id);
+      assert.strictEqual(leaf2.getProperty(ont.sdoc.next), '');
     });
 
     it('does not construct a subject without type definition', () => {

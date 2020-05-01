@@ -1,5 +1,5 @@
-// import { Subject } from './Subject'
 import { Graph } from './Graph';
+import { ont } from '../config/ontology';
 import { Element, Node, Operation, transform, Path, Text } from './interface';
 import * as _ from 'lodash';
 import { Subject } from './Subject';
@@ -51,7 +51,7 @@ class Page extends Graph {
         this._preInsertRecursive(
           {
             id: <string>op.properties.id,
-            type: curr.getProperty('type'),
+            type: curr.getProperty(ont.rdf.type),
             children: [], // TODO: this is a workaround
           },
           subjToInsert,
@@ -119,12 +119,12 @@ class Page extends Graph {
     let result = subject.toJson();
     if (!result.children) return result;
 
-    let childId = subject.getProperty('firstChild');
+    let childId = subject.getProperty(ont.sdoc.firstChild);
     let child: Subject | undefined = this._subjectMap.get(childId);
 
     while (child) {
       result.children.push(this._toJsonRecursive(child));
-      childId = child.getProperty('next');
+      childId = child.getProperty(ont.sdoc.next);
       child = this._subjectMap.get(childId);
     }
 
