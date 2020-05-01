@@ -1,10 +1,5 @@
 import { Predicate } from './Predicate';
-import {
-  subjTypeToPredArray,
-  predIdToAlias,
-  ont,
-  aliasToPredId,
-} from '../config/ontology';
+import { predIdToAlias, ont, aliasToPredId } from '../config/ontology';
 import { Node } from './interface';
 import * as _ from 'lodash';
 
@@ -37,18 +32,7 @@ class Subject {
     this._graph = graph;
     this._valuesUpdated.id = this._valuesFromPod.id = id;
     this._predicates = predicates;
-    this._assignInitValues();
   }
-
-  private _assignInitValues = () => {
-    const predIdArray: string[] = subjTypeToPredArray;
-    predIdArray.forEach(predId => {
-      // const alias = predIdToAlias[predId];
-
-      // TODO: initial value set to default
-      this._valuesFromPod[predId] = this._valuesUpdated[predId] = '';
-    });
-  };
 
   public fromQuad(quad: any) {
     if (!this._predicates[quad.predicate.id]) {
