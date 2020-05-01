@@ -43,6 +43,18 @@ const subjTypeToPredArray = [
   ont.sdoc.hintState,
 ];
 
+const aliasToPredId = {
+  type: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+  title: 'http://purl.org/dc/terms/title',
+  firstChild: 'http://www.solidoc.net/ontologies#firstChild',
+  next: 'http://www.solidoc.net/ontologies#nextNode',
+  text: 'http://www.solidoc.net/ontologies#text',
+  checked: 'http://www.solidoc.net/ontologies#checked',
+  language: 'http://www.solidoc.net/ontologies#language',
+  formula: 'http://www.solidoc.net/ontologies#formula',
+  hintState: 'http://www.solidoc.net/ontologies#hintState',
+};
+
 const predIdToAlias = {
   'http://www.w3.org/1999/02/22-rdf-syntax-ns#type': 'type',
   'http://purl.org/dc/terms/title': 'title',
@@ -67,4 +79,4 @@ const predIdToType = {
   'http://www.solidoc.net/ontologies#hintState': 'Text',
 };
 
-export { ont, predIdToAlias, predIdToType, subjTypeToPredArray };
+export { ont, predIdToAlias, predIdToType, subjTypeToPredArray, aliasToPredId };

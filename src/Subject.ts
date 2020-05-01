@@ -1,5 +1,10 @@
 import { Predicate } from './Predicate';
-import { subjTypeToPredArray, predIdToAlias, ont } from '../config/ontology';
+import {
+  subjTypeToPredArray,
+  predIdToAlias,
+  ont,
+  aliasToPredId,
+} from '../config/ontology';
 import { Node } from './interface';
 import * as _ from 'lodash';
 
@@ -38,10 +43,10 @@ class Subject {
   private _assignInitValues = () => {
     const predIdArray: string[] = subjTypeToPredArray;
     predIdArray.forEach(predId => {
-      const alias = predIdToAlias[predId];
+      // const alias = predIdToAlias[predId];
 
       // TODO: initial value set to default
-      this._valuesFromPod[alias] = this._valuesUpdated[alias] = '';
+      this._valuesFromPod[predId] = this._valuesUpdated[predId] = '';
     });
   };
 
@@ -51,7 +56,8 @@ class Subject {
       return;
     }
     const value: string = this._predicates[alias].fromQuad(quad);
-    this._valuesFromPod[alias] = this._valuesUpdated[alias] = value;
+    this._valuesFromPod[quad.predicate.id] = value;
+    this._valuesUpdated[quad.predicate.id] = value;
   }
 
   public toJson(): Node {
@@ -65,6 +71,7 @@ class Subject {
       delete result.children;
     }
     Object.keys(this._predicates).forEach(alias => {
+      // const predId = aliasToPredId[alias];
       ['next', 'firstChild', 'type'].includes(alias) ||
         this.getProperty(alias) === '' ||
         (result[alias] = this.getProperty(alias));
@@ -74,10 +81,14 @@ class Subject {
   }
 
   public getProperty(alias: string): string {
+    if (alias === 'id') {
+      return this._id;
+    }
     if (alias !== 'id' && !this._predicates[alias]) {
       throw new Error('Try to get an unknown Predicate: ' + this._id + alias);
     }
-    return this._valuesUpdated[alias];
+    const predId = aliasToPredId[alias];
+    return this._valuesUpdated[predId];
   }
 
   public setProperty(alias: string, value: string) {
@@ -85,7 +96,8 @@ class Subject {
       throw new Error('Try to set an unknown Predicate: ' + this._id + alias);
     }
     // TODO: should throw on getting 'next' for Root?
-    this._valuesUpdated[alias] = value;
+    const predId = aliasToPredId[alias];
+    this._valuesUpdated[predId] = value;
   }
 
   public set(node: Node) {
@@ -109,10 +121,11 @@ class Subject {
     } else {
       let sparql = '';
       Object.keys(this._predicates).forEach(alias => {
+        const predId = aliasToPredId[alias];
         sparql += this._predicates[alias].getSparql(
           this._id,
-          this._valuesUpdated[alias],
-          this._valuesFromPod[alias],
+          this._valuesUpdated[predId],
+          this._valuesFromPod[predId],
         );
       });
       return sparql;
