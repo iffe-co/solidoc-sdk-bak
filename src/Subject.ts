@@ -3,12 +3,12 @@ import { predIdToAlias, ont, aliasToPredId } from '../config/ontology';
 import { Node } from './interface';
 import * as _ from 'lodash';
 
-const createValueTemplate = () => {
-  return {
-    id: '',
-    type: '',
-  };
-};
+// const createValueTemplate = () => {
+//   return {
+//     id: '',
+//     type: '',
+//   };
+// };
 
 class Subject {
   protected _id: string;
@@ -18,8 +18,10 @@ class Subject {
   private _isDeleted: boolean = false;
   private _isInserted: boolean = false;
 
-  protected _valuesUpdated: any = createValueTemplate();
-  protected _valuesFromPod: any = createValueTemplate();
+  // protected _valuesUpdated: any = createValueTemplate();
+  // protected _valuesFromPod: any = createValueTemplate();
+  private _valuesUpdated = new Map<Predicate, string>();
+  private _valuesFromPod = new Map<Predicate, string>();
 
   constructor(
     id: string,
@@ -30,7 +32,7 @@ class Subject {
     this._id = id;
     this._type = type;
     this._graph = graph;
-    this._valuesUpdated.id = this._valuesFromPod.id = id;
+    // this._valuesUpdated.id = this._valuesFromPod.id = id;
     this._predicates = predicates;
   }
 
@@ -38,9 +40,12 @@ class Subject {
     if (!this._predicates[quad.predicate.id]) {
       return;
     }
-    const value: string = this._predicates[quad.predicate.id].fromQuad(quad);
-    this._valuesFromPod[quad.predicate.id] = value;
-    this._valuesUpdated[quad.predicate.id] = value;
+    const pred: Predicate = this._predicates[quad.predicate.id];
+    const value: string = pred.fromQuad(quad);
+    this._valuesFromPod.set(pred, value);
+    this._valuesUpdated.set(pred, value);
+    // this._valuesFromPod[quad.predicate.id] = value;
+    // this._valuesUpdated[quad.predicate.id] = value;
   }
 
   public toJson(): Node {
@@ -68,13 +73,13 @@ class Subject {
   }
 
   public getProperty(pred: Predicate): string {
-    return this._valuesUpdated[pred.id] || pred.default;
+    return this._valuesUpdated.get(pred) || pred.default;
   }
 
   public setProperty(pred: Predicate, value: string) {
     // TODO: should throw on getting 'next' for Root?
-    this._valuesUpdated[pred.id] = value;
-    value === pred.default && delete this._valuesUpdated[pred.id];
+    this._valuesUpdated.set(pred, value);
+    value === pred.default && this._valuesUpdated.delete(pred);
   }
 
   public set(node: Node) {
@@ -101,8 +106,8 @@ class Subject {
       Object.values(this._predicates).forEach(pred => {
         sparql += pred.getSparql(
           this._id,
-          this._valuesUpdated[pred.id],
-          this._valuesFromPod[pred.id],
+          this._valuesUpdated.get(pred),
+          this._valuesFromPod.get(pred),
         );
       });
       return sparql;

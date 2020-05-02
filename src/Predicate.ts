@@ -25,7 +25,11 @@ class Predicate {
     this._default = '';
   }
 
-  public getSparql(subject: string, updated: string, initial: string): string {
+  public getSparql(
+    subject: string,
+    updated: string | undefined,
+    initial: string | undefined,
+  ): string {
     return (
       this._deleteClause(subject, updated, initial) +
       this._insertClause(subject, updated, initial)
@@ -34,8 +38,8 @@ class Predicate {
 
   private _deleteClause = (
     subject: string,
-    updated: string,
-    initial: string,
+    updated: string | undefined,
+    initial: string | undefined,
   ): string => {
     return this._shouldDelete(updated, initial)
       ? `DELETE WHERE { GRAPH <${this._graph}> { <${subject}> <${this._id}> ?o } };\n`
@@ -44,23 +48,29 @@ class Predicate {
 
   private _insertClause = (
     subject: string,
-    updated: string,
-    initial: string,
+    updated: string | undefined,
+    initial: string | undefined,
   ): string => {
     return this._shouldInsert(updated, initial)
       ? `INSERT DATA { GRAPH <${this._graph}> { <${subject}> <${
           this._id
-        }> ${this._escape(updated)}} };\n`
+        }> ${this._escape(<string>updated)}} };\n`
       : '';
   };
 
-  private _shouldDelete(updated: string, initial: string): boolean {
+  private _shouldDelete(
+    updated: string | undefined,
+    initial: string | undefined,
+  ): boolean {
     return (
       updated !== initial && initial !== this._default && initial !== undefined
     );
   }
 
-  private _shouldInsert(updated: string, initial: string): boolean {
+  private _shouldInsert(
+    updated: string | undefined,
+    initial: string | undefined,
+  ): boolean {
     return (
       updated !== initial && updated !== this._default && updated !== undefined
     );
