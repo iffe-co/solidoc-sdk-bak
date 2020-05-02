@@ -1,7 +1,6 @@
 import { Subject } from './Subject';
 import { subjTypeToPredArray, predIdToType, ont } from '../config/ontology';
 import { Predicate } from './Predicate';
-import { Node } from './interface';
 import * as n3 from 'n3';
 
 const parser = new n3.Parser();
@@ -36,21 +35,13 @@ class Graph {
     const quads: any[] = parser.parse(turtle);
     quads.forEach(quad => {
       if (quad.predicate.id === ont.rdf.type) {
-        this.createSubject({
-          id: quad.subject.id,
-          type: quad.object.id, // TODO: should only createSubject for known types
-          children: [], // TODO: this is a workaround to deceive the type check
-        });
+        this.createSubject(quad.subject.id);
       }
     });
 
     // Should always create the root
     if (!this._subjectMap.get(this._id)) {
-      this.createSubject({
-        id: this._id,
-        type: ont.sdoc.root,
-        children: [],
-      });
+      this.createSubject(this._id);
     }
 
     quads.forEach(quad => {
@@ -81,12 +72,12 @@ class Graph {
     return predicate;
   };
 
-  public createSubject = (node: Node): Subject => {
-    if (this._subjectMap.get(node.id)) {
-      throw new Error('duplicated subject creation: ' + node.id);
+  public createSubject = (subejectId: string): Subject => {
+    if (this._subjectMap.get(subejectId)) {
+      throw new Error('duplicated subject creation: ' + subejectId);
     }
-    let subject = new Subject(node.id, node.type, this._id);
-    this._subjectMap.set(node.id, subject);
+    let subject = new Subject(subejectId, this._id);
+    this._subjectMap.set(subejectId, subject);
     return subject;
   };
 

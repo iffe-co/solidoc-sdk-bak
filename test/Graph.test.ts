@@ -62,7 +62,7 @@ describe('Graph', () => {
 
     it('disallows creating node with a duplicated id', () => {
       assert.throws(() => {
-        graph.createSubject(cfg.para[2]);
+        graph.createSubject(cfg.para[2].id);
       });
     });
 
@@ -96,11 +96,7 @@ describe('Graph', () => {
 
     it('undoes to remove new subject from memory', () => {
       let tempId = cfg.page.id + '#temp';
-      let subject = graph.createSubject({
-        id: tempId,
-        type: ont.sdoc.paragraph,
-        children: [],
-      });
+      let subject = graph.createSubject(tempId);
       subject.insert();
       graph.undo();
 

@@ -23,7 +23,7 @@ class Page extends Graph {
     transform(this._editor, opCloned);
 
     for (let node of subjToInsert.values()) {
-      let subject = this.createSubject(node);
+      let subject = this.createSubject(node.id);
       subject.insert(); // TODO
     }
 

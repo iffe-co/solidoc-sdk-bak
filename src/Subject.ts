@@ -12,9 +12,8 @@ class Subject {
   private _valuesUpdated = new Map<Predicate, string>();
   private _valuesFromPod = new Map<Predicate, string>();
 
-  constructor(id: string, type: string, graph: string) {
+  constructor(id: string, graph: string) {
     this._id = id;
-    this._type = type;
     this._graph = graph;
   }
 
@@ -22,6 +21,9 @@ class Subject {
     const value: string = pred.fromQuad(quad);
     this._valuesFromPod.set(pred, value);
     this._valuesUpdated.set(pred, value);
+    if (pred.id === ont.rdf.type) {
+      this._type = value;
+    }
   }
 
   public get id(): string {
