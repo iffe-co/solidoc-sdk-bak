@@ -1,14 +1,5 @@
 import { Predicate } from './Predicate';
-import { predIdToAlias, ont } from '../config/ontology';
-import { Node } from './interface';
 import * as _ from 'lodash';
-
-// const createValueTemplate = () => {
-//   return {
-//     id: '',
-//     type: '',
-//   };
-// };
 
 class Subject {
   protected _id: string;
@@ -18,8 +9,6 @@ class Subject {
   private _isDeleted: boolean = false;
   private _isInserted: boolean = false;
 
-  // protected _valuesUpdated: any = createValueTemplate();
-  // protected _valuesFromPod: any = createValueTemplate();
   private _valuesUpdated = new Map<Predicate, string>();
   private _valuesFromPod = new Map<Predicate, string>();
 
@@ -45,28 +34,12 @@ class Subject {
     this._valuesUpdated.set(pred, value);
   }
 
-  public toJson(): Node {
-    let result = {
-      id: this._id,
-      type: this._type,
-      children: [],
-    };
-
-    if (this._type === ont.sdoc.leaf) {
-      delete result.children;
-    }
-    Object.values(this._predicates).forEach(pred => {
-      const alias = predIdToAlias[pred.id];
-      [ont.sdoc.next, ont.sdoc.firstChild, ont.rdf.type].includes(pred.id) ||
-        this.getProperty(pred) === pred.default ||
-        (result[alias] = this.getProperty(pred));
-    });
-
-    return result;
-  }
-
   public get id(): string {
     return this._id;
+  }
+
+  public get type(): string {
+    return this._type;
   }
 
   public getProperty(pred: Predicate): string {
@@ -77,6 +50,7 @@ class Subject {
     // TODO: should throw on getting 'next' for Root?
     this._valuesUpdated.set(pred, value);
     value === pred.default && this._valuesUpdated.delete(pred);
+    // TODO: if type is set, also modify this._type
   }
 
   public getSparqlForUpdate = (): string => {

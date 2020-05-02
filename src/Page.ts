@@ -1,5 +1,5 @@
 import { Graph } from './Graph';
-import { ont, aliasToPredId } from '../config/ontology';
+import { ont, aliasToPredId, predIdToAlias } from '../config/ontology';
 import { Element, Node, Operation, transform, Path, Text } from './interface';
 import * as _ from 'lodash';
 import { Subject } from './Subject';
@@ -12,7 +12,7 @@ class Page extends Graph {
     this._editor = <Element>this._toJsonRecursive(this.getRoot());
   }
 
-  public toJson = (): Element => {
+  public get = (): Element => {
     return this._editor;
   };
 
@@ -133,7 +133,7 @@ class Page extends Graph {
   }
 
   private _toJsonRecursive(subject: Subject): Node {
-    let result = subject.toJson();
+    let result = this._toJson(subject);
     if (!result.children) return result;
 
     let childId = subject.getProperty(this.getPredicate(ont.sdoc.firstChild));
@@ -144,6 +144,26 @@ class Page extends Graph {
       childId = child.getProperty(this.getPredicate(ont.sdoc.next));
       child = this._subjectMap.get(childId);
     }
+
+    return result;
+  }
+
+  private _toJson(subject: Subject): Node {
+    let result = {
+      id: subject.id,
+      type: subject.type,
+      children: [],
+    };
+
+    if (subject.type === ont.sdoc.leaf) {
+      delete result.children;
+    }
+    Object.values(this._predicates).forEach(pred => {
+      const alias = predIdToAlias[pred.id];
+      [ont.sdoc.next, ont.sdoc.firstChild, ont.rdf.type].includes(pred.id) ||
+        subject.getProperty(pred) === pred.default ||
+        (result[alias] = subject.getProperty(pred));
+    });
 
     return result;
   }
