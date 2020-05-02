@@ -32,7 +32,6 @@ class Subject {
     this._id = id;
     this._type = type;
     this._graph = graph;
-    // this._valuesUpdated.id = this._valuesFromPod.id = id;
     this._predicates = predicates;
   }
 
@@ -44,8 +43,6 @@ class Subject {
     const value: string = pred.fromQuad(quad);
     this._valuesFromPod.set(pred, value);
     this._valuesUpdated.set(pred, value);
-    // this._valuesFromPod[quad.predicate.id] = value;
-    // this._valuesUpdated[quad.predicate.id] = value;
   }
 
   public toJson(): Node {
@@ -103,13 +100,17 @@ class Subject {
       return `DELETE WHERE { GRAPH <${this._graph}> { <${this._id}> ?p ?o } };\n`;
     } else {
       let sparql = '';
-      Object.values(this._predicates).forEach(pred => {
+      let allPred = new Set<Predicate>([
+        ...this._valuesFromPod.keys(),
+        ...this._valuesUpdated.keys(),
+      ]);
+      for (let pred of allPred) {
         sparql += pred.getSparql(
           this._id,
           this._valuesUpdated.get(pred),
           this._valuesFromPod.get(pred),
         );
-      });
+      }
       return sparql;
     }
   };
