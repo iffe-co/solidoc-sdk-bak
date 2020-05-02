@@ -33,7 +33,7 @@ describe('test/Subject.test.ts', () => {
   beforeEach(() => {
     para1 = _.cloneDeep(config.para[1]);
     para2 = _.cloneDeep(config.para[2]);
-    branch2 = new Subject(para2.id, para2.type, config.page.id, predicates);
+    branch2 = new Subject(para2.id, para2.type, config.page.id);
   });
 
   describe('Create Node', () => {
@@ -59,7 +59,7 @@ describe('test/Subject.test.ts', () => {
     it('parses from quads', () => {
       quads = parser.parse(turtle.para[2]);
       quads.forEach(quad => {
-        branch2.fromQuad(quad);
+        branch2.fromQuad(predicates[quad.predicate.id], quad);
       });
 
       assert.equal(
@@ -71,7 +71,7 @@ describe('test/Subject.test.ts', () => {
     it('discards an unknown quad', () => {
       let turtle = `<${config.para[2].id}> <${ont.sdoc.text}> "abc".`;
       let quads = parser.parse(turtle);
-      branch2.fromQuad(quads[0]);
+      branch2.fromQuad(predicates[quads[0].predicate.id], quads[0]);
 
       assert(!branch2.isInserted());
     });
@@ -89,7 +89,7 @@ describe('test/Subject.test.ts', () => {
 
   describe('#nextNode property', () => {
     beforeEach(() => {
-      branch1 = new Subject(para1.id, para1.type, config.page.id, predicates);
+      branch1 = new Subject(para1.id, para1.type, config.page.id);
     });
 
     it('setNext() is together with set("next")', () => {
@@ -104,7 +104,7 @@ describe('test/Subject.test.ts', () => {
     it('parses #nextNode from quads and synced with getNext()', () => {
       let quads = parser.parse(turtle.para[1]);
       // note the index of quads
-      branch1.fromQuad(quads[1]);
+      branch1.fromQuad(predicates[quads[1].predicate.id], quads[1]);
 
       assert.strictEqual(
         branch1.getProperty(predicates[ont.sdoc.next]),
@@ -164,7 +164,6 @@ describe('test/Subject.test.ts', () => {
         config.para[1].id,
         config.para[1].type,
         config.page.id,
-        predicates,
       );
     });
 
@@ -201,7 +200,7 @@ describe('Root', () => {
 
   beforeEach(() => {
     page = _.cloneDeep(config.page);
-    root = new Subject(page.id, page.type, config.page.id, predicates);
+    root = new Subject(page.id, page.type, config.page.id);
   });
 
   it('sets title', () => {
@@ -214,7 +213,7 @@ describe('Root', () => {
   it('gets sparql', () => {
     let quads = parser.parse(turtle.page);
     quads.forEach(quad => {
-      root.fromQuad(quad);
+      root.fromQuad(predicates[quad.predicate.id], quad);
     });
     root.setProperty(predicates[ont.sdoc.firstChild], '');
     let sparql = root.getSparqlForUpdate();
@@ -227,7 +226,7 @@ describe('Root', () => {
     let quads = parser.parse(turtle);
 
     assert.doesNotThrow(() => {
-      root.fromQuad(quads[0]);
+      root.fromQuad(predicates[quads[0].predicate.id], quads[0]);
     });
   });
 
@@ -250,8 +249,8 @@ describe('Leaf', () => {
   const quads: any[] = parser.parse(turtle.text[8]);
 
   beforeEach(() => {
-    leaf = new Subject(text.id, text.type, config.page.id, predicates);
-    quads.forEach(quad => leaf.fromQuad(quad));
+    leaf = new Subject(text.id, text.type, config.page.id);
+    quads.forEach(quad => leaf.fromQuad(predicates[quad.predicate.id], quad));
   });
 
   it('parses from quads', () => {

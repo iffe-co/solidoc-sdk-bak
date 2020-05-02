@@ -5,7 +5,7 @@ class Subject {
   protected _id: string;
   protected _type: string;
   protected _graph: string;
-  protected _predicates: { [key: string]: Predicate };
+  // protected _predicates: { [key: string]: Predicate };
   private _isDeleted: boolean = false;
   private _isInserted: boolean = false;
 
@@ -16,19 +16,19 @@ class Subject {
     id: string,
     type: string,
     graph: string,
-    predicates: { [key: string]: Predicate },
+    // predicates: { [key: string]: Predicate },
   ) {
     this._id = id;
     this._type = type;
     this._graph = graph;
-    this._predicates = predicates;
+    // this._predicates = predicates;
   }
 
-  public fromQuad(quad: any) {
-    if (!this._predicates[quad.predicate.id]) {
-      return;
-    }
-    const pred: Predicate = this._predicates[quad.predicate.id];
+  public fromQuad(pred: Predicate, quad: any) {
+    // if (!this._predicates[quad.predicate.id]) {
+    //   return;
+    // }
+    // const pred: Predicate = this._predicates[quad.predicate.id];
     const value: string = pred.fromQuad(quad);
     this._valuesFromPod.set(pred, value);
     this._valuesUpdated.set(pred, value);

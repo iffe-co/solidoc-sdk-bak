@@ -54,7 +54,8 @@ class Graph {
     quads.forEach(quad => {
       // TODO: should it throw on an unknown subject?
       let subject = this.getSubject(quad.subject.id);
-      subject.fromQuad(quad);
+      let predicate = this.getPredicate(quad.predicate.id);
+      subject.fromQuad(predicate, quad);
     });
   };
 
@@ -82,7 +83,7 @@ class Graph {
     if (this._subjectMap.get(node.id)) {
       throw new Error('duplicated subject creation: ' + node.id);
     }
-    let subject = new Subject(node.id, node.type, this._id, this._predicates);
+    let subject = new Subject(node.id, node.type, this._id);
     this._subjectMap.set(node.id, subject);
     return subject;
   };
