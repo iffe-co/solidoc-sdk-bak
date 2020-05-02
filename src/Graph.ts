@@ -14,11 +14,11 @@ class Graph {
 
   constructor(id: string, turtle: string) {
     this._id = id;
-    this.createPredicates();
+    this.createAllPredicates();
     this._parseTurtle(turtle);
   }
 
-  private createPredicates = () => {
+  private createAllPredicates = () => {
     const predIdArray: string[] = subjTypeToPredArray;
     predIdArray.forEach(this.createPredicate);
   };

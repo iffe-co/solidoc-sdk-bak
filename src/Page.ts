@@ -1,5 +1,5 @@
 import { Graph } from './Graph';
-import { ont, aliasToPredId, predIdToAlias } from '../config/ontology';
+import { ont, aliasToPredId } from '../config/ontology';
 import { Element, Node, Operation, transform, Path, Text } from './interface';
 import * as _ from 'lodash';
 import { Subject } from './Subject';
@@ -166,8 +166,7 @@ class Page extends Graph {
       ) {
         continue;
       }
-      const alias = predIdToAlias[pred.id];
-      result[alias] = subject.getProperty(pred);
+      result[pred.alias] = subject.getProperty(pred);
     }
 
     return result;
