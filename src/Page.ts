@@ -1,5 +1,5 @@
 import { Graph } from './Graph';
-import { ont } from '../config/ontology';
+import { ont, aliasToPredId } from '../config/ontology';
 import { Element, Node, Operation, transform, Path, Text } from './interface';
 import * as _ from 'lodash';
 import { Subject } from './Subject';
@@ -97,7 +97,7 @@ class Page extends Graph {
 
   private _updateRecursive(node: Node, nextNode?: Node) {
     let subject = this.getSubject(node.id);
-    subject.set(node);
+    this.set(node);
     nextNode &&
       subject.setProperty(this.getPredicate(ont.sdoc.next), nextNode.id);
 
@@ -108,6 +108,22 @@ class Page extends Graph {
 
     node.children.forEach((childNode: Node, index: number) => {
       this._updateRecursive(childNode, node.children[index + 1]);
+    });
+  }
+
+  public set(node: Node) {
+    let subject = this.getSubject(node.id);
+    if (subject.isDeleted()) {
+      throw new Error('Trying to update a deleted subject: ' + this._id);
+    }
+
+    Object.keys(node).forEach(alias => {
+      if (alias === 'id' || alias === 'children') {
+        //
+      } else {
+        const predId = aliasToPredId[alias];
+        subject.setProperty(this.getPredicate(predId), node[alias]);
+      }
     });
   }
 

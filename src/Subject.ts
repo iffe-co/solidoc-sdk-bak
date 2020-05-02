@@ -1,5 +1,5 @@
 import { Predicate } from './Predicate';
-import { predIdToAlias, ont, aliasToPredId } from '../config/ontology';
+import { predIdToAlias, ont } from '../config/ontology';
 import { Node } from './interface';
 import * as _ from 'lodash';
 
@@ -77,21 +77,6 @@ class Subject {
     // TODO: should throw on getting 'next' for Root?
     this._valuesUpdated.set(pred, value);
     value === pred.default && this._valuesUpdated.delete(pred);
-  }
-
-  public set(node: Node) {
-    if (this._isDeleted) {
-      throw new Error('Trying to update a deleted subject: ' + this._id);
-    }
-
-    Object.keys(node).forEach(alias => {
-      if (alias === 'id' || alias === 'children') {
-        //
-      } else {
-        const predId = aliasToPredId[alias];
-        this.setProperty(this._predicates[predId], node[alias]);
-      }
-    });
   }
 
   public getSparqlForUpdate = (): string => {
