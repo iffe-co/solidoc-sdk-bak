@@ -1,34 +1,24 @@
 import { Predicate } from './Predicate';
 import * as _ from 'lodash';
+import { ont } from '../config/ontology';
 
 class Subject {
-  protected _id: string;
-  protected _type: string;
-  protected _graph: string;
-  // protected _predicates: { [key: string]: Predicate };
+  private _id: string;
+  private _type: string;
+  private _graph: string;
   private _isDeleted: boolean = false;
   private _isInserted: boolean = false;
 
   private _valuesUpdated = new Map<Predicate, string>();
   private _valuesFromPod = new Map<Predicate, string>();
 
-  constructor(
-    id: string,
-    type: string,
-    graph: string,
-    // predicates: { [key: string]: Predicate },
-  ) {
+  constructor(id: string, type: string, graph: string) {
     this._id = id;
     this._type = type;
     this._graph = graph;
-    // this._predicates = predicates;
   }
 
   public fromQuad(pred: Predicate, quad: any) {
-    // if (!this._predicates[quad.predicate.id]) {
-    //   return;
-    // }
-    // const pred: Predicate = this._predicates[quad.predicate.id];
     const value: string = pred.fromQuad(quad);
     this._valuesFromPod.set(pred, value);
     this._valuesUpdated.set(pred, value);
@@ -50,7 +40,9 @@ class Subject {
     // TODO: should throw on getting 'next' for Root?
     this._valuesUpdated.set(pred, value);
     value === pred.default && this._valuesUpdated.delete(pred);
-    // TODO: if type is set, also modify this._type
+    if (pred.id === ont.rdf.type) {
+      this._type = value;
+    }
   }
 
   public getSparqlForUpdate = (): string => {

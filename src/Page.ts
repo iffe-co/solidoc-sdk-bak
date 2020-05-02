@@ -158,12 +158,17 @@ class Page extends Graph {
     if (subject.type === ont.sdoc.leaf) {
       delete result.children;
     }
-    Object.values(this._predicates).forEach(pred => {
+
+    for (let pred of this._predicateMap.values()) {
+      if (
+        [ont.sdoc.next, ont.sdoc.firstChild, ont.rdf.type].includes(pred.id) ||
+        subject.getProperty(pred) === pred.default
+      ) {
+        continue;
+      }
       const alias = predIdToAlias[pred.id];
-      [ont.sdoc.next, ont.sdoc.firstChild, ont.rdf.type].includes(pred.id) ||
-        subject.getProperty(pred) === pred.default ||
-        (result[alias] = subject.getProperty(pred));
-    });
+      result[alias] = subject.getProperty(pred);
+    }
 
     return result;
   }

@@ -10,7 +10,7 @@ const parser = new n3.Parser();
 class Graph {
   protected _id: string = '';
   protected _subjectMap = new Map<string, Subject>();
-  protected _predicates: { [key: string]: Predicate } = {};
+  protected _predicateMap = new Map<string, Predicate>();
 
   constructor(id: string, turtle: string) {
     this._id = id;
@@ -20,14 +20,16 @@ class Graph {
 
   private createPredicates = () => {
     const predIdArray: string[] = subjTypeToPredArray;
-    predIdArray.forEach(predId => {
-      // const alias = predIdToAlias[predId];
-      this._predicates[predId] = new Predicate(
-        predId,
-        predIdToType[predId],
-        this._id,
-      );
-    });
+    predIdArray.forEach(this.createPredicate);
+  };
+
+  public createPredicate = (predId: string): Predicate => {
+    if (this._predicateMap.get(predId)) {
+      throw new Error('duplicated predicate creation: ' + predId);
+    }
+    let predicate = new Predicate(predId, predIdToType[predId], this._id);
+    this._predicateMap.set(predId, predicate);
+    return predicate;
   };
 
   private _parseTurtle = (turtle: string) => {
@@ -72,7 +74,7 @@ class Graph {
   };
 
   public getPredicate = (id: string): Predicate => {
-    const predicate = this._predicates[id];
+    const predicate = this._predicateMap.get(id);
     if (!predicate) {
       throw new Error('Predicate not found: ' + id);
     }
