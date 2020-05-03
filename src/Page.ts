@@ -37,7 +37,6 @@ class Page extends Graph {
     const subjToInsert = new Set<Node>();
     const subjToRemove = new Set<string>();
     let currId: string;
-    let curr: Subject;
 
     // TODO: should operation on a deleted subject allowed?
     switch (op.type) {
@@ -47,11 +46,10 @@ class Page extends Graph {
 
       case 'split_node':
         currId = Node.get(this._editor, op.path).id;
-        curr = this.getSubject(currId);
         this._preInsertRecursive(
           {
             id: <string>op.properties.id,
-            type: curr.getProperty(this.getPredicate(ont.rdf.type)),
+            type: this.getValue(currId, ont.rdf.type),
             children: [], // TODO: this is a workaround
           },
           subjToInsert,
@@ -136,13 +134,13 @@ class Page extends Graph {
     let result = this._toJson(subject);
     if (!result.children) return result;
 
-    let childId = subject.getProperty(this.getPredicate(ont.sdoc.firstChild));
+    let childId = this.getValue(subject.id, ont.sdoc.firstChild);
     let child: Subject | undefined = this._subjectMap.get(childId);
 
     while (child) {
       result.children.push(this._toJsonRecursive(child));
-      childId = child.getProperty(this.getPredicate(ont.sdoc.next));
-      child = this._subjectMap.get(childId);
+      let nextId = this.getValue(child.id, ont.sdoc.next);
+      child = this._subjectMap.get(nextId);
     }
 
     return result;

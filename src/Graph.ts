@@ -56,18 +56,18 @@ class Graph {
     return this.getSubject(this._id);
   };
 
-  public getSubject = (id: string): Subject => {
-    const subject = this._subjectMap.get(id);
+  public getSubject = (subjectId: string): Subject => {
+    const subject = this._subjectMap.get(subjectId);
     if (!subject) {
-      throw new Error('Subject not found: ' + id);
+      throw new Error('Subject not found: ' + subjectId);
     }
     return subject;
   };
 
-  public getPredicate = (id: string): Predicate => {
-    const predicate = this._predicateMap.get(id);
+  public getPredicate = (predicateId: string): Predicate => {
+    const predicate = this._predicateMap.get(predicateId);
     if (!predicate) {
-      throw new Error('Predicate not found: ' + id);
+      throw new Error('Predicate not found: ' + predicateId);
     }
     return predicate;
   };
@@ -76,9 +76,15 @@ class Graph {
     if (this._subjectMap.get(subejectId)) {
       throw new Error('duplicated subject creation: ' + subejectId);
     }
-    let subject = new Subject(subejectId, this._id);
+    const subject = new Subject(subejectId, this._id);
     this._subjectMap.set(subejectId, subject);
     return subject;
+  };
+
+  public getValue = (subjectId: string, predicateId: string) => {
+    const subject = this.getSubject(subjectId);
+    const predicate = this.getPredicate(predicateId);
+    return subject.getProperty(predicate);
   };
 
   public getSparqlForUpdate(): string {
