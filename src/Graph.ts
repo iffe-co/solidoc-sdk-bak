@@ -80,6 +80,12 @@ class Graph {
     return subject.getProperty(predicate);
   };
 
+  public setValue = (subjectId: string, predicateId: string, value: string) => {
+    const subject = this.getSubject(subjectId);
+    const predicate = this.getPredicate(predicateId);
+    return subject.setProperty(predicate, value);
+  };
+
   public getSparqlForUpdate(): string {
     let sparql = '';
     for (let subject of this._subjectMap.values()) {
@@ -90,21 +96,13 @@ class Graph {
 
   public commit() {
     for (let [id, subject] of this._subjectMap.entries()) {
-      if (subject.isDeleted()) {
-        this._subjectMap.delete(id);
-      } else {
-        subject.commit();
-      }
+      subject.isDeleted() ? this._subjectMap.delete(id) : subject.commit();
     }
   }
 
   public undo() {
     for (let [id, subject] of this._subjectMap.entries()) {
-      if (subject.isInserted()) {
-        this._subjectMap.delete(id);
-      } else {
-        subject.undo();
-      }
+      subject.isInserted() ? this._subjectMap.delete(id) : subject.undo();
     }
   }
 }

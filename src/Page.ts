@@ -110,17 +110,9 @@ class Page extends Graph {
   }
 
   public set(node: Node) {
-    let subject = this.getSubject(node.id);
-    if (subject.isDeleted()) {
-      throw new Error('Trying to update a deleted subject: ' + this._id);
-    }
-
     Object.keys(node).forEach(alias => {
-      if (alias === 'id' || alias === 'children') {
-        //
-      } else {
-        const predId = aliasToPredId[alias];
-        subject.setProperty(this.getPredicate(predId), node[alias]);
+      if (alias !== 'id' && alias !== 'children') {
+        this.setValue(node.id, aliasToPredId[alias], node[alias]);
       }
     });
   }

@@ -21,9 +21,7 @@ class Subject {
     const value: string = pred.fromQuad(quad);
     this._valuesFromPod.set(pred, value);
     this._valuesUpdated.set(pred, value);
-    if (pred.id === ont.rdf.type) {
-      this._type = value;
-    }
+    pred.id === ont.rdf.type && (this._type = value);
   }
 
   public get id(): string {
@@ -39,12 +37,9 @@ class Subject {
   }
 
   public setProperty(pred: Predicate, value: string) {
-    // TODO: should throw on getting 'next' for Root?
     this._valuesUpdated.set(pred, value);
     value === pred.default && this._valuesUpdated.delete(pred);
-    if (pred.id === ont.rdf.type) {
-      this._type = value;
-    }
+    pred.id === ont.rdf.type && (this._type = value);
   }
 
   public getSparqlForUpdate = (): string => {
