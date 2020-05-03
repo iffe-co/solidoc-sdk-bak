@@ -1,5 +1,5 @@
 import { Subject } from './Subject';
-import { subjTypeToPredArray, ont } from '../config/ontology';
+import { subjTypeToPredArray } from '../config/ontology';
 import { Predicate } from './Predicate';
 import * as n3 from 'n3';
 
@@ -13,6 +13,7 @@ class Graph {
 
   constructor(id: string, turtle: string) {
     this._id = id;
+    this.createSubject(id);
     this.createAllPredicates();
     this._parseTurtle(turtle);
   }
@@ -34,20 +35,12 @@ class Graph {
   private _parseTurtle = (turtle: string) => {
     const quads: any[] = parser.parse(turtle);
     quads.forEach(quad => {
-      if (quad.predicate.id === ont.rdf.type) {
+      const subject =
+        this._subjectMap.get(quad.subject.id) ||
         this.createSubject(quad.subject.id);
-      }
-    });
-
-    // Should always create the root
-    if (!this._subjectMap.get(this._id)) {
-      this.createSubject(this._id);
-    }
-
-    quads.forEach(quad => {
-      // TODO: should it throw on an unknown subject?
-      let subject = this.getSubject(quad.subject.id);
-      let predicate = this.getPredicate(quad.predicate.id);
+      const predicate =
+        this._predicateMap.get(quad.predicate.id) ||
+        this.createPredicate(quad.predicate.id);
       subject.fromQuad(predicate, quad);
     });
   };

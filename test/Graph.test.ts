@@ -51,14 +51,14 @@ describe('Graph', () => {
       );
     });
 
-    it('does not construct a subject without type definition', () => {
-      let tempId = cfg.page.id + '#temp';
-      let turtleTemp = turtleAll + `<${tempId}> <${ont.sdoc.text}> "ABC".`;
+    // it('does not construct a subject without type definition', () => {
+    //   let tempId = cfg.page.id + '#temp';
+    //   let turtleTemp = turtleAll + `<${tempId}> <${ont.sdoc.text}> "ABC".`;
 
-      assert.throws(() => {
-        new Graph(cfg.page.id, turtleTemp);
-      });
-    });
+    //   assert.throws(() => {
+    //     new Graph(cfg.page.id, turtleTemp);
+    //   });
+    // });
 
     it('disallows creating node with a duplicated id', () => {
       assert.throws(() => {
