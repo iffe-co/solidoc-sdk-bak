@@ -18,7 +18,7 @@ describe('Type: a NamedNode Predicate', () => {
   const insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.rdf.type}> <${ont.sdoc.paragraph}>} };\n`;
 
   beforeEach(() => {
-    type = new Predicate(ont.rdf.type, 'NamedNode', page.id);
+    type = new Predicate(ont.rdf.type, page.id);
   });
 
   it('parses quad as a named node', () => {
@@ -57,7 +57,7 @@ describe('Text Predicate', () => {
   const insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.text}> "Hello world!"} };\n`;
 
   beforeEach(() => {
-    text = new Predicate(ont.sdoc.text, 'Text', page.id);
+    text = new Predicate(ont.sdoc.text, page.id);
   });
 
   it('parses quad as text', () => {

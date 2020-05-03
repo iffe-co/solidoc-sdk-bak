@@ -1,5 +1,5 @@
 import * as _ from 'lodash';
-import { predIdToAlias } from '../config/ontology';
+import { predIdToAlias, predIdToType } from '../config/ontology';
 
 class Predicate {
   private _id: string;
@@ -8,10 +8,11 @@ class Predicate {
   private _graph: string;
   private _default: string = '';
 
-  constructor(id: string, type: 'NamedNode' | 'Text', graph: string) {
+  constructor(id: string, graph: string) {
     this._id = id;
     this._graph = graph;
     this._alias = predIdToAlias[id];
+    const type = predIdToType[id];
     this.setType(type);
   }
 

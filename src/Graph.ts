@@ -1,5 +1,5 @@
 import { Subject } from './Subject';
-import { subjTypeToPredArray, predIdToType, ont } from '../config/ontology';
+import { subjTypeToPredArray, ont } from '../config/ontology';
 import { Predicate } from './Predicate';
 import * as n3 from 'n3';
 
@@ -26,7 +26,7 @@ class Graph {
     if (this._predicateMap.get(predId)) {
       throw new Error('duplicated predicate creation: ' + predId);
     }
-    let predicate = new Predicate(predId, predIdToType[predId], this._id);
+    let predicate = new Predicate(predId, this._id);
     this._predicateMap.set(predId, predicate);
     return predicate;
   };
