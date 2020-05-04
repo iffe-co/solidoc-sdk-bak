@@ -1,17 +1,17 @@
 import * as _ from 'lodash';
-import { predIdToAlias, predIdToType } from '../config/ontology';
+import { predIdToLabel, predIdToType } from '../config/ontology';
 
 class Predicate {
   private _id: string;
   private _type: 'NamedNode' | 'Text';
-  private _alias: string;
+  private _label: string;
   private _graph: string;
   private _default: string = '';
 
   constructor(id: string, graph: string) {
     this._id = id;
     this._graph = graph;
-    this._alias = predIdToAlias[id];
+    this._label = predIdToLabel[id];
     const type = predIdToType[id];
     this.setType(type);
   }
@@ -24,8 +24,8 @@ class Predicate {
     return this._default;
   }
 
-  public get alias(): string {
-    return this._alias;
+  public get label(): string {
+    return this._label;
   }
 
   public setType(type: 'NamedNode' | 'Text') {

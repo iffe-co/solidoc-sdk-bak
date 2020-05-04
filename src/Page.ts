@@ -1,5 +1,5 @@
 import { Graph } from './Graph';
-import { ont, aliasToPredId } from '../config/ontology';
+import { ont, labelToPredId } from '../config/ontology';
 import { Element, Node, Operation, transform, Path, Text } from './interface';
 import * as _ from 'lodash';
 import { Subject } from './Subject';
@@ -110,9 +110,9 @@ class Page extends Graph {
   }
 
   public set(node: Node) {
-    Object.keys(node).forEach(alias => {
-      if (alias !== 'id' && alias !== 'children') {
-        this.setValue(node.id, aliasToPredId[alias], node[alias]);
+    Object.keys(node).forEach(label => {
+      if (label !== 'id' && label !== 'children') {
+        this.setValue(node.id, labelToPredId[label], node[label]);
       }
     });
   }
@@ -156,7 +156,7 @@ class Page extends Graph {
       ) {
         continue;
       }
-      result[pred.alias] = subject.getProperty(pred);
+      result[pred.label] = subject.getProperty(pred);
     }
 
     return result;
