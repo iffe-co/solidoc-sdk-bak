@@ -75,7 +75,7 @@ const predIdToRange = {
   'http://www.solidoc.net/ontologies#firstChild': 'NamedNode',
   'http://www.solidoc.net/ontologies#nextNode': 'NamedNode',
   'http://www.solidoc.net/ontologies#text': 'Text',
-  'http://www.solidoc.net/ontologies#checked': 'Boolean', // TODO: should be Boolean
+  'http://www.solidoc.net/ontologies#checked': 'Text', // TODO: should be Boolean
   'http://www.solidoc.net/ontologies#language': 'Text', // TODO: better be NamedNode
   'http://www.solidoc.net/ontologies#formula': 'Text',
   'http://www.solidoc.net/ontologies#hintState': 'Text',

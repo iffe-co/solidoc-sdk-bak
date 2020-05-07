@@ -9,8 +9,8 @@ class Subject {
   private _isDeleted: boolean = false;
   private _isInserted: boolean = false;
 
-  private _valuesUpdated = new Map<Predicate, string | boolean | undefined>();
-  private _valuesFromPod = new Map<Predicate, string | boolean | undefined>();
+  private _valuesUpdated = new Map<Predicate, string | undefined>();
+  private _valuesFromPod = new Map<Predicate, string | undefined>();
 
   constructor(id: string, graph: string) {
     this._id = id;
@@ -32,11 +32,11 @@ class Subject {
     return this._type;
   }
 
-  public getProperty(pred: Predicate): string | boolean | undefined {
+  public getProperty(pred: Predicate): string | undefined {
     return this._valuesUpdated.get(pred) || pred.default;
   }
 
-  public setProperty(pred: Predicate, value: string | boolean | undefined) {
+  public setProperty(pred: Predicate, value: string | undefined) {
     this._valuesUpdated.set(pred, value);
     value === pred.default && this._valuesUpdated.delete(pred);
     pred.id === ont.rdf.type && (this._type = <string>value);

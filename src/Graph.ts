@@ -83,7 +83,7 @@ class Graph {
   public setValue = (
     subjectId: string,
     predicateId: string,
-    value: string | boolean | undefined,
+    value: string | undefined,
   ) => {
     const subject = this.getSubject(subjectId);
     const predicate = this.getPredicate(predicateId);

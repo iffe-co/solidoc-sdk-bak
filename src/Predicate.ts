@@ -3,10 +3,10 @@ import { predIdToLabel, predIdToRange } from '../config/ontology';
 
 class Predicate {
   private _id: string;
-  private _range: 'NamedNode' | 'Text' | 'Boolean';
+  private _range: 'NamedNode' | 'Text';
   private _label: string;
   private _graph: string;
-  private _default: string | boolean | undefined;
+  private _default: string | undefined;
 
   constructor(id: string, graph: string) {
     this._id = id;
@@ -20,7 +20,7 @@ class Predicate {
     return this._id;
   }
 
-  public get default(): string | boolean | undefined {
+  public get default(): string | undefined {
     return this._default;
   }
 
@@ -28,15 +28,15 @@ class Predicate {
     return this._label;
   }
 
-  public _setRange(range: 'NamedNode' | 'Text' | 'Boolean') {
+  public _setRange(range: 'NamedNode' | 'Text') {
     this._range = range;
     switch (this._range) {
       case 'Text':
         this._default = '';
         break;
-      case 'Boolean':
-        this._default = false;
-        break;
+      // case 'Boolean':
+      //   this._default = false;
+      //   break;
       default:
         this._default = undefined;
         break;
@@ -45,8 +45,8 @@ class Predicate {
 
   public getSparql(
     subject: string,
-    updated: string | boolean | undefined,
-    initial: string | boolean | undefined,
+    updated: string | undefined,
+    initial: string | undefined,
   ): string {
     return (
       this._deleteClause(subject, updated, initial) +
@@ -56,8 +56,8 @@ class Predicate {
 
   private _deleteClause = (
     subject: string,
-    updated: string | boolean | undefined,
-    initial: string | boolean | undefined,
+    updated: string | undefined,
+    initial: string | undefined,
   ): string => {
     return this._shouldDelete(updated, initial)
       ? `DELETE WHERE { GRAPH <${this._graph}> { <${subject}> <${this.id}> ?o } };\n`
@@ -66,8 +66,8 @@ class Predicate {
 
   private _insertClause = (
     subject: string,
-    updated: string | boolean | undefined,
-    initial: string | boolean | undefined,
+    updated: string | undefined,
+    initial: string | undefined,
   ): string => {
     return this._shouldInsert(updated, initial)
       ? `INSERT DATA { GRAPH <${this._graph}> { <${subject}> <${
@@ -77,8 +77,8 @@ class Predicate {
   };
 
   private _shouldDelete(
-    updated: string | boolean | undefined,
-    initial: string | boolean | undefined,
+    updated: string | undefined,
+    initial: string | undefined,
   ): boolean {
     return (
       updated !== initial && initial !== this._default && initial !== undefined
@@ -86,8 +86,8 @@ class Predicate {
   }
 
   private _shouldInsert(
-    updated: string | boolean | undefined,
-    initial: string | boolean | undefined,
+    updated: string | undefined,
+    initial: string | undefined,
   ): boolean {
     return (
       updated !== initial && updated !== this._default && updated !== undefined
@@ -103,13 +103,13 @@ class Predicate {
     return `<${value}>`;
   }
 
-  public fromQuad(quad: any): string | boolean {
+  public fromQuad(quad: any): string {
     const value: string = quad.object.id;
     switch (this._range) {
       case 'Text':
         return value.substring(1, value.lastIndexOf('"'));
-      case 'Boolean':
-        return value.startsWith(`"true"`);
+      // case 'Boolean':
+      //   return value.startsWith(`"true"`);
       default:
         return value;
     }
@@ -117,3 +117,11 @@ class Predicate {
 }
 
 export { Predicate };
+
+import * as n3 from 'n3';
+const parser = new n3.Parser();
+
+let turtle = '<http://example.org/alice> <http://example.org/age> 35 .';
+
+let quads = parser.parse(turtle);
+console.log(quads[0].object);
