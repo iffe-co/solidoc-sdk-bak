@@ -14,7 +14,7 @@ turtleAll += turtle.text.join('\n') + '\n';
 describe('Create Page', () => {
   it('parses from quads', () => {
     page = new Page(cfg.page.id, turtleAll);
-    assert.deepStrictEqual(page.get(), cfg.page);
+    assert.deepStrictEqual(page.toJson(), cfg.page);
   });
 });
 
@@ -24,7 +24,7 @@ describe('Insert Node', () => {
   beforeEach(() => {
     page = new Page(
       cfg.page.id,
-      `<${cfg.page.id}> <${ont.dct.title}> "${cfg.page.title}".`,
+      `<${cfg.page.id}> a <${ont.sdoc.root}>; <${ont.dct.title}> "${cfg.page.title}".`,
     );
     op0 = {
       type: 'insert_node',
@@ -36,7 +36,7 @@ describe('Insert Node', () => {
   it('inserts a paragraph', () => {
     page.apply(op0);
 
-    assert.deepStrictEqual(page.get().children[0], cfg.para[0]);
+    assert.deepStrictEqual(page.toJson().children[0], cfg.para[0]);
     assert(page.getSubject(cfg.para[0].id).isInserted());
     assert(page.getSubject(cfg.text[0].id).isInserted());
   });

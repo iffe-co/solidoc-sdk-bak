@@ -12,7 +12,7 @@ class Page extends Graph {
     this._editor = <Element>this._toJsonRecursive(this.getRoot());
   }
 
-  public get = (): Element => {
+  public toJson = (): Element => {
     return this._editor;
   };
 
@@ -123,7 +123,7 @@ class Page extends Graph {
   }
 
   private _toJsonRecursive(subject: Subject): Node {
-    let result = this._toJson(subject);
+    let result = subject.toJson();
     if (!result.children) return result;
 
     let childId = this.getValue(subject.id, ont.sdoc.firstChild);
@@ -133,30 +133,6 @@ class Page extends Graph {
       result.children.push(this._toJsonRecursive(child));
       let nextId = this.getValue(child.id, ont.sdoc.next);
       child = this._subjectMap.get(nextId);
-    }
-
-    return result;
-  }
-
-  private _toJson(subject: Subject): Node {
-    let result = {
-      id: subject.id,
-      type: subject.type,
-      children: [],
-    };
-
-    if (subject.type === ont.sdoc.leaf) {
-      delete result.children;
-    }
-
-    for (let pred of this._predicateMap.values()) {
-      if (
-        [ont.sdoc.next, ont.sdoc.firstChild, ont.rdf.type].includes(pred.id) ||
-        subject.getProperty(pred) === pred.default
-      ) {
-        continue;
-      }
-      result[pred.label] = subject.getProperty(pred);
     }
 
     return result;

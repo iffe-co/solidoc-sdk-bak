@@ -1,3 +1,5 @@
+import { Node } from '../src/interface';
+
 const ont = {
   rdf: {
     type: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
@@ -79,4 +81,72 @@ const predIdToType = {
   'http://www.solidoc.net/ontologies#hintState': 'Text',
 };
 
-export { ont, predIdToLabel, predIdToType, subjTypeToPredArray, labelToPredId };
+// TODO: use pred.default
+const defaultJson = (id: string, type: string): Node => {
+  switch (type) {
+    case ont.sdoc.root:
+      return {
+        id: id,
+        type: type,
+        title: '',
+        children: [],
+      };
+    case ont.sdoc.leaf:
+      return {
+        id: id,
+        type: type,
+        text: '',
+      };
+    case ont.sdoc.heading1:
+    case ont.sdoc.heading2:
+    case ont.sdoc.heading3:
+    case ont.sdoc.divider:
+    case ont.sdoc.paragraph:
+    case ont.sdoc.numberedList:
+    case ont.sdoc.bulletedList:
+      return {
+        id: id,
+        type: type,
+        children: [],
+      };
+    case ont.sdoc.taskList:
+      return {
+        id: id,
+        type: type,
+        checked: false,
+        children: [],
+      };
+    case ont.sdoc.mathEquation:
+      return {
+        id: id,
+        type: type,
+        formula: '',
+        children: [],
+      };
+    case ont.sdoc.pre:
+      return {
+        id: id,
+        type: type,
+        language: '',
+        children: [],
+      };
+    case ont.sdoc.hint:
+      return {
+        id: id,
+        type: type,
+        hitState: '',
+        children: [],
+      };
+    default:
+      throw new Error('Unknown type: ' + type);
+  }
+};
+
+export {
+  ont,
+  predIdToLabel,
+  predIdToType,
+  subjTypeToPredArray,
+  labelToPredId,
+  defaultJson,
+};

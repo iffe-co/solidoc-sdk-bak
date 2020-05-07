@@ -44,13 +44,14 @@ describe('test/Subject.test.ts', () => {
       assert(!branch2.isInserted());
     });
 
-    // it('translates to Json', () => {
-    //   branch2.set(para2);
-    //   assert.deepStrictEqual(branch2.toJson(), {
-    //     ...para2,
-    //     children: [],
-    //   });
-    // });
+    it('translates to Json', () => {
+      let pred = predicates[ont.rdf.type];
+      branch2.setProperty(pred, para2.type);
+      assert.deepStrictEqual(branch2.toJson(), {
+        ...para2,
+        children: [],
+      });
+    });
 
     it('parses from quads', () => {
       quads = parser.parse(turtle.para[2]);
@@ -193,6 +194,9 @@ describe('Root', () => {
   beforeEach(() => {
     page = _.cloneDeep(config.page);
     root = new Subject(page.id, config.page.id);
+
+    let pred = predicates[ont.rdf.type];
+    root.setProperty(pred, ont.sdoc.root);
   });
 
   it('sets title', () => {
@@ -200,6 +204,11 @@ describe('Root', () => {
     root.setProperty(pred, 'Welcome');
 
     assert.strictEqual(root.getProperty(pred), 'Welcome');
+    assert.deepStrictEqual(root.toJson(), {
+      ...page,
+      title: 'Welcome',
+      children: [],
+    });
   });
 
   it('gets sparql', () => {

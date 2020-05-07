@@ -1,6 +1,6 @@
 import { Predicate } from './Predicate';
 import * as _ from 'lodash';
-import { ont } from '../config/ontology';
+import { ont, defaultJson } from '../config/ontology';
 
 class Subject {
   private _id: string;
@@ -40,6 +40,17 @@ class Subject {
     this._valuesUpdated.set(pred, value);
     value === pred.default && this._valuesUpdated.delete(pred);
     pred.id === ont.rdf.type && (this._type = value);
+  }
+
+  public toJson() {
+    const result = defaultJson(this.id, this.type);
+
+    for (let pred of this._valuesUpdated.keys()) {
+      [ont.sdoc.next, ont.sdoc.firstChild, ont.rdf.type].includes(pred.id) ||
+        (result[pred.label] = this.getProperty(pred));
+    }
+
+    return result;
   }
 
   public getSparqlForUpdate = (): string => {
