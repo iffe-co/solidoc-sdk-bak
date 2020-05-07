@@ -34,11 +34,17 @@ describe('test/Subject.test.ts', () => {
 
   describe('Create Node', () => {
     it('constructs an empty node', () => {
-      assert.strictEqual(branch2.getProperty(predicates[ont.rdf.type]), '');
-      assert.strictEqual(branch2.getProperty(predicates[ont.sdoc.next]), '');
+      assert.strictEqual(
+        branch2.getProperty(predicates[ont.rdf.type]),
+        undefined,
+      );
+      assert.strictEqual(
+        branch2.getProperty(predicates[ont.sdoc.next]),
+        undefined,
+      );
       assert.strictEqual(
         branch2.getProperty(predicates[ont.sdoc.firstChild]),
-        '',
+        undefined,
       );
       assert(!branch2.isDeleted());
       assert(!branch2.isInserted());
@@ -216,7 +222,7 @@ describe('Root', () => {
     quads.forEach(quad => {
       root.fromQuad(predicates[quad.predicate.id], quad);
     });
-    root.setProperty(predicates[ont.sdoc.firstChild], '');
+    root.setProperty(predicates[ont.sdoc.firstChild], undefined);
     let sparql = root.getSparqlForUpdate();
 
     assert(sparql.startsWith('DELETE WHERE'));

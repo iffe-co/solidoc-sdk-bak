@@ -49,7 +49,7 @@ class Page extends Graph {
         this._preInsertRecursive(
           {
             id: <string>op.properties.id,
-            type: this.getValue(currId, ont.rdf.type),
+            type: <string>this.getValue(currId, ont.rdf.type),
             children: [], // TODO: this is a workaround
           },
           subjToInsert,
@@ -94,27 +94,33 @@ class Page extends Graph {
   }
 
   private _updateRecursive(node: Node, nextNode?: Node) {
-    let subject = this.getSubject(node.id);
-    this.set(node);
-    nextNode &&
-      subject.setProperty(this.getPredicate(ont.sdoc.next), nextNode.id);
+    this._update(node, nextNode);
 
     if (!node.children) return;
-
-    const firstChildId = node.children[0] ? node.children[0].id : '';
-    subject.setProperty(this.getPredicate(ont.sdoc.firstChild), firstChildId);
 
     node.children.forEach((childNode: Node, index: number) => {
       this._updateRecursive(childNode, node.children[index + 1]);
     });
   }
 
-  public set(node: Node) {
+  private _update(node: Node, nextNode?: Node) {
     Object.keys(node).forEach(label => {
       if (label !== 'id' && label !== 'children') {
         this.setValue(node.id, labelToPredId[label], node[label]);
       }
     });
+
+    if (nextNode) {
+      this.setValue(node.id, ont.sdoc.next, nextNode.id);
+    } else {
+      this.setValue(node.id, ont.sdoc.next, undefined);
+    }
+
+    if (node.children && node.children[0]) {
+      this.setValue(node.id, ont.sdoc.firstChild, node.children[0].id);
+    } else {
+      this.setValue(node.id, ont.sdoc.firstChild, undefined);
+    }
   }
 
   public undo() {
@@ -126,16 +132,28 @@ class Page extends Graph {
     let result = subject.toJson();
     if (!result.children) return result;
 
-    let childId = this.getValue(subject.id, ont.sdoc.firstChild);
-    let child: Subject | undefined = this._subjectMap.get(childId);
+    let child = this._getRelative(subject, 'firstChild');
 
     while (child) {
       result.children.push(this._toJsonRecursive(child));
-      let nextId = this.getValue(child.id, ont.sdoc.next);
-      child = this._subjectMap.get(nextId);
+      child = this._getRelative(child, 'next');
     }
 
     return result;
+  }
+
+  private _getRelative(
+    subject: Subject,
+    label: 'firstChild' | 'next',
+  ): Subject | undefined {
+    const relId = this.getValue(subject.id, labelToPredId[label]);
+    if (relId === undefined) {
+      return undefined;
+    }
+    if (typeof relId !== 'string') {
+      throw new Error(`Inappropriate relId: ` + relId);
+    }
+    return this._subjectMap.get(relId);
   }
 }
 

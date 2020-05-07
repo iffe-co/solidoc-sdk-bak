@@ -172,7 +172,7 @@ describe('Remove Node', () => {
       page
         .getSubject(config.para[0].id)
         .getProperty(page.getPredicate(ont.sdoc.firstChild)),
-      '',
+      undefined,
     );
   });
 

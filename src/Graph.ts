@@ -80,7 +80,11 @@ class Graph {
     return subject.getProperty(predicate);
   };
 
-  public setValue = (subjectId: string, predicateId: string, value: string) => {
+  public setValue = (
+    subjectId: string,
+    predicateId: string,
+    value: string | boolean | undefined,
+  ) => {
     const subject = this.getSubject(subjectId);
     const predicate = this.getPredicate(predicateId);
     return subject.setProperty(predicate, value);

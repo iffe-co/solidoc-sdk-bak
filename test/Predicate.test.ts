@@ -40,17 +40,56 @@ describe('Type: a NamedNode Predicate', () => {
   });
 
   it('generate sparql for deleted Predicate', () => {
-    const sparql: string = type.getSparql(node.id, '', node.type);
+    const sparql: string = type.getSparql(node.id, undefined, node.type);
     assert.strictEqual(sparql, deleteClause);
   });
 
   it('generate sparql for a just-added Predicate', () => {
-    const sparql: string = type.getSparql(node.id, ont.sdoc.paragraph, '');
+    const sparql: string = type.getSparql(
+      node.id,
+      ont.sdoc.paragraph,
+      undefined,
+    );
     assert.strictEqual(sparql, insertClause);
   });
 });
 
 describe('Text Predicate', () => {
+  let text: Predicate;
+
+  const deleteClause = `DELETE WHERE { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.text}> ?o } };\n`;
+  const insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.text}> "Hello world!"} };\n`;
+
+  beforeEach(() => {
+    text = new Predicate(ont.sdoc.text, page.id);
+  });
+
+  it('parses quad as text', () => {
+    assert.strictEqual(text.fromQuad(quads[1]), node.text);
+  });
+
+  it('generates null sparql', async () => {
+    const sparql: string = text.getSparql(node.id, node.text, node.text);
+    assert.strictEqual(sparql, '');
+  });
+
+  it('generates sparql for update', async () => {
+    const sparql: string = text.getSparql(node.id, 'Hello world!', node.text);
+    assert.strictEqual(sparql, deleteClause + insertClause);
+  });
+
+  it('generates sparql for deletion only', async () => {
+    const sparql: string = text.getSparql(node.id, '', node.text);
+    assert.strictEqual(sparql, deleteClause);
+  });
+
+  it('generates sparql for insertion only', async () => {
+    const sparql: string = text.getSparql(node.id, 'Hello world!', '');
+    assert.strictEqual(sparql, insertClause);
+  });
+});
+
+describe('Boolean Predicate', () => {
   let text: Predicate;
 
   const deleteClause = `DELETE WHERE { GRAPH <${page.id}> { <${node.id}> <${ont.sdoc.text}> ?o } };\n`;

@@ -33,7 +33,7 @@ describe('Graph', () => {
       );
       assert.strictEqual(
         branch2.getProperty(graph.getPredicate(ont.sdoc.next)),
-        '',
+        undefined,
       );
     });
 
@@ -47,7 +47,7 @@ describe('Graph', () => {
       );
       assert.strictEqual(
         leaf2.getProperty(graph.getPredicate(ont.sdoc.next)),
-        '',
+        undefined,
       );
     });
 

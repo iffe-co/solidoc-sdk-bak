@@ -1,26 +1,26 @@
 import * as _ from 'lodash';
-import { predIdToLabel, predIdToType } from '../config/ontology';
+import { predIdToLabel, predIdToRange } from '../config/ontology';
 
 class Predicate {
   private _id: string;
-  private _type: 'NamedNode' | 'Text';
+  private _range: 'NamedNode' | 'Text' | 'Boolean';
   private _label: string;
   private _graph: string;
-  private _default: string = '';
+  private _default: string | boolean | undefined;
 
   constructor(id: string, graph: string) {
     this._id = id;
     this._graph = graph;
     this._label = predIdToLabel[id];
-    const type = predIdToType[id];
-    this.setType(type);
+    const range = predIdToRange[id];
+    this._setRange(range);
   }
 
   public get id(): string {
     return this._id;
   }
 
-  public get default(): string {
+  public get default(): string | boolean | undefined {
     return this._default;
   }
 
@@ -28,15 +28,25 @@ class Predicate {
     return this._label;
   }
 
-  public setType(type: 'NamedNode' | 'Text') {
-    this._type = type;
-    this._default = '';
+  public _setRange(range: 'NamedNode' | 'Text' | 'Boolean') {
+    this._range = range;
+    switch (this._range) {
+      case 'Text':
+        this._default = '';
+        break;
+      case 'Boolean':
+        this._default = false;
+        break;
+      default:
+        this._default = undefined;
+        break;
+    }
   }
 
   public getSparql(
     subject: string,
-    updated: string | undefined,
-    initial: string | undefined,
+    updated: string | boolean | undefined,
+    initial: string | boolean | undefined,
   ): string {
     return (
       this._deleteClause(subject, updated, initial) +
@@ -46,29 +56,29 @@ class Predicate {
 
   private _deleteClause = (
     subject: string,
-    updated: string | undefined,
-    initial: string | undefined,
+    updated: string | boolean | undefined,
+    initial: string | boolean | undefined,
   ): string => {
     return this._shouldDelete(updated, initial)
-      ? `DELETE WHERE { GRAPH <${this._graph}> { <${subject}> <${this._id}> ?o } };\n`
+      ? `DELETE WHERE { GRAPH <${this._graph}> { <${subject}> <${this.id}> ?o } };\n`
       : '';
   };
 
   private _insertClause = (
     subject: string,
-    updated: string | undefined,
-    initial: string | undefined,
+    updated: string | boolean | undefined,
+    initial: string | boolean | undefined,
   ): string => {
     return this._shouldInsert(updated, initial)
       ? `INSERT DATA { GRAPH <${this._graph}> { <${subject}> <${
-          this._id
+          this.id
         }> ${this._escape(<string>updated)}} };\n`
       : '';
   };
 
   private _shouldDelete(
-    updated: string | undefined,
-    initial: string | undefined,
+    updated: string | boolean | undefined,
+    initial: string | boolean | undefined,
   ): boolean {
     return (
       updated !== initial && initial !== this._default && initial !== undefined
@@ -76,8 +86,8 @@ class Predicate {
   }
 
   private _shouldInsert(
-    updated: string | undefined,
-    initial: string | undefined,
+    updated: string | boolean | undefined,
+    initial: string | boolean | undefined,
   ): boolean {
     return (
       updated !== initial && updated !== this._default && updated !== undefined
@@ -85,7 +95,7 @@ class Predicate {
   }
 
   private _escape(value: string): string {
-    if (this._type === 'Text') {
+    if (this._range === 'Text') {
       const backSlashEscaped: string = value.replace(/\\/g, '\\\\');
       const quoteEscaped: string = backSlashEscaped.replace(/"/g, '\\"');
       return `"${quoteEscaped}"`;
@@ -93,12 +103,16 @@ class Predicate {
     return `<${value}>`;
   }
 
-  public fromQuad(quad: any): string {
-    if (this._type === 'NamedNode') {
-      return quad.object.id;
+  public fromQuad(quad: any): string | boolean {
+    const value: string = quad.object.id;
+    switch (this._range) {
+      case 'Text':
+        return value.substring(1, value.lastIndexOf('"'));
+      case 'Boolean':
+        return value.startsWith(`"true"`);
+      default:
+        return value;
     }
-    const text: string = quad.object.id;
-    return text.substring(1, text.lastIndexOf('"'));
   }
 }
 

@@ -69,13 +69,13 @@ const predIdToLabel = {
   'http://www.solidoc.net/ontologies#hintState': 'hintState',
 };
 
-const predIdToType = {
+const predIdToRange = {
   'http://www.w3.org/1999/02/22-rdf-syntax-ns#type': 'NamedNode',
   'http://purl.org/dc/terms/title': 'Text',
   'http://www.solidoc.net/ontologies#firstChild': 'NamedNode',
   'http://www.solidoc.net/ontologies#nextNode': 'NamedNode',
   'http://www.solidoc.net/ontologies#text': 'Text',
-  'http://www.solidoc.net/ontologies#checked': 'Text', // TODO: should be Boolean
+  'http://www.solidoc.net/ontologies#checked': 'Boolean', // TODO: should be Boolean
   'http://www.solidoc.net/ontologies#language': 'Text', // TODO: better be NamedNode
   'http://www.solidoc.net/ontologies#formula': 'Text',
   'http://www.solidoc.net/ontologies#hintState': 'Text',
@@ -145,7 +145,7 @@ const defaultJson = (id: string, type: string): Node => {
 export {
   ont,
   predIdToLabel,
-  predIdToType,
+  predIdToRange,
   subjTypeToPredArray,
   labelToPredId,
   defaultJson,
