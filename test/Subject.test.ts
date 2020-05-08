@@ -53,6 +53,7 @@ describe('test/Subject.test.ts', () => {
     it('translates to Json', () => {
       let pred = predicates[ont.rdf.type];
       branch2.setProperty(pred, para2.type);
+
       assert.deepStrictEqual(branch2.toJson(), {
         ...para2,
         children: [],
@@ -62,7 +63,7 @@ describe('test/Subject.test.ts', () => {
     it('parses from quads', () => {
       quads = parser.parse(turtle.para[2]);
       quads.forEach(quad => {
-        branch2.fromQuad(predicates[quad.predicate.id], quad);
+        branch2.fromQuad(predicates[quad.predicate.id], quad.object);
       });
 
       assert.equal(
@@ -74,7 +75,7 @@ describe('test/Subject.test.ts', () => {
     it('discards an unknown quad', () => {
       let turtle = `<${config.para[2].id}> <${ont.sdoc.text}> "abc".`;
       let quads = parser.parse(turtle);
-      branch2.fromQuad(predicates[quads[0].predicate.id], quads[0]);
+      branch2.fromQuad(predicates[quads[0].predicate.id], quads[0].object);
 
       assert(!branch2.isInserted());
     });
@@ -107,7 +108,7 @@ describe('test/Subject.test.ts', () => {
     it('parses #nextNode from quads and synced with getNext()', () => {
       let quads = parser.parse(turtle.para[1]);
       // note the index of quads
-      branch1.fromQuad(predicates[quads[1].predicate.id], quads[1]);
+      branch1.fromQuad(predicates[quads[1].predicate.id], quads[1].object);
 
       assert.strictEqual(
         branch1.getProperty(predicates[ont.sdoc.next]),
@@ -220,7 +221,7 @@ describe('Root', () => {
   it('gets sparql', () => {
     let quads = parser.parse(turtle.page);
     quads.forEach(quad => {
-      root.fromQuad(predicates[quad.predicate.id], quad);
+      root.fromQuad(predicates[quad.predicate.id], quad.object);
     });
     root.setProperty(predicates[ont.sdoc.firstChild], undefined);
     let sparql = root.getSparqlForUpdate();
@@ -228,12 +229,12 @@ describe('Root', () => {
     assert(sparql.startsWith('DELETE WHERE'));
   });
 
-  it('throws on parsing #nextNode predicate', () => {
+  it('allows parsing #nextNode predicate', () => {
     let turtle = `<${page.id}> <${ont.sdoc.next}> <${config.para[0].id}>.`;
     let quads = parser.parse(turtle);
 
     assert.doesNotThrow(() => {
-      root.fromQuad(predicates[quads[0].predicate.id], quads[0]);
+      root.fromQuad(predicates[quads[0].predicate.id], quads[0].object);
     });
   });
 
@@ -257,7 +258,9 @@ describe('Leaf', () => {
 
   beforeEach(() => {
     leaf = new Subject(text.id, config.page.id);
-    quads.forEach(quad => leaf.fromQuad(predicates[quad.predicate.id], quad));
+    quads.forEach(quad =>
+      leaf.fromQuad(predicates[quad.predicate.id], quad.object),
+    );
   });
 
   it('parses from quads', () => {

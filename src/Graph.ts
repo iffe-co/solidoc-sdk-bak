@@ -1,4 +1,4 @@
-import { Subject } from './Subject';
+import { Subject, Literal } from './Subject';
 import { Predicate } from './Predicate';
 import * as n3 from 'n3';
 
@@ -61,11 +61,11 @@ class Graph {
       const predicate =
         this._predicateMap.get(quad.predicate.id) ||
         this.createPredicate(quad.predicate.id);
-      subject.fromQuad(predicate, quad);
+      subject.fromQuad(predicate, quad.object);
     });
   };
 
-  public getValue = (subjectId: string, predicateId: string) => {
+  public getValue = (subjectId: string, predicateId: string): Literal => {
     const subject = this.getSubject(subjectId);
     const predicate = this.getPredicate(predicateId);
     return subject.getProperty(predicate);
@@ -74,7 +74,7 @@ class Graph {
   public setValue = (
     subjectId: string,
     predicateId: string,
-    value: string | undefined,
+    value: Literal,
   ) => {
     const subject = this.getSubject(subjectId);
     const predicate = this.getPredicate(predicateId);

@@ -1,12 +1,13 @@
 import * as _ from 'lodash';
-import { predIdToLabel, predIdToRange } from '../config/ontology';
+import { predIdToLabel, predIdToRange, ont } from '../config/ontology';
+import { Object } from './Subject';
 
 class Predicate {
   private _id: string;
-  private _range: 'NamedNode' | 'Text';
+  private _range: string;
   private _label: string;
   private _graph: string;
-  private _default: string | undefined;
+  private _default: Object;
 
   constructor(id: string, graph: string) {
     this._id = id;
@@ -20,7 +21,7 @@ class Predicate {
     return this._id;
   }
 
-  public get default(): string | undefined {
+  public get default(): Object {
     return this._default;
   }
 
@@ -28,25 +29,39 @@ class Predicate {
     return this._label;
   }
 
-  public _setRange(range: 'NamedNode' | 'Text') {
+  public get range(): string {
+    return this._range;
+  }
+
+  public _setRange(range: string) {
     this._range = range;
     switch (this._range) {
-      case 'Text':
-        this._default = '';
+      case ont.xsd.string:
+        this._default = {
+          value: '',
+          type: this._range,
+        };
         break;
-      // case 'Boolean':
-      //   this._default = false;
-      //   break;
+      case ont.xsd.boolean:
+        this._default = {
+          value: false,
+          type: this._range,
+        };
+        break;
       default:
-        this._default = undefined;
+        // NamedNode
+        this._default = {
+          value: undefined,
+          type: this._range,
+        };
         break;
     }
   }
 
   public getSparql(
     subject: string,
-    updated: string | undefined,
-    initial: string | undefined,
+    updated: Object | undefined,
+    initial: Object | undefined,
   ): string {
     return (
       this._deleteClause(subject, updated, initial) +
@@ -56,8 +71,8 @@ class Predicate {
 
   private _deleteClause = (
     subject: string,
-    updated: string | undefined,
-    initial: string | undefined,
+    updated: Object | undefined,
+    initial: Object | undefined,
   ): string => {
     return this._shouldDelete(updated, initial)
       ? `DELETE WHERE { GRAPH <${this._graph}> { <${subject}> <${this.id}> ?o } };\n`
@@ -66,54 +81,67 @@ class Predicate {
 
   private _insertClause = (
     subject: string,
-    updated: string | undefined,
-    initial: string | undefined,
+    updated: Object | undefined,
+    initial: Object | undefined,
   ): string => {
     return this._shouldInsert(updated, initial)
       ? `INSERT DATA { GRAPH <${this._graph}> { <${subject}> <${
           this.id
-        }> ${this._escape(<string>updated)}} };\n`
+        }> ${this._escape(<Object>updated)}} };\n`
       : '';
   };
 
   private _shouldDelete(
-    updated: string | undefined,
-    initial: string | undefined,
+    updated: Object | undefined,
+    initial: Object | undefined,
   ): boolean {
-    return (
-      updated !== initial && initial !== this._default && initial !== undefined
+    return !(
+      _.isEqual(updated, initial) ||
+      _.isEqual(initial, this._default) ||
+      initial === undefined
     );
   }
 
   private _shouldInsert(
-    updated: string | undefined,
-    initial: string | undefined,
+    updated: Object | undefined,
+    initial: Object | undefined,
   ): boolean {
-    return (
-      updated !== initial && updated !== this._default && updated !== undefined
+    return !(
+      _.isEqual(updated, initial) ||
+      _.isEqual(updated, this._default) ||
+      updated === undefined
     );
   }
 
-  private _escape(value: string): string {
-    if (this._range === 'Text') {
-      const backSlashEscaped: string = value.replace(/\\/g, '\\\\');
-      const quoteEscaped: string = backSlashEscaped.replace(/"/g, '\\"');
-      return `"${quoteEscaped}"`;
+  // TODO: extract from Predicate
+  private _escape(obj: Object): string {
+    switch (obj.type) {
+      case ont.xsd.anyURI:
+        return `<${obj.value}>`;
+      case ont.xsd.boolean:
+        return `"${obj.value}"^^${ont.xsd.boolean}`;
+      default:
+        // xsd:string case
+        const backSlashEscaped: string = (<string>obj.value).replace(
+          /\\/g,
+          '\\\\',
+        );
+        const quoteEscaped: string = backSlashEscaped.replace(/"/g, '\\"');
+        return `"${quoteEscaped}"`;
     }
-    return `<${value}>`;
   }
 
-  public fromQuad(quad: any): string {
-    const value: string = quad.object.id;
-    switch (this._range) {
-      case 'Text':
-        return value.substring(1, value.lastIndexOf('"'));
-      // case 'Boolean':
-      //   return value.startsWith(`"true"`);
-      default:
-        return value;
-    }
-  }
+  // public fromQuad(quad: any): string {
+  //   const value: string = quad.object.id;
+  //   switch (this._range) {
+  //     case ont.xsd.string:
+  //       return value.substring(1, value.lastIndexOf('"'));
+  //     // case 'Boolean':
+  //     //   return value.startsWith(`"true"`);
+  //     default:
+  //       return value;
+  //   }
+  // }
 }
 
 export { Predicate };

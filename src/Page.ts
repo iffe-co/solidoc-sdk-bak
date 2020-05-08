@@ -151,7 +151,7 @@ class Page extends Graph {
     if (relId === undefined) {
       return undefined;
     }
-    return this._subjectMap.get(relId);
+    return this._subjectMap.get(<string>relId);
   }
 }
 

@@ -7,6 +7,15 @@ const ont = {
   dct: {
     title: 'http://purl.org/dc/terms/title',
   },
+  xsd: {
+    anyURI: 'http://www.w3.org/2001/XMLSchema#anyURI',
+    string: 'http://www.w3.org/2001/XMLSchema#string',
+    boolean: 'http://www.w3.org/2001/XMLSchema#boolean',
+    integer: 'http://www.w3.org/2001/XMLSchema#integer',
+    float: 'http://www.w3.org/2001/XMLSchema#float',
+    date: 'http://www.w3.org/2001/XMLSchema#date',
+    dateTime: 'http://www.w3.org/2001/XMLSchema#dateTime',
+  },
   sdoc: {
     // predicates
     firstChild: 'http://www.solidoc.net/ontologies#firstChild',
@@ -70,15 +79,15 @@ const predIdToLabel = {
 };
 
 const predIdToRange = {
-  'http://www.w3.org/1999/02/22-rdf-syntax-ns#type': 'NamedNode',
-  'http://purl.org/dc/terms/title': 'Text',
-  'http://www.solidoc.net/ontologies#firstChild': 'NamedNode',
-  'http://www.solidoc.net/ontologies#nextNode': 'NamedNode',
-  'http://www.solidoc.net/ontologies#text': 'Text',
-  'http://www.solidoc.net/ontologies#checked': 'Text', // TODO: should be Boolean
-  'http://www.solidoc.net/ontologies#language': 'Text', // TODO: better be NamedNode
-  'http://www.solidoc.net/ontologies#formula': 'Text',
-  'http://www.solidoc.net/ontologies#hintState': 'Text',
+  'http://www.w3.org/1999/02/22-rdf-syntax-ns#type': ont.xsd.anyURI,
+  'http://purl.org/dc/terms/title': ont.xsd.string,
+  'http://www.solidoc.net/ontologies#firstChild': ont.xsd.anyURI,
+  'http://www.solidoc.net/ontologies#nextNode': ont.xsd.anyURI,
+  'http://www.solidoc.net/ontologies#text': ont.xsd.string,
+  'http://www.solidoc.net/ontologies#checked': ont.xsd.boolean,
+  'http://www.solidoc.net/ontologies#language': ont.xsd.string, // TODO: better be enum
+  'http://www.solidoc.net/ontologies#formula': ont.xsd.string,
+  'http://www.solidoc.net/ontologies#hintState': ont.xsd.string,
 };
 
 // TODO: use pred.default
