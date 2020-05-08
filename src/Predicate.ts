@@ -117,11 +117,3 @@ class Predicate {
 }
 
 export { Predicate };
-
-import * as n3 from 'n3';
-const parser = new n3.Parser();
-
-let turtle = '<http://example.org/alice> <http://example.org/age> 35 .';
-
-let quads = parser.parse(turtle);
-console.log(quads[0].object);

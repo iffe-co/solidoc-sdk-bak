@@ -1,5 +1,5 @@
 import { Graph } from './Graph';
-import { ont, labelToPredId } from '../config/ontology';
+import { ont, labelToPredId, subjTypeToPredArray } from '../config/ontology';
 import { Element, Node, Operation, transform, Path, Text } from './interface';
 import * as _ from 'lodash';
 import { Subject } from './Subject';
@@ -9,6 +9,7 @@ class Page extends Graph {
 
   constructor(id: string, turtle: string) {
     super(id, turtle);
+    subjTypeToPredArray.forEach(this.createPredicate);
     this._editor = <Element>this._toJsonRecursive(this.getRoot());
   }
 
@@ -149,9 +150,6 @@ class Page extends Graph {
     const relId = this.getValue(subject.id, labelToPredId[label]);
     if (relId === undefined) {
       return undefined;
-    }
-    if (typeof relId !== 'string') {
-      throw new Error(`Inappropriate relId: ` + relId);
     }
     return this._subjectMap.get(relId);
   }

@@ -28,13 +28,10 @@ describe('Graph', () => {
       let branch2 = graph.getSubject(cfg.para[2].id);
 
       assert.strictEqual(
-        branch0.getProperty(graph.getPredicate(ont.sdoc.next)),
+        graph.getValue(branch0.id, ont.sdoc.next),
         cfg.para[1].id,
       );
-      assert.strictEqual(
-        branch2.getProperty(graph.getPredicate(ont.sdoc.next)),
-        undefined,
-      );
+      assert.strictEqual(graph.getValue(branch2.id, ont.sdoc.next), undefined);
     });
 
     it('constructs leaf subject', () => {
@@ -42,31 +39,30 @@ describe('Graph', () => {
       let leaf2 = graph.getSubject(cfg.text[2].id);
 
       assert.strictEqual(
-        leaf0.getProperty(graph.getPredicate(ont.sdoc.next)),
+        graph.getValue(leaf0.id, ont.sdoc.next),
         cfg.text[1].id,
       );
-      assert.strictEqual(
-        leaf2.getProperty(graph.getPredicate(ont.sdoc.next)),
-        undefined,
-      );
+      assert.strictEqual(graph.getValue(leaf2.id, ont.sdoc.next), undefined);
     });
 
-    // it('does not construct a subject without type definition', () => {
-    //   let tempId = cfg.page.id + '#temp';
-    //   let turtleTemp = turtleAll + `<${tempId}> <${ont.sdoc.text}> "ABC".`;
-
-    //   assert.throws(() => {
-    //     new Graph(cfg.page.id, turtleTemp);
-    //   });
-    // });
-
-    it('disallows creating node with a duplicated id', () => {
+    it('disallows creating a duplicated subject', () => {
       assert.throws(() => {
         graph.createSubject(cfg.para[2].id);
+      }, /^Error: Duplicated subject creation/);
+    });
+
+    it('allows creating a duplicated predicate', () => {
+      assert.doesNotThrow(() => {
+        graph.createPredicate(ont.sdoc.next);
       });
     });
 
-    it('does not construct a subject with an unknown type');
+    it('throws on getting a non-existing predicate', () => {
+      assert.throws(() => {
+        graph.getPredicate(ont.sdoc.checked);
+      });
+    });
+
     it('handles a subject with multiple type definitions');
 
     it('parses from an empty string', () => {
@@ -105,12 +101,15 @@ describe('Graph', () => {
       });
     });
 
-    // it('undoes to recover #nextNode', () => {
-    //   let branch0 = graph.getSubject(cfg.para[0].id)
-    //   branch0.set(cfg.para[0], cfg.para[0]); // meaningless and illegal, but ok for test
-    //   graph.undo()
+    it('undoes to recover #nextNode', () => {
+      let branch0 = graph.getSubject(cfg.para[0].id);
+      graph.setValue(branch0.id, ont.sdoc.next, branch0.id); // meaningless and illegal, but ok for test
+      graph.undo();
 
-    //   assert.strictEqual(branch0.get('next'), cfg.para[1].id)
-    // })
+      assert.strictEqual(
+        graph.getValue(branch0.id, ont.sdoc.next),
+        cfg.para[1].id,
+      );
+    });
   });
 });

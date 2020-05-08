@@ -1,5 +1,4 @@
 import { Subject } from './Subject';
-import { subjTypeToPredArray } from '../config/ontology';
 import { Predicate } from './Predicate';
 import * as n3 from 'n3';
 
@@ -14,21 +13,42 @@ class Graph {
   constructor(id: string, turtle: string) {
     this._id = id;
     this.createSubject(id);
-    this.createAllPredicates();
     this._parseTurtle(turtle);
   }
 
-  private createAllPredicates = () => {
-    const predIdArray: string[] = subjTypeToPredArray;
-    predIdArray.forEach(this.createPredicate);
+  public createSubject = (subejectId: string): Subject => {
+    if (this._subjectMap.get(subejectId)) {
+      throw new Error('Duplicated subject creation: ' + subejectId);
+    }
+    const subject = new Subject(subejectId, this._id);
+    this._subjectMap.set(subejectId, subject);
+    return subject;
+  };
+
+  public getSubject = (subjectId: string): Subject => {
+    const subject = this._subjectMap.get(subjectId);
+    if (!subject) {
+      throw new Error('Subject not found: ' + subjectId);
+    }
+    return subject;
+  };
+
+  public getRoot = (): Subject => {
+    return this.getSubject(this._id);
   };
 
   public createPredicate = (predId: string): Predicate => {
-    if (this._predicateMap.get(predId)) {
-      throw new Error('duplicated predicate creation: ' + predId);
-    }
-    let predicate = new Predicate(predId, this._id);
+    let predicate =
+      this._predicateMap.get(predId) || new Predicate(predId, this._id);
     this._predicateMap.set(predId, predicate);
+    return predicate;
+  };
+
+  public getPredicate = (predicateId: string): Predicate => {
+    const predicate = this._predicateMap.get(predicateId);
+    if (!predicate) {
+      throw new Error('Predicate not found: ' + predicateId);
+    }
     return predicate;
   };
 
@@ -43,35 +63,6 @@ class Graph {
         this.createPredicate(quad.predicate.id);
       subject.fromQuad(predicate, quad);
     });
-  };
-
-  public getRoot = (): Subject => {
-    return this.getSubject(this._id);
-  };
-
-  public getSubject = (subjectId: string): Subject => {
-    const subject = this._subjectMap.get(subjectId);
-    if (!subject) {
-      throw new Error('Subject not found: ' + subjectId);
-    }
-    return subject;
-  };
-
-  public getPredicate = (predicateId: string): Predicate => {
-    const predicate = this._predicateMap.get(predicateId);
-    if (!predicate) {
-      throw new Error('Predicate not found: ' + predicateId);
-    }
-    return predicate;
-  };
-
-  public createSubject = (subejectId: string): Subject => {
-    if (this._subjectMap.get(subejectId)) {
-      throw new Error('duplicated subject creation: ' + subejectId);
-    }
-    const subject = new Subject(subejectId, this._id);
-    this._subjectMap.set(subejectId, subject);
-    return subject;
   };
 
   public getValue = (subjectId: string, predicateId: string) => {
