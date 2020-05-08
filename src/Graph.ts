@@ -1,4 +1,5 @@
-import { Subject, Literal } from './Subject';
+import { Subject } from './Subject';
+import { Literal } from './Object';
 import { Predicate } from './Predicate';
 import * as n3 from 'n3';
 

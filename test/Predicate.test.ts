@@ -1,5 +1,5 @@
 import { Predicate } from '../src/Predicate';
-import { Object } from '../src/Subject';
+import { Object } from '../src/Object';
 import { ont } from '../config/ontology';
 import { config } from '../config/test';
 import * as assert from 'power-assert';

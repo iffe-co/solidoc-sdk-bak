@@ -1,6 +1,6 @@
 import * as _ from 'lodash';
 import { predIdToLabel, predIdToRange, ont } from '../config/ontology';
-import { Object } from './Subject';
+import { Object } from './Object';
 
 class Predicate {
   private _id: string;
@@ -87,7 +87,7 @@ class Predicate {
     return this._shouldInsert(updated, initial)
       ? `INSERT DATA { GRAPH <${this._graph}> { <${subject}> <${
           this.id
-        }> ${this._escape(<Object>updated)}} };\n`
+        }> ${Object.toSparql(<Object>updated)}} };\n`
       : '';
   };
 
@@ -112,36 +112,6 @@ class Predicate {
       updated === undefined
     );
   }
-
-  // TODO: extract from Predicate
-  private _escape(obj: Object): string {
-    switch (obj.type) {
-      case ont.xsd.anyURI:
-        return `<${obj.value}>`;
-      case ont.xsd.boolean:
-        return `"${obj.value}"^^${ont.xsd.boolean}`;
-      default:
-        // xsd:string case
-        const backSlashEscaped: string = (<string>obj.value).replace(
-          /\\/g,
-          '\\\\',
-        );
-        const quoteEscaped: string = backSlashEscaped.replace(/"/g, '\\"');
-        return `"${quoteEscaped}"`;
-    }
-  }
-
-  // public fromQuad(quad: any): string {
-  //   const value: string = quad.object.id;
-  //   switch (this._range) {
-  //     case ont.xsd.string:
-  //       return value.substring(1, value.lastIndexOf('"'));
-  //     // case 'Boolean':
-  //     //   return value.startsWith(`"true"`);
-  //     default:
-  //       return value;
-  //   }
-  // }
 }
 
 export { Predicate };

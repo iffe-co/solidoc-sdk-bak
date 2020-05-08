@@ -1,12 +1,7 @@
 import { Predicate } from './Predicate';
+import { Object, Literal } from './Object';
 import * as _ from 'lodash';
 import { ont, defaultJson } from '../config/ontology';
-
-type Literal = string | boolean | undefined;
-interface Object {
-  value: Literal;
-  type: string;
-}
 
 class Subject {
   private _id: string;
@@ -15,8 +10,8 @@ class Subject {
   private _isDeleted: boolean = false;
   private _isInserted: boolean = false;
 
-  private _valuesUpdated = new Map<Predicate, Object | undefined>();
-  private _valuesFromPod = new Map<Predicate, Object | undefined>();
+  private _valuesUpdated = new Map<Predicate, Object>();
+  private _valuesFromPod = new Map<Predicate, Object>();
 
   constructor(id: string, graph: string) {
     this._id = id;
@@ -32,7 +27,7 @@ class Subject {
   }
 
   public fromQuad(pred: Predicate, obj: any) {
-    const result = this._parseObject(obj);
+    const result = Object.fromQuad(obj);
 
     this._valuesFromPod.set(pred, { ...result });
     this._valuesUpdated.set(pred, { ...result });
@@ -41,65 +36,18 @@ class Subject {
     pred.id === ont.rdf.type && (this._type = <string>result.value);
   }
 
-  private _parseObject(input: any): Object {
-    const result: Object = {
-      value: '',
-      type: '',
-    };
-
-    if (input.termType === 'NamedNode') {
-      result.type = ont.xsd.anyURI;
-      result.value = input.id;
-    } else if (input.id.endsWith('"')) {
-      result.type = 'string';
-      result.value = input.id.substring(1, input.id.lastIndexOf('"'));
-    } else if (input.id.endsWith('boolean')) {
-      result.type = 'boolean';
-      result.value = input.id.startsWith('"true"');
-    }
-    // TODO: more types
-
-    return result;
-  }
-
   public getProperty(pred: Predicate): Literal {
     const obj: Object = this._valuesUpdated.get(pred) || pred.default;
     return obj.value;
   }
 
   public setProperty(pred: Predicate, value: Literal) {
-    const obj = this._parseValue(pred, value);
+    const obj = Object.fromValue(pred.range, value);
     this._valuesUpdated.set(pred, obj);
     _.isEqual(obj, pred.default) && this._valuesUpdated.delete(pred);
 
     // TODO: use label
     pred.id === ont.rdf.type && (this._type = <string>value);
-  }
-
-  private _parseValue(pred: Predicate, value: Literal): Object {
-    const obj: Object = {
-      value: value,
-      type: '',
-    };
-
-    switch (typeof value) {
-      case 'string':
-        if (pred.range !== ont.xsd.anyURI && pred.range !== ont.xsd.string) {
-          throw new Error(
-            'Object typeof string, predicate range ' + pred.range,
-          );
-        }
-        obj.type = pred.range;
-        break;
-      case 'boolean':
-        obj.type = ont.xsd.boolean;
-        break;
-      case 'undefined':
-        obj.type = ont.xsd.anyURI;
-        break;
-    }
-
-    return obj;
   }
 
   public toJson() {
@@ -174,4 +122,4 @@ class Subject {
   };
 }
 
-export { Subject, Object, Literal };
+export { Subject };
