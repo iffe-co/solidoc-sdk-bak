@@ -61,9 +61,10 @@ describe('Insert Node', () => {
   it('gets sparql', () => {
     page.apply(op0);
     page.update();
+    page.commit();
 
-    assert(
-      page.getRoot().getProperty(page.getPredicate(ont.sdoc.firstChild)),
+    assert.strictEqual(
+      page.getValue(cfg.page.id, ont.sdoc.firstChild),
       cfg.para[0].id,
     );
     // assert(page.getSubject(cfg.para[0].id).toJson(), cfg.para[0]);
@@ -167,11 +168,10 @@ describe('Remove Node', () => {
     page.apply(op1);
     page.apply(op1);
     page.update();
+    page.commit();
 
     assert.strictEqual(
-      page
-        .getSubject(cfg.para[0].id)
-        .getProperty(page.getPredicate(ont.sdoc.firstChild)),
+      page.getValue(cfg.para[0].id, ont.sdoc.firstChild),
       undefined,
     );
   });
@@ -273,6 +273,7 @@ describe('Set Node', () => {
   it('updates the subject', () => {
     page.apply(op0);
     page.update();
+    page.commit();
 
     assert.strictEqual(page.getValue(cfg.text[0].id, ont.sdoc.bold), false);
   });

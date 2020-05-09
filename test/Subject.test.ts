@@ -86,6 +86,7 @@ describe('test/Subject.test.ts', () => {
       // para2.type = ont.sdoc.numberedList;
       let pred = predicates[ont.rdf.type];
       branch2.setProperty(pred, ont.sdoc.numberedList);
+      branch2.commit();
 
       assert.strictEqual(branch2.getProperty(pred), ont.sdoc.numberedList);
     });
@@ -98,6 +99,7 @@ describe('test/Subject.test.ts', () => {
 
     it('setNext() is together with set("next")', () => {
       branch1.setProperty(predicates[ont.sdoc.next], para2.id);
+      branch1.commit();
 
       assert.strictEqual(
         branch1.getProperty(predicates[ont.sdoc.next]),
@@ -209,6 +211,7 @@ describe('Root', () => {
   it('sets title', () => {
     let pred = predicates[ont.dct.title];
     root.setProperty(pred, 'Welcome');
+    root.commit();
 
     assert.strictEqual(root.getProperty(pred), 'Welcome');
     assert.deepStrictEqual(root.toJson(), {

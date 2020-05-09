@@ -71,13 +71,13 @@ describe('Graph', () => {
     });
   });
 
-  describe('Sparql-update', () => {
-    it('generates null sparql when no change applied', () => {
-      let sparql = graph.getSparqlForUpdate();
+  // describe('Sparql-update', () => {
+  //   it('generates null sparql when no change applied', () => {
+  //     let sparql = graph.getSparqlForUpdate();
 
-      assert(!sparql);
-    });
-  });
+  //     assert(!sparql);
+  //   });
+  // });
 
   describe('Commits and Undoes', () => {
     it('commits to remove deleted subject from memory', () => {

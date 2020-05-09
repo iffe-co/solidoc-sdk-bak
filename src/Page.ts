@@ -103,7 +103,7 @@ class Page extends Graph {
   }
 
   private _update(node: Node, nextNode?: Node) {
-    this.getSubject(node.id).clearProperties();
+    // this.getSubject(node.id).clearProperties();
 
     Object.keys(node).forEach(label => {
       if (label !== 'id' && label !== 'children') {
