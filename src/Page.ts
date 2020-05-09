@@ -37,7 +37,6 @@ class Page extends Graph {
   private _preprocess(op: Operation) {
     const subjToInsert = new Set<Node>();
     const subjToRemove = new Set<string>();
-    let currId: string;
 
     // TODO: should operation on a deleted subject allowed?
     switch (op.type) {
@@ -46,11 +45,10 @@ class Page extends Graph {
         break;
 
       case 'split_node':
-        currId = Node.get(this._editor, op.path).id;
         this._preInsertRecursive(
           {
             id: <string>op.properties.id,
-            type: <string>this.getValue(currId, ont.rdf.type),
+            type: Node.get(this._editor, op.path).type,
             children: [], // TODO: this is a workaround
           },
           subjToInsert,
