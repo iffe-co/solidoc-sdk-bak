@@ -105,6 +105,7 @@ class Page extends Graph {
   }
 
   private _update(node: Node, nextNode?: Node) {
+    // TODO: property deleted??
     Object.keys(node).forEach(label => {
       if (label !== 'id' && label !== 'children') {
         this.setValue(node.id, labelToPredId[label], node[label]);

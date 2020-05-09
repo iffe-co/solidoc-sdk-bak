@@ -44,7 +44,7 @@ class Subject {
   public setProperty(pred: Predicate, value: Literal) {
     const obj = Object.fromValue(pred.range, value);
     this._valuesUpdated.set(pred, obj);
-    _.isEqual(obj, pred.default) && this._valuesUpdated.delete(pred);
+    // _.isEqual(obj, pred.default) && this._valuesUpdated.delete(pred);
 
     // TODO: use label
     pred.id === ont.rdf.type && (this._type = <string>value);
@@ -74,8 +74,8 @@ class Subject {
       for (let pred of allPred) {
         sparql += pred.getSparql(
           this._id,
-          this._valuesUpdated.get(pred),
-          this._valuesFromPod.get(pred),
+          this._valuesUpdated.get(pred) || pred.default,
+          this._valuesFromPod.get(pred) || pred.default,
         );
       }
       return sparql;

@@ -25,6 +25,7 @@ const ont = {
     language: 'http://www.solidoc.net/ontologies#language',
     formula: 'http://www.solidoc.net/ontologies#formula',
     hintState: 'http://www.solidoc.net/ontologies#hintState',
+    bold: 'http://www.solidoc.net/ontologies#bold',
     // subjects
     root: 'http://www.solidoc.net/ontologies#Root',
     leaf: 'http://www.solidoc.net/ontologies#Leaf',
@@ -52,6 +53,7 @@ const subjTypeToPredArray = [
   ont.sdoc.language,
   ont.sdoc.formula,
   ont.sdoc.hintState,
+  ont.sdoc.bold,
 ];
 
 const labelToPredId = {
@@ -64,6 +66,7 @@ const labelToPredId = {
   language: 'http://www.solidoc.net/ontologies#language',
   formula: 'http://www.solidoc.net/ontologies#formula',
   hintState: 'http://www.solidoc.net/ontologies#hintState',
+  bold: 'http://www.solidoc.net/ontologies#bold',
 };
 
 const predIdToLabel = {
@@ -76,6 +79,7 @@ const predIdToLabel = {
   'http://www.solidoc.net/ontologies#language': 'language',
   'http://www.solidoc.net/ontologies#formula': 'formula',
   'http://www.solidoc.net/ontologies#hintState': 'hintState',
+  'http://www.solidoc.net/ontologies#bold': 'bold',
 };
 
 const predIdToRange = {
@@ -88,6 +92,7 @@ const predIdToRange = {
   'http://www.solidoc.net/ontologies#language': ont.xsd.string, // TODO: better be enum
   'http://www.solidoc.net/ontologies#formula': ont.xsd.string,
   'http://www.solidoc.net/ontologies#hintState': ont.xsd.string,
+  'http://www.solidoc.net/ontologies#bold': ont.xsd.boolean,
 };
 
 // TODO: use pred.default

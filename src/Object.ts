@@ -17,12 +17,14 @@ export const Object = {
     if (input.termType === 'NamedNode') {
       result.type = ont.xsd.anyURI;
       result.value = input.id;
-    } else if (input.id.endsWith('"')) {
-      result.type = 'string';
+    } else if (input.id.endsWith('"') || input.id.endsWith('string')) {
+      result.type = ont.xsd.string;
       result.value = input.id.substring(1, input.id.lastIndexOf('"'));
     } else if (input.id.endsWith('boolean')) {
-      result.type = 'boolean';
+      result.type = ont.xsd.boolean;
       result.value = input.id.startsWith('"true"');
+    } else {
+      throw new Error('Unknown data type');
     }
     // TODO: more types
 
@@ -30,39 +32,36 @@ export const Object = {
   },
 
   fromValue(predRange: string, value: Literal): Object {
-    const obj: Object = {
+    const result: Object = {
       value: value,
       type: '',
     };
 
     switch (typeof value) {
       case 'string':
-        if (predRange !== ont.xsd.anyURI && predRange !== ont.xsd.string) {
-          throw new Error('Object typeof string, predicate range ' + predRange);
-        }
-        obj.type = predRange;
+        result.type = predRange === ont.xsd.anyURI ? predRange : ont.xsd.string;
         break;
       case 'boolean':
-        obj.type = ont.xsd.boolean;
+        result.type = ont.xsd.boolean;
         break;
       case 'undefined':
-        obj.type = ont.xsd.anyURI;
+        result.type = ont.xsd.anyURI;
         break;
       // TODO: more types
     }
 
-    return obj;
+    return result;
   },
 
   // TODO: extract from Predicate
-  toSparql(obj: Object): string {
+  escape(obj: Object): string {
     switch (obj.type) {
       case ont.xsd.anyURI:
         return `<${obj.value}>`;
       case ont.xsd.boolean:
         return `"${obj.value}"^^${ont.xsd.boolean}`;
       default:
-        // xsd:string case
+        // xsd:string
         const backSlashEscaped: string = (<string>obj.value).replace(
           /\\/g,
           '\\\\',

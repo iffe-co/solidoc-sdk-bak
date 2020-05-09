@@ -13,6 +13,7 @@ for (let i = 0; i < 9; i++) {
     id: config.page.id + '#t' + i,
     type: ont.sdoc.leaf,
     text: 'text ' + i,
+    bold: true,
   };
 }
 
@@ -61,5 +62,6 @@ for (let i = 0; i < 9; i++) {
   if (i % 3 !== 2) {
     turtle.text[i] += `  <${ont.sdoc.next}> <${config.text[i + 1].id}>;`;
   }
-  turtle.text[i] += `  <${ont.sdoc.text}> '${config.text[i].text}'.`;
+  turtle.text[i] += `  <${ont.sdoc.text}> '${config.text[i].text}';`;
+  turtle.text[i] += `  <${ont.sdoc.bold}> true.`;
 }

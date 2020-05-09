@@ -4,13 +4,8 @@ import { ont } from '../config/ontology';
 import { config } from '../config/test';
 import * as assert from 'power-assert';
 
-// import * as n3 from 'n3';
-// const parser = new n3.Parser();
-
 const node = config.text[8];
 const page = config.page;
-
-// const quads: any[] = parser.parse(turtle.text[8]);
 
 describe('Type: a NamedNode Predicate', () => {
   let type: Predicate;
@@ -31,10 +26,6 @@ describe('Type: a NamedNode Predicate', () => {
   beforeEach(() => {
     type = new Predicate(ont.rdf.type, page.id);
   });
-
-  // it('parses quad as a named node', () => {
-  //   assert.strictEqual(type.fromQuad(quads[0]), node.type);
-  // });
 
   it('generates null sparql if no changes applied', () => {
     const sparql: string = type.getSparql(node.id, initial, initial);
@@ -77,10 +68,6 @@ describe('Text Predicate', () => {
     text = new Predicate(ont.sdoc.text, page.id);
   });
 
-  // it('parses quad as text', () => {
-  //   assert.strictEqual(text.fromQuad(quads[1]), node.text);
-  // });
-
   it('generates null sparql', async () => {
     const sparql: string = text.getSparql(node.id, initial, initial);
     assert.strictEqual(sparql, '');
@@ -110,10 +97,6 @@ describe('Text Predicate', () => {
 
 //   beforeEach(() => {
 //     text = new Predicate(ont.sdoc.text, page.id);
-//   });
-
-//   it('parses quad as text', () => {
-//     assert.strictEqual(text.fromQuad(quads[1]), node.text);
 //   });
 
 //   it('generates null sparql', async () => {
