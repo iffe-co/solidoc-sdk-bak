@@ -1,4 +1,4 @@
-import { ont } from './ontology';
+import { ont, idToLabel } from './ontology';
 
 export const config: any = {
   page: {
@@ -11,7 +11,7 @@ export const config: any = {
 for (let i = 0; i < 9; i++) {
   config.text[i] = {
     id: config.page.id + '#t' + i,
-    type: ont.sdoc.leaf,
+    type: idToLabel[ont.sdoc.leaf],
     text: 'text ' + i,
     bold: true,
   };
@@ -20,7 +20,7 @@ for (let i = 0; i < 9; i++) {
 for (let i = 0; i < 3; i++) {
   config.para[i] = {
     id: config.page.id + '#p' + i,
-    type: ont.sdoc.paragraph,
+    type: idToLabel[ont.sdoc.paragraph],
     children: [
       config.text[i * 3],
       config.text[i * 3 + 1],
@@ -31,7 +31,7 @@ for (let i = 0; i < 3; i++) {
 
 config.page = {
   ...config.page,
-  type: ont.sdoc.root,
+  type: idToLabel[ont.sdoc.root],
   title: 'Homepage',
   children: [config.para[0], config.para[1], config.para[2]],
 };

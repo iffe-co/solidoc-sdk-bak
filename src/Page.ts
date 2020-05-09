@@ -1,5 +1,5 @@
 import { Graph } from './Graph';
-import { ont, labelToPredId, subjTypeToPredArray } from '../config/ontology';
+import { ont, labelToId, subjTypeToPredArray } from '../config/ontology';
 import { Element, Node, Operation, transform, Path, Text } from './interface';
 import * as _ from 'lodash';
 import { Subject } from './Subject';
@@ -107,7 +107,7 @@ class Page extends Graph {
 
     Object.keys(node).forEach(label => {
       if (label !== 'id' && label !== 'children') {
-        this.setValue(node.id, labelToPredId[label], node[label]);
+        this.setValue(node.id, labelToId[label], node[label]);
       }
     });
 
@@ -143,7 +143,7 @@ class Page extends Graph {
     subject: Subject,
     label: 'firstChild' | 'next',
   ): Subject | undefined {
-    const relId = this.getValue(subject.id, labelToPredId[label]);
+    const relId = this.getValue(subject.id, labelToId[label]);
     if (relId === undefined) {
       return undefined;
     }

@@ -85,10 +85,11 @@ describe('test/Subject.test.ts', () => {
     it('sets and gets a known property', () => {
       // para2.type = ont.sdoc.numberedList;
       let pred = predicates[ont.rdf.type];
-      branch2.setProperty(pred, ont.sdoc.numberedList);
+      // branch2.setProperty(pred, ont.sdoc.numberedList);
+      branch2.setProperty(pred, 'NumberedList');
       branch2.commit();
 
-      assert.strictEqual(branch2.getProperty(pred), ont.sdoc.numberedList);
+      assert.strictEqual(branch2.getProperty(pred), 'NumberedList');
     });
   });
 
@@ -148,10 +149,10 @@ describe('test/Subject.test.ts', () => {
     it('commits attributes', () => {
       let pred = predicates[ont.rdf.type];
       // para2.type = ont.sdoc.numberedList;
-      branch2.setProperty(pred, ont.sdoc.numberedList);
+      branch2.setProperty(pred, 'NumberedList');
       branch2.commit();
 
-      assert.strictEqual(branch2.getProperty(pred), ont.sdoc.numberedList);
+      assert.strictEqual(branch2.getProperty(pred), 'NumberedList');
       assert(!branch2.isInserted());
     });
 
@@ -187,11 +188,11 @@ describe('test/Subject.test.ts', () => {
       let pred = predicates[ont.rdf.type];
       branch2.setProperty(pred, para2.type);
       branch2.commit(); // so {type: Paragraph} becomes value
-      branch2.setProperty(pred, ont.sdoc.numberedList);
+      branch2.setProperty(pred, 'NumberedList');
       branch2.delete();
       branch2.undo();
 
-      assert.strictEqual(branch2.getProperty(pred), para2.type);
+      assert.strictEqual(branch2.getProperty(pred), 'NumberedList');
     });
   });
 });
@@ -205,7 +206,7 @@ describe('Root', () => {
     root = new Subject(page.id, config.page.id);
 
     let pred = predicates[ont.rdf.type];
-    root.setProperty(pred, ont.sdoc.root);
+    root.setProperty(pred, 'Root');
   });
 
   it('sets title', () => {

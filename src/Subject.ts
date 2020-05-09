@@ -1,7 +1,7 @@
 import { Predicate } from './Predicate';
 import { Object, Literal } from './Object';
 import * as _ from 'lodash';
-import { ont, defaultJson } from '../config/ontology';
+import { ont, defaultJson, idToLabel, labelToId } from '../config/ontology';
 
 class Subject {
   private _id: string;
@@ -31,21 +31,30 @@ class Subject {
 
     this._valuesFromPod.set(pred, { ...result });
 
-    // TODO: use label
-    pred.id === ont.rdf.type && (this._type = <string>Object.getValue(result));
+    pred.id === ont.rdf.type && this._setType(result);
+  }
+
+  private _setType(typeObj: Object) {
+    const typeId = <string>Object.getValue(typeObj);
+    this._type = idToLabel[typeId];
   }
 
   public getProperty(pred: Predicate): Literal {
+    if (pred.id === ont.rdf.type) {
+      return this.type;
+    }
     const obj: Object = this._valuesFromPod.get(pred) || pred.default;
     return Object.getValue(obj);
   }
 
   public setProperty(pred: Predicate, value: Literal) {
+    pred.id === ont.rdf.type && (value = labelToId[<string>value]);
+
     const obj = Object.fromValue(pred.range, value);
     this._valuesUpdated.set(pred, obj);
 
     // TODO: use label
-    pred.id === ont.rdf.type && (this._type = <string>value);
+    pred.id === ont.rdf.type && this._setType(obj);
   }
 
   public toJson() {

@@ -1,5 +1,5 @@
 import * as _ from 'lodash';
-import { predIdToLabel, predIdToRange, ont } from '../config/ontology';
+import { idToLabel, predIdToRange, ont } from '../config/ontology';
 import { Object } from './Object';
 
 class Predicate {
@@ -12,7 +12,7 @@ class Predicate {
   constructor(id: string, graph: string) {
     this._id = id;
     this._graph = graph;
-    this._label = predIdToLabel[id];
+    this._label = idToLabel[id];
     const range = predIdToRange[id];
     this._setRange(range);
   }
