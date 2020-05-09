@@ -38,12 +38,12 @@ describe('Type: a NamedNode Predicate', () => {
   });
 
   it('generate sparql for deleted Predicate', () => {
-    const sparql: string = type.getSparql(node.id, type.default, initial);
+    const sparql: string = type.getSparql(node.id, undefined, initial);
     assert.strictEqual(sparql, deleteClause);
   });
 
   it('generate sparql for a just-added Predicate', () => {
-    const sparql: string = type.getSparql(node.id, updated, type.default);
+    const sparql: string = type.getSparql(node.id, updated, undefined);
     assert.strictEqual(sparql, insertClause);
   });
 });
@@ -79,12 +79,12 @@ describe('Text Predicate', () => {
   });
 
   it('generates sparql for deletion only', async () => {
-    const sparql: string = text.getSparql(node.id, text.default, initial);
+    const sparql: string = text.getSparql(node.id, undefined, initial);
     assert.strictEqual(sparql, deleteClause);
   });
 
   it('generates sparql for insertion only', async () => {
-    const sparql: string = text.getSparql(node.id, updated, text.default);
+    const sparql: string = text.getSparql(node.id, updated, undefined);
     assert.strictEqual(sparql, insertClause);
   });
 });

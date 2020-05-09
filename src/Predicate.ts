@@ -58,7 +58,11 @@ class Predicate {
     }
   }
 
-  public getSparql(subject: string, updated: Object, initial: Object): string {
+  public getSparql(
+    subject: string,
+    updated: Object | undefined,
+    initial: Object | undefined,
+  ): string {
     return (
       this._deleteClause(subject, updated, initial) +
       this._insertClause(subject, updated, initial)
@@ -67,8 +71,8 @@ class Predicate {
 
   private _deleteClause = (
     subject: string,
-    updated: Object,
-    initial: Object,
+    updated: Object | undefined,
+    initial: Object | undefined,
   ): string => {
     return this._shouldDelete(updated, initial)
       ? `DELETE WHERE { GRAPH <${this._graph}> { <${subject}> <${this.id}> ?o } };\n`
@@ -77,8 +81,8 @@ class Predicate {
 
   private _insertClause = (
     subject: string,
-    updated: Object,
-    initial: Object,
+    updated: Object | undefined,
+    initial: Object | undefined,
   ): string => {
     return this._shouldInsert(updated, initial)
       ? `INSERT DATA { GRAPH <${this._graph}> { <${subject}> <${
@@ -87,12 +91,18 @@ class Predicate {
       : '';
   };
 
-  private _shouldDelete(updated: Object, initial: Object): boolean {
-    return !(_.isEqual(updated, initial) || _.isEqual(initial, this._default));
+  private _shouldDelete(
+    updated: Object | undefined,
+    initial: Object | undefined,
+  ): boolean {
+    return !_.isEqual(updated, initial) && initial !== undefined;
   }
 
-  private _shouldInsert(updated: Object, initial: Object): boolean {
-    return !(_.isEqual(updated, initial) || _.isEqual(updated, this._default));
+  private _shouldInsert(
+    updated: Object | undefined,
+    initial: Object | undefined,
+  ): boolean {
+    return !_.isEqual(updated, initial) && updated !== undefined;
   }
 }
 

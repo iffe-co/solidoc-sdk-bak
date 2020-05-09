@@ -105,7 +105,8 @@ class Page extends Graph {
   }
 
   private _update(node: Node, nextNode?: Node) {
-    // TODO: property deleted??
+    this.getSubject(node.id).clearProperties();
+
     Object.keys(node).forEach(label => {
       if (label !== 'id' && label !== 'children') {
         this.setValue(node.id, labelToPredId[label], node[label]);
@@ -114,14 +115,10 @@ class Page extends Graph {
 
     if (nextNode) {
       this.setValue(node.id, ont.sdoc.next, nextNode.id);
-    } else {
-      this.setValue(node.id, ont.sdoc.next, undefined);
     }
 
     if (node.children && node.children[0]) {
       this.setValue(node.id, ont.sdoc.firstChild, node.children[0].id);
-    } else {
-      this.setValue(node.id, ont.sdoc.firstChild, undefined);
     }
   }
 

@@ -44,10 +44,13 @@ class Subject {
   public setProperty(pred: Predicate, value: Literal) {
     const obj = Object.fromValue(pred.range, value);
     this._valuesUpdated.set(pred, obj);
-    // _.isEqual(obj, pred.default) && this._valuesUpdated.delete(pred);
 
     // TODO: use label
     pred.id === ont.rdf.type && (this._type = <string>value);
+  }
+
+  public clearProperties() {
+    this._valuesUpdated.clear();
   }
 
   public toJson() {
@@ -66,17 +69,16 @@ class Subject {
       // TODO: for non-persisted subjects, this clause should be empty
       return `DELETE WHERE { GRAPH <${this._graph}> { <${this._id}> ?p ?o } };\n`;
     } else {
-      let sparql = '';
       let allPred = new Set<Predicate>([
         ...this._valuesFromPod.keys(),
         ...this._valuesUpdated.keys(),
       ]);
+
+      let sparql = '';
       for (let pred of allPred) {
-        sparql += pred.getSparql(
-          this._id,
-          this._valuesUpdated.get(pred) || pred.default,
-          this._valuesFromPod.get(pred) || pred.default,
-        );
+        const initial = this._valuesFromPod.get(pred);
+        const updated = this._valuesUpdated.get(pred);
+        sparql += pred.getSparql(this._id, updated, initial);
       }
       return sparql;
     }

@@ -1,5 +1,5 @@
 import { Page } from '../src/Page';
-import { config as cfg, turtle, config } from '../config/test';
+import { config as cfg, turtle } from '../config/test';
 import { ont } from '../config/ontology';
 import { Operation } from '../src/interface';
 import * as assert from 'power-assert';
@@ -94,7 +94,7 @@ describe('Split Node', () => {
       path: [0],
       position: 1,
       properties: {
-        id: config.page.id + '#temp',
+        id: cfg.page.id + '#temp',
       },
     };
   });
@@ -102,7 +102,7 @@ describe('Split Node', () => {
   it('splits a paragraph', () => {
     page.apply(op0);
 
-    assert(page.getSubject(config.page.id + '#temp').isInserted());
+    assert(page.getSubject(cfg.page.id + '#temp').isInserted());
   });
 
   it('disallows duplicated node', () => {
@@ -118,7 +118,7 @@ describe('Split Node', () => {
     page.update();
     page.commit();
 
-    assert(!page.getSubject(config.page.id + '#temp').isInserted());
+    assert(!page.getSubject(cfg.page.id + '#temp').isInserted());
   });
 
   it('undoes splitting', () => {
@@ -127,7 +127,7 @@ describe('Split Node', () => {
     page.undo();
 
     assert.throws(() => {
-      page.getSubject(config.page.id + '#temp');
+      page.getSubject(cfg.page.id + '#temp');
     }, /^Error: Subject not found/);
   });
 });
@@ -158,8 +158,8 @@ describe('Remove Node', () => {
   it('removes a paragraph', () => {
     page.apply(op0);
 
-    assert(page.getSubject(config.para[0].id).isDeleted());
-    assert(page.getSubject(config.text[0].id).isDeleted());
+    assert(page.getSubject(cfg.para[0].id).isDeleted());
+    assert(page.getSubject(cfg.text[0].id).isDeleted());
   });
 
   it('removes a text', () => {
@@ -170,7 +170,7 @@ describe('Remove Node', () => {
 
     assert.strictEqual(
       page
-        .getSubject(config.para[0].id)
+        .getSubject(cfg.para[0].id)
         .getProperty(page.getPredicate(ont.sdoc.firstChild)),
       undefined,
     );
@@ -190,11 +190,11 @@ describe('Remove Node', () => {
     page.commit();
 
     assert.throws(() => {
-      page.getSubject(config.para[0].id);
+      page.getSubject(cfg.para[0].id);
     }, /^Error: Subject not found/);
 
     assert.throws(() => {
-      page.getSubject(config.text[0].id);
+      page.getSubject(cfg.text[0].id);
     }, /^Error: Subject not found/);
   });
 
@@ -203,8 +203,8 @@ describe('Remove Node', () => {
     page.update();
     page.undo();
 
-    assert(!page.getSubject(config.para[0].id).isDeleted());
-    assert(!page.getSubject(config.text[0].id).isDeleted());
+    assert(!page.getSubject(cfg.para[0].id).isDeleted());
+    assert(!page.getSubject(cfg.text[0].id).isDeleted());
   });
 });
 
@@ -223,7 +223,7 @@ describe('Merge Node', () => {
   it('merges a paragraph', () => {
     page.apply(op0);
 
-    assert(page.getSubject(config.para[1].id).isDeleted());
+    assert(page.getSubject(cfg.para[1].id).isDeleted());
   });
 
   it('commits merging', () => {
@@ -232,7 +232,7 @@ describe('Merge Node', () => {
     page.commit();
 
     assert.throws(() => {
-      page.getSubject(config.para[1].id);
+      page.getSubject(cfg.para[1].id);
     }, /^Error: Subject not found/);
   });
 
@@ -241,6 +241,39 @@ describe('Merge Node', () => {
     page.update();
     page.undo();
 
-    assert(!page.getSubject(config.para[1].id).isDeleted());
+    assert(!page.getSubject(cfg.para[1].id).isDeleted());
+  });
+});
+
+describe('Set Node', () => {
+  let op0: Operation;
+
+  beforeEach(() => {
+    page = new Page(cfg.page.id, turtleAll);
+
+    op0 = {
+      type: 'set_node',
+      path: [0, 0],
+      newProperties: {
+        bold: null,
+      },
+    };
+  });
+
+  it('set a paragraph', () => {
+    page.apply(op0);
+
+    assert.deepStrictEqual(page.toJson().children[0].children[0], {
+      id: cfg.text[0].id,
+      type: cfg.text[0].type,
+      text: cfg.text[0].text,
+    });
+  });
+
+  it('updates the subject', () => {
+    page.apply(op0);
+    page.update();
+
+    assert.strictEqual(page.getValue(cfg.text[0].id, ont.sdoc.bold), false);
   });
 });
