@@ -8,6 +8,10 @@ export interface Object {
 }
 
 export const Object = {
+  getValue(obj: Object) {
+    return obj.value;
+  },
+
   fromQuad(input: any): Object {
     const result: Object = {
       value: '',

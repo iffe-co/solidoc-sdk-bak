@@ -30,15 +30,14 @@ class Subject {
     const result = Object.fromQuad(obj);
 
     this._valuesFromPod.set(pred, { ...result });
-    // this._valuesUpdated.set(pred, { ...result });
 
     // TODO: use label
-    pred.id === ont.rdf.type && (this._type = <string>result.value);
+    pred.id === ont.rdf.type && (this._type = <string>Object.getValue(result));
   }
 
   public getProperty(pred: Predicate): Literal {
     const obj: Object = this._valuesFromPod.get(pred) || pred.default;
-    return obj.value;
+    return Object.getValue(obj);
   }
 
   public setProperty(pred: Predicate, value: Literal) {
@@ -48,10 +47,6 @@ class Subject {
     // TODO: use label
     pred.id === ont.rdf.type && (this._type = <string>value);
   }
-
-  // public clearProperties() {
-  //   this._valuesUpdated.clear();
-  // }
 
   public toJson() {
     const result = defaultJson(this.id, this.type);
@@ -100,7 +95,6 @@ class Subject {
       throw new Error('A non-persisted subject should not be undone');
     }
 
-    // this._valuesUpdated = _.cloneDeep(this._valuesFromPod);
     this._valuesUpdated.clear();
 
     this._isDeleted = false;
