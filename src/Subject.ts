@@ -80,7 +80,7 @@ class Subject {
         case 'children':
           pred = predMap.get(ont.sdoc.firstChild);
           value = node.children[0] ? node.children[0].id : undefined;
-          pred && this.setProperty(pred, value);
+          pred && value !== undefined && this.setProperty(pred, value);
           break;
         case 'type':
           pred = predMap.get(ont.rdf.type);

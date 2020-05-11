@@ -28,9 +28,9 @@ export const Object = {
       result.type = ont.xsd.boolean;
       result.value = input.id.startsWith('"true"');
     } else {
-      throw new Error('Unknown data type');
+      // throw new Error('Unknown data type');
+      // TODO: more types
     }
-    // TODO: more types
 
     return result;
   },

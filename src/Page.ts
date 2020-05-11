@@ -10,6 +10,7 @@ class Page extends Graph {
   constructor(id: string, turtle: string) {
     super(id, turtle);
     subjTypeToPredArray.forEach(this.createPredicate);
+    this.setValue(id, ont.rdf.type, ont.sdoc.root);
     this._editor = <Element>this._toJsonRecursive(this.getRoot());
   }
 
