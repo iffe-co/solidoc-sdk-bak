@@ -1,5 +1,6 @@
-import { Predicate } from './Predicate';
-import { Object, Literal } from './Object';
+import { Predicate as Pred } from './Predicate';
+import { Object as Obj, Literal } from './Object';
+import { Node } from './interface';
 import * as _ from 'lodash';
 import { ont, defaultJson, idToLabel, labelToId } from '../config/ontology';
 
@@ -10,8 +11,8 @@ class Subject {
   private _isDeleted: boolean = false;
   private _isInserted: boolean = false;
 
-  private _valuesUpdated = new Map<Predicate, Object>();
-  private _valuesFromPod = new Map<Predicate, Object>();
+  private _valuesUpdated = new Map<Pred, Obj>();
+  private _valuesFromPod = new Map<Pred, Obj>();
 
   constructor(id: string, graph: string) {
     this._id = id;
@@ -26,34 +27,28 @@ class Subject {
     return this._type;
   }
 
-  public fromQuad(pred: Predicate, obj: any) {
-    const result = Object.fromQuad(obj);
+  public fromQuad(pred: Pred, obj: any) {
+    const result = Obj.fromQuad(obj);
 
     this._valuesFromPod.set(pred, { ...result });
 
     pred.id === ont.rdf.type && this._setType(result);
   }
 
-  private _setType(typeObj: Object) {
-    const typeId = <string>Object.getValue(typeObj);
+  private _setType(typeObj: Obj) {
+    const typeId = <string>Obj.getValue(typeObj);
     this._type = idToLabel[typeId];
   }
 
-  public getProperty(pred: Predicate): Literal {
-    if (pred.id === ont.rdf.type) {
-      return this.type;
-    }
-    const obj: Object = this._valuesFromPod.get(pred) || pred.default;
-    return Object.getValue(obj);
+  public getProperty(pred: Pred): Literal {
+    const obj: Obj = this._valuesFromPod.get(pred) || pred.default;
+    return Obj.getValue(obj);
   }
 
-  public setProperty(pred: Predicate, value: Literal) {
-    pred.id === ont.rdf.type && (value = labelToId[<string>value]);
-
-    const obj = Object.fromValue(pred.range, value);
+  public setProperty(pred: Pred, value: Literal) {
+    const obj = Obj.fromValue(pred.range, value);
     this._valuesUpdated.set(pred, obj);
 
-    // TODO: use label
     pred.id === ont.rdf.type && this._setType(obj);
   }
 
@@ -61,11 +56,43 @@ class Subject {
     const result = defaultJson(this.id, this.type);
 
     for (let pred of this._valuesFromPod.keys()) {
-      [ont.sdoc.next, ont.sdoc.firstChild, ont.rdf.type].includes(pred.id) ||
-        (result[pred.label] = this.getProperty(pred));
+      switch (pred.id) {
+        case ont.sdoc.next:
+        case ont.sdoc.firstChild:
+        case ont.rdf.type:
+          break;
+        default:
+          result[pred.label] = this.getProperty(pred);
+      }
     }
 
     return result;
+  }
+
+  public fromJson(node: Node, predMap: Map<string, Pred>) {
+    let pred: Pred | undefined;
+    let value: Literal;
+
+    Object.keys(node).forEach(label => {
+      switch (label) {
+        case 'id':
+          break;
+        case 'children':
+          pred = predMap.get(ont.sdoc.firstChild);
+          value = node.children[0] ? node.children[0].id : undefined;
+          pred && this.setProperty(pred, value);
+          break;
+        case 'type':
+          pred = predMap.get(ont.rdf.type);
+          value = labelToId[node[label]];
+          pred && this.setProperty(pred, value);
+          break;
+        default:
+          pred = predMap.get(labelToId[label]);
+          value = node[label];
+          pred && this.setProperty(pred, value);
+      }
+    });
   }
 
   public getSparqlForUpdate = (): string => {
@@ -73,7 +100,7 @@ class Subject {
       // TODO: for non-persisted subjects, this clause should be empty
       return `DELETE WHERE { GRAPH <${this._graph}> { <${this._id}> ?p ?o } };\n`;
     } else {
-      let allPred = new Set<Predicate>([
+      let allPred = new Set<Pred>([
         ...this._valuesFromPod.keys(),
         ...this._valuesUpdated.keys(),
       ]);

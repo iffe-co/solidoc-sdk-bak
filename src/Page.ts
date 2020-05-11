@@ -93,31 +93,17 @@ class Page extends Graph {
   }
 
   private _updateRecursive(node: Node, nextNode?: Node) {
-    this._update(node, nextNode);
+    this.getSubject(node.id).fromJson(node, this._predicateMap);
+
+    if (nextNode) {
+      this.setValue(node.id, ont.sdoc.next, nextNode.id);
+    }
 
     if (!node.children) return;
 
     node.children.forEach((childNode: Node, index: number) => {
       this._updateRecursive(childNode, node.children[index + 1]);
     });
-  }
-
-  private _update(node: Node, nextNode?: Node) {
-    // this.getSubject(node.id).clearProperties();
-
-    Object.keys(node).forEach(label => {
-      if (label !== 'id' && label !== 'children') {
-        this.setValue(node.id, labelToId[label], node[label]);
-      }
-    });
-
-    if (nextNode) {
-      this.setValue(node.id, ont.sdoc.next, nextNode.id);
-    }
-
-    if (node.children && node.children[0]) {
-      this.setValue(node.id, ont.sdoc.firstChild, node.children[0].id);
-    }
   }
 
   public undo() {
