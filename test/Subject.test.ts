@@ -1,213 +1,281 @@
-import { Subject } from '../src/Subject'
-import { Branch, createNode } from '../src/Node';
-import { ont } from '../config/ontology'
-import { config, turtle } from '../config/test'
+import { Subject } from '../src/Subject';
+import { Predicate } from '../src/Predicate';
+import { ont, subjTypeToPredArray } from '../config/ontology';
+import { config, turtle } from '../config/test';
+import { Element } from '../src/interface';
 import * as assert from 'power-assert';
+import * as _ from 'lodash';
 
 import * as n3 from 'n3';
 const parser = new n3.Parser();
+let quads: any[];
 
-const nodeMap = new Map<string, Subject>();
+const predicates: { [key: string]: Predicate } = {};
+const createPredicates = () => {
+  const predIdArray: string[] = subjTypeToPredArray;
+  predIdArray.forEach(predId => {
+    predicates[predId] = new Predicate(predId, config.page._id);
+  });
+};
+createPredicates();
 
-const para0 = config.para[0]
-const para1 = config.para[1]
-const para2 = config.para[2]
-const page = config.page
+describe('test/Subject.test.ts', () => {
+  let branch1: Subject;
+  let para1: Element;
 
-describe('Subject', () => {
-  let branch1: Branch;
-  let branch2: Branch;
-  let quads: any[];
+  let branch2: Subject;
+  let para2: Element;
 
   beforeEach(() => {
-    branch2 = <Branch>createNode(para2, nodeMap);
-    quads = parser.parse(turtle.para[2]);
-    quads.forEach(quad => branch2.fromQuad(quad, nodeMap));
+    para1 = _.cloneDeep(config.para[1]);
+    para2 = _.cloneDeep(config.para[2]);
+    branch2 = new Subject(para2.id, config.page.id);
   });
 
   describe('Create Node', () => {
-
-    it('parses from quads', () => {
-      assert.equal(branch2.get('id'), para2.id)
-      assert.equal(branch2.get('type'), para2.type)
-      assert.equal(branch2.get('next'), '')
-      assert.equal(branch2.get('firstChild'), para2.children[0].id)
-    })
+    it('constructs an empty node', () => {
+      assert.strictEqual(
+        branch2.getProperty(predicates[ont.rdf.type]),
+        undefined,
+      );
+      assert.strictEqual(
+        branch2.getProperty(predicates[ont.sdoc.next]),
+        undefined,
+      );
+      assert.strictEqual(
+        branch2.getProperty(predicates[ont.sdoc.firstChild]),
+        undefined,
+      );
+      assert(!branch2.isDeleted());
+      assert(!branch2.isInserted());
+    });
 
     it('translates to Json', () => {
+      let pred = predicates[ont.rdf.type];
+      branch2.setProperty(pred, ont.sdoc.paragraph);
+
       assert.deepStrictEqual(branch2.toJson(), {
         ...para2,
         children: [],
       });
     });
 
+    it('parses from quads', () => {
+      quads = parser.parse(turtle.para[2]);
+      quads.forEach(quad => {
+        branch2.fromQuad(predicates[quad.predicate.id], quad.object);
+      });
+
+      assert.equal(
+        branch2.getProperty(predicates[ont.sdoc.firstChild]),
+        config.para[2].children[0].id,
+      );
+    });
+
     it('discards an unknown quad', () => {
-      let turtle = `<${para2.id}> <${ont.sdoc.text}> "abc".`;
-      let quads = parser.parse(turtle)
-      branch2.fromQuad(quads[0], nodeMap)
-      let sparql = branch2.getSparqlForUpdate(page.id);
-      assert.strictEqual(sparql, '')
+      let turtle = `<${config.para[2].id}> <${ont.sdoc.text}> "abc".`;
+      let quads = parser.parse(turtle);
+      branch2.fromQuad(predicates[quads[0].predicate.id], quads[0].object);
+
+      assert(!branch2.isInserted());
     });
   });
 
   describe('Sets and gets', () => {
-
     it('sets and gets a known property', () => {
-      branch2.set({ type: ont.sdoc.numberedList });
-      assert.strictEqual(branch2.get('type'), ont.sdoc.numberedList);
+      // para2.type = ont.sdoc.numberedList;
+      let pred = predicates[ont.rdf.type];
+      // branch2.setProperty(pred, ont.sdoc.numberedList);
+      branch2.setProperty(pred, 'NumberedList');
+      branch2.commit();
+
+      assert.strictEqual(branch2.getProperty(pred), 'NumberedList');
     });
-
-    it('throws on getting an unkown property', () => {
-      try {
-        branch2.get('unknown')
-      } catch (e) {
-        return
-      }
-      assert(0)
-    })
-
-    it('ignores id and children properties', () => {
-      branch2.set({ id: 'fake id', children: ['something'] });
-      let sparql = branch2.getSparqlForUpdate(page.id);
-      assert.strictEqual(sparql, '')
-    })
-
-    it('adds an optional property', () => {
-      branch2.set({ author: 'alice' });
-      assert.deepStrictEqual(JSON.parse(branch2.get('option')), {
-        author: "alice",
-      })
-    })
-
-    it('deletes optional property', () => {
-      branch2.set({ author: "alice" })
-      branch2.commit()
-      branch2.set({ author: null })
-      let json: any = branch2.toJson();
-      assert.strictEqual(json.author, undefined);
-      assert.strictEqual(branch2.get('option'), '{}')
-    });
-
-    it('modifies optional property', () => {
-      branch2.set({ author: "alice" })
-      branch2.commit()
-      branch2.set({ author: "bob" })
-      let json: any = branch2.toJson();
-      assert.strictEqual(json.author, 'bob');
-    })
   });
 
   describe('#nextNode property', () => {
     beforeEach(() => {
-      branch1 = <Branch>createNode(para1, nodeMap);
-    })
-
-    it('setNext() is together with set("next")', () => {
-      branch1.setNext(branch2)
-      assert.strictEqual(branch1.get("next"), branch2.get('id'));
+      branch1 = new Subject(para1.id, config.page.id);
     });
 
-    it('disallows set("next")', () => {
-      try {
-        branch1.set({ "next": branch2.get('id') })
-      } catch (e) {
-        return
-      }
-      assert(0)
+    it('setNext() is together with set("next")', () => {
+      branch1.setProperty(predicates[ont.sdoc.next], para2.id);
+      branch1.commit();
+
+      assert.strictEqual(
+        branch1.getProperty(predicates[ont.sdoc.next]),
+        branch2.id,
+      );
     });
 
     it('parses #nextNode from quads and synced with getNext()', () => {
-      let quads = parser.parse(turtle.para[1])
+      let quads = parser.parse(turtle.para[1]);
       // note the index of quads
-      branch1.fromQuad(quads[1], nodeMap)
-      assert.strictEqual(branch1.getNext(), branch2)
-    })
+      branch1.fromQuad(predicates[quads[1].predicate.id], quads[1].object);
 
-    it('throws if #nextNode inconsistent with next', () => {
-      let quads = parser.parse(turtle.para[1])
-      // note the index of quads
-      quads[1].object.id = para0.id
-      try {
-        branch1.fromQuad(quads[1], nodeMap)
-      } catch (e) {
-        return
-      }
-      assert(0)
-    })
-
-    it('unsets next', () => {
-      branch1.setNext(branch2)
-      branch1.commit()
-      branch1.setNext(undefined)
-      assert.strictEqual(branch1.getNext(), undefined)
-    })
+      assert.strictEqual(
+        branch1.getProperty(predicates[ont.sdoc.next]),
+        config.para[2].id,
+      );
+    });
   });
 
   describe('performs deletion', () => {
-
-    it('performs deletion', () => {
-      assert.strictEqual(branch2.isDeleted(), false)
-      branch2.delete()
-      assert.strictEqual(branch2.isDeleted(), true)
+    beforeEach(() => {
+      branch2.delete();
     });
 
-    it('throws on setting a deleted node', () => {
-      branch2.delete()
-      try {
-        branch2.set({ type: ont.sdoc.numberedList });
-      } catch (e) {
-        return
-      }
-      assert(0)
-    })
+    it('performs deletion', () => {
+      assert.strictEqual(branch2.isDeleted(), true);
+    });
+
+    // it('throws on setting a deleted node', () => {
+    //   assert.throws(() => {
+    //     branch2.set(para2);
+    //   });
+    // });
 
     it('generates sparql after deletion', () => {
-      branch2.delete();
-      const sparql = branch2.getSparqlForUpdate(page.id);
-      assert.strictEqual(sparql, `WITH <${page.id}> DELETE { <${para2.id}> ?p ?o } WHERE { <${para2.id}> ?p ?o };\n`);
+      const sparql = branch2.getSparqlForUpdate();
+
+      assert.strictEqual(
+        sparql,
+        `DELETE WHERE { GRAPH <${config.page.id}> { <${config.para[2].id}> ?p ?o } };\n`,
+      );
+    });
+  });
+
+  describe('commits', () => {
+    it('commits attributes', () => {
+      let pred = predicates[ont.rdf.type];
+      // para2.type = ont.sdoc.numberedList;
+      branch2.setProperty(pred, 'NumberedList');
+      branch2.commit();
+
+      assert.strictEqual(branch2.getProperty(pred), 'NumberedList');
+      assert(!branch2.isInserted());
     });
 
     it('disallows committing a deleted node', () => {
       branch2.delete();
-      try {
+
+      assert.throws(() => {
         branch2.commit();
-      } catch (e) {
-        return;
-      }
-      assert(0)
-    })
+      });
+    });
   });
 
-  describe('commits and undoes', () => {
+  describe('undoes', () => {
+    beforeEach(() => {
+      branch1 = new Subject(config.para[1].id, config.page.id);
+    });
+
+    it('disallows undoing a non-existOnPod node', () => {
+      branch2.insert();
+      assert.throws(() => {
+        branch2.undo();
+      });
+    });
 
     it('undoes deletion', () => {
       branch2.delete();
-      branch2.undo(nodeMap);
+      branch2.undo();
+
       assert.strictEqual(branch2.isDeleted(), false);
     });
 
     it('undoes attributes', () => {
-      branch2.set({ type: ont.sdoc.numberedList })
-      branch2.delete()
-      branch2.undo(nodeMap)
-      assert.strictEqual(branch2.get('type'), para2.type)
-    })
+      let pred = predicates[ont.rdf.type];
+      branch2.setProperty(pred, ont.sdoc.paragraph);
+      branch2.commit(); // so {type: Paragraph} becomes value
+      branch2.setProperty(pred, ont.sdoc.numberedList);
+      branch2.delete();
+      branch2.undo();
 
-    it('undoes next', () => {
-      branch1 = <Branch>createNode(para1, nodeMap);
-      branch1.commit();
-      branch1.setNext(branch2);
-      branch1.undo(nodeMap);
-      assert.strictEqual(branch1.getNext(), undefined)
-    })
+      assert.strictEqual(branch2.getProperty(pred), ont.sdoc.paragraph);
+    });
+  });
+});
 
-    it('commits attributes', () => {
-      branch2.set({ type: ont.sdoc.numberedList })
-      branch2.commit()
-      branch2.undo(nodeMap)
-      assert.strictEqual(branch2.get('type'), ont.sdoc.numberedList)
-    })
+describe('Root', () => {
+  let page;
+  let root: Subject;
 
-  })
+  beforeEach(() => {
+    page = _.cloneDeep(config.page);
+    root = new Subject(page.id, config.page.id);
 
+    let pred = predicates[ont.rdf.type];
+    root.setProperty(pred, ont.sdoc.root);
+  });
+
+  it('sets title', () => {
+    let pred = predicates[ont.dct.title];
+    root.setProperty(pred, 'Welcome');
+    root.commit();
+
+    assert.strictEqual(root.getProperty(pred), 'Welcome');
+    assert.deepStrictEqual(root.toJson(), {
+      ...page,
+      title: 'Welcome',
+      children: [],
+    });
+  });
+
+  it('gets sparql', () => {
+    let quads = parser.parse(turtle.page);
+    quads.forEach(quad => {
+      root.fromQuad(predicates[quad.predicate.id], quad.object);
+    });
+    root.setProperty(predicates[ont.sdoc.firstChild], undefined);
+    let sparql = root.getSparqlForUpdate();
+
+    assert(sparql.startsWith('DELETE WHERE'));
+  });
+
+  it('allows parsing #nextNode predicate', () => {
+    let turtle = `<${page.id}> <${ont.sdoc.next}> <${config.para[0].id}>.`;
+    let quads = parser.parse(turtle);
+
+    assert.doesNotThrow(() => {
+      root.fromQuad(predicates[quads[0].predicate.id], quads[0].object);
+    });
+  });
+
+  // it('throws on set("next")', () => {
+  //   assert.throws(() => {
+  //     root.setProperty('next', config.para[1].id);
+  //   }, /^Error: Try to set an unknown Predicate/);
+  // });
+
+  it('disallows deletion', () => {
+    assert.throws(() => {
+      root.delete();
+    });
+  });
+});
+
+describe('Leaf', () => {
+  let leaf: Subject;
+  const text = config.text[8];
+  const quads: any[] = parser.parse(turtle.text[8]);
+
+  beforeEach(() => {
+    leaf = new Subject(text.id, config.page.id);
+    quads.forEach(quad =>
+      leaf.fromQuad(predicates[quad.predicate.id], quad.object),
+    );
+  });
+
+  it('parses from quads', () => {
+    assert.strictEqual(
+      leaf.getProperty(predicates[ont.rdf.type]),
+      ont.sdoc.leaf,
+    );
+    assert.strictEqual(leaf.getProperty(predicates[ont.sdoc.text]), text.text);
+  });
+
+  // it('translate to Json', () => {
+  //   assert.deepStrictEqual(leaf.toJson(), text);
+  // });
 });

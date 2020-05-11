@@ -5,6 +5,8 @@ node_modules
 *.swp
 *.lock
 .nyc_output
+.eslintrc.js
+.prettierrc.js
 
 package-lock.json
 

@@ -1,4 +1,4 @@
-import { Page } from './src/Page'
+import { Page } from './src/Page';
 import { Node, Element, Text, Path, Operation } from './src/interface';
 
-export { Page, Path, Operation, Node, Element, Text }
+export { Page, Path, Operation, Node, Element, Text };

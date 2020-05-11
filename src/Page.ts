@@ -1,152 +1,140 @@
-import { Root, Branch, Leaf, createNode } from './Node';
-import { Subject } from './Subject';
 import { Graph } from './Graph';
-import { Path, Operation, Element } from './interface'
-
+import { ont, labelToId, subjTypeToPredArray } from '../config/ontology';
+import { Element, Node, Operation, transform, Path, Text } from './interface';
+import * as _ from 'lodash';
+import { Subject } from './Subject';
 
 class Page extends Graph {
+  private _editor: Element;
+
   constructor(id: string, turtle: string) {
     super(id, turtle);
-    (<Root>this.getRoot()).assembleChlildren(this._nodeMap)
+    subjTypeToPredArray.forEach(this.createPredicate);
+    this._editor = <Element>this._toJsonRecursive(this.getRoot());
   }
 
   public toJson = (): Element => {
-    let head = this.getRoot();
-    return head?.toJson()
+    return this._editor;
+  };
+
+  public apply = (op: Operation) => {
+    const opCloned = _.cloneDeep(op);
+    const { subjToInsert, subjToRemove } = this._preprocess(opCloned);
+
+    transform(this._editor, opCloned);
+
+    for (let node of subjToInsert.values()) {
+      let subject = this.createSubject(node.id);
+      subject.insert(); // TODO
+    }
+
+    for (let nodeId of subjToRemove.values()) {
+      let subject = this.getSubject(nodeId);
+      subject.delete();
+    }
+  };
+
+  private _preprocess(op: Operation) {
+    const subjToInsert = new Set<Node>();
+    const subjToRemove = new Set<string>();
+
+    // TODO: should operation on a deleted subject allowed?
+    switch (op.type) {
+      case 'insert_node':
+        this._preInsertRecursive(op.node, subjToInsert);
+        break;
+
+      case 'split_node':
+        this._preInsertRecursive(
+          {
+            id: <string>op.properties.id,
+            type: Node.get(this._editor, op.path).type,
+            children: [], // TODO: this is a workaround
+          },
+          subjToInsert,
+        );
+        break;
+      case 'remove_node':
+        this._preRemoveRecursive(op.path, subjToRemove);
+        break;
+      case 'merge_node':
+        subjToRemove.add(Node.get(this._editor, op.path).id);
+        break;
+    }
+    return { subjToInsert, subjToRemove };
+  }
+
+  private _preInsertRecursive = (node: Node, subjToInsert: Set<Node>) => {
+    if (this._subjectMap.has(node.id)) {
+      throw new Error('Duplicated node insertion: ' + node.id);
+    }
+    subjToInsert.add(node);
+
+    if (Text.isText(node)) return;
+
+    (<Element>node).children.forEach(child => {
+      this._preInsertRecursive(child, subjToInsert);
+    });
+  };
+
+  private _preRemoveRecursive = (path: Path, subjToRemove: Set<string>) => {
+    const node = Node.get(this._editor, path);
+    subjToRemove.add(node.id);
+
+    if (Text.isText(node)) return;
+
+    (<Element>node).children.forEach((_child, index) => {
+      this._preRemoveRecursive([...path, index], subjToRemove);
+    });
+  };
+
+  public update() {
+    this._updateRecursive(this._editor);
+  }
+
+  private _updateRecursive(node: Node, nextNode?: Node) {
+    this.getSubject(node.id).fromJson(node, this._predicateMap);
+
+    if (nextNode) {
+      this.setValue(node.id, ont.sdoc.next, nextNode.id);
+    }
+
+    if (!node.children) return;
+
+    node.children.forEach((childNode: Node, index: number) => {
+      this._updateRecursive(childNode, node.children[index + 1]);
+    });
   }
 
   public undo() {
     super.undo();
-    (<Root>this.getRoot()).assembleChlildren(this._nodeMap)
+    this._editor = <Element>this._toJsonRecursive(this.getRoot());
   }
 
-  private _getContextOf = (path: Path) => {
-    const parent = this.getNode(path.parentId);
-    if (!parent) {
-      throw new Error('Cannot get parent: ' + path.parentId)
-    }
-    const curr = (parent instanceof Branch) ? parent.getIndexedChild(path.offset) : undefined
-    const prev = (parent instanceof Branch) ? parent.getIndexedChild(path.offset - 1) : undefined
-    const next = (parent instanceof Branch) ? parent.getIndexedChild(path.offset + 1) : undefined
+  private _toJsonRecursive(subject: Subject): Node {
+    let result = subject.toJson();
+    if (!result.children) return result;
 
-    return { parent, curr, prev, next }
+    let child = this._getRelative(subject, 'firstChild');
+
+    while (child) {
+      result.children.push(this._toJsonRecursive(child));
+      child = this._getRelative(child, 'next');
+    }
+
+    return result;
   }
 
-  public apply = (op: Operation) => {
-    switch (op.type) {
-      case 'insert_node': {
-        const { parent } = this._getContextOf(op.path);
-        if (!(parent instanceof Branch)) {
-          throw new Error('Cannot insert')
-        }
-        parent.insertRecursive(op.node, op.path.offset, this._nodeMap)
-        break
-      }
-
-      case 'remove_node': {
-        const { parent, curr } = this._getContextOf(op.path)
-        if (!(curr instanceof Subject) && curr !== undefined) {
-          throw new Error('Cannot remove')
-        }
-
-        parent.detachChildren(op.path.offset, 1);
-
-        curr && curr.delete()
-
-        break
-      }
-
-      case 'move_node': {
-        const { parent, curr } = this._getContextOf(op.path)
-        const { parent: newParent } = this._getContextOf(op.newPath)
-
-        if (!curr || (curr instanceof Branch && curr.isAncestor(newParent))) {
-          throw new Error('Cannot move')
-        }
-
-        parent.detachChildren(op.path.offset, 1);
-
-        newParent.attachChildren(curr, op.newPath.offset);
-
-        break
-      }
-
-      case 'merge_node': {
-        const { parent, prev, curr } = this._getContextOf(op.path)
-        if (!(curr instanceof Subject) || !(prev instanceof Subject)) {
-          throw new Error('Cannot merge')
-        }
-
-        const child = curr.detachChildren(0, Infinity);
-
-        prev.attachChildren(child, Infinity);
-
-        parent.detachChildren(op.path.offset, 1);
-
-        curr.delete()
-
-        break
-      }
-
-      case 'split_node': {
-        const { parent, curr } = this._getContextOf(op.path)
-
-        if (!curr || !(curr instanceof Subject)) {
-          throw new Error('Cannot split')
-        }
-
-        const json = {
-          ...curr.toBlankJson(),
-          ...op.properties,
-        }
-
-        const newNext = createNode(json, this._nodeMap);
-
-        parent.attachChildren(newNext, op.path.offset + 1)
-
-        const children = curr.detachChildren(op.position, Infinity);
-
-        newNext.attachChildren(children, 0);
-
-        break
-      }
-
-      case 'set_node': {
-        const { curr } = this._getContextOf(op.path)
-
-        if (!curr || !(curr instanceof Subject)) {
-          throw new Error('Cannot get path')
-        }
-
-        curr.set(op.newProperties)
-
-        break
-      }
-
-      case 'insert_text': {
-        const { curr } = this._getContextOf(op.path);
-        if (!(curr instanceof Leaf)) {
-          throw new Error('Not a Leaf node: ' + JSON.stringify(op.path))
-        }
-        curr.attachChildren(op.text, op.offset)
-        break
-      }
-
-      case 'remove_text': {
-        const { curr } = this._getContextOf(op.path);
-        if (!(curr instanceof Leaf)) {
-          throw new Error('Not a Leaf node: ' + JSON.stringify(op.path))
-        }
-        curr.detachChildren(op.offset, op.text.length);
-        break
-      }
-
-      default: {
-        break
-      }
-
+  private _getRelative(
+    subject: Subject,
+    label: 'firstChild' | 'next',
+  ): Subject | undefined {
+    const relId = this.getValue(subject.id, labelToId[label]);
+    if (relId === undefined) {
+      return undefined;
     }
+    return this._subjectMap.get(<string>relId);
   }
 }
 
-export { Page, Path, Operation }
+export { Page };

@@ -1,59 +1,116 @@
-// import { Subject } from '../src/Subject'
-// import { Root, Branch, Leaf } from '../src/Node';
-// import { Operation } from '../src/Operation'
-// import { config as cfg, turtle } from '../config/test'
-// import * as assert from 'power-assert';
+import { config as cfg, turtle, config } from '../config/test';
+import { ont } from '../config/ontology';
+import * as assert from 'power-assert';
 
-// import * as n3 from 'n3';
-// // import { ont } from '../config/ontology';
-// const parser = new n3.Parser();
+import { Graph } from '../src/Graph';
+import { Subject } from '../src/Subject';
 
-// const nodeMap = new Map<string, Subject>();
+describe('Graph', () => {
+  let graph: Graph;
+  let root: Subject;
+  let turtleAll = '';
+  turtleAll += turtle.page + '\n';
+  turtleAll += turtle.para.join('\n') + '\n';
+  turtleAll += turtle.text.join('\n') + '\n';
 
-// describe('Branch', () => {
-//   let root: Root
+  beforeEach(() => {
+    graph = new Graph(cfg.page.id, turtleAll);
+    root = graph.getRoot();
+  });
 
-//   let branch: Branch[] = []
+  describe('Constructor', () => {
+    it('constructs the root ', () => {
+      assert.strictEqual(root, graph.getSubject(cfg.page.id));
+    });
 
-//   let leaf: Leaf[] = []
+    it('constructs branch subject', () => {
+      let branch0 = graph.getSubject(cfg.para[0].id);
+      let branch2 = graph.getSubject(cfg.para[2].id);
 
-//   beforeEach(() => {
-//     root = <Root>createNodes(cfg.page, nodeMap);
-//     let quads = parser.parse(turtle.page)
-//     quads.forEach(quad => {
-//       root.fromQuad(quad, nodeMap)
-//     });
-  
+      assert.strictEqual(
+        graph.getValue(branch0.id, ont.sdoc.next),
+        cfg.para[1].id,
+      );
+      assert.strictEqual(graph.getValue(branch2.id, ont.sdoc.next), undefined);
+    });
 
-//     branch[0] = <Branch>createNodes(cfg.para[0], nodeMap);
-//     branch[1] = <Branch>createNodes(cfg.para[1], nodeMap);
-//     branch[2] = <Branch>createNodes(cfg.para[2], nodeMap);
-//     for (let i = 0; i < 3; i++) {
-//       let quads = parser.parse(turtle.para[i])
-//       quads.forEach(quad => {
-//         branch[i].fromQuad(quad, nodeMap)
-//       });
-//     }
+    it('constructs leaf subject', () => {
+      let leaf0 = graph.getSubject(cfg.text[0].id);
+      let leaf2 = graph.getSubject(cfg.text[2].id);
 
-//     for (let i = 0; i < 9; i++) {
-//       leaf[i] = <Leaf>createNodes(cfg.text[i], nodeMap);
-//     }
-//     for (let i = 0; i < 9; i++) {
-//       let quads = parser.parse(turtle.text[i])
-//       quads.forEach(quad => {
-//         leaf[i].fromQuad(quad, nodeMap)
-//       });
-//     }
-//   });
+      assert.strictEqual(
+        graph.getValue(leaf0.id, ont.sdoc.next),
+        cfg.text[1].id,
+      );
+      assert.strictEqual(graph.getValue(leaf2.id, ont.sdoc.next), undefined);
+    });
 
-//   describe('Tree structure assembling', () => {
+    it('disallows creating a duplicated subject', () => {
+      assert.throws(() => {
+        graph.createSubject(cfg.para[2].id);
+      }, /^Error: Duplicated subject creation/);
+    });
 
-//     it('tree', () => {
-//       assert(true)
-//     })
+    it('allows creating a duplicated predicate', () => {
+      assert.doesNotThrow(() => {
+        graph.createPredicate(ont.sdoc.next);
+      });
+    });
 
-//   })
-// });
-  
+    it('throws on getting a non-existing predicate', () => {
+      assert.throws(() => {
+        graph.getPredicate(ont.sdoc.checked);
+      });
+    });
 
+    it('handles a subject with multiple type definitions');
 
+    it('parses from an empty string', () => {
+      graph = new Graph(cfg.page.id, '');
+      assert.deepStrictEqual(graph.getRoot().id, config.page.id);
+    });
+  });
+
+  describe('Sparql-update', () => {
+    it('generates null sparql when no change applied', () => {
+      graph.commit();
+      let sparql = graph.getSparqlForUpdate();
+
+      assert(!sparql);
+    });
+  });
+
+  describe('Commits and Undoes', () => {
+    it('commits to remove deleted subject from memory', () => {
+      let branch0 = graph.getSubject(cfg.para[0].id);
+      branch0.delete();
+      graph.commit();
+
+      assert.throws(() => {
+        graph.getSubject(cfg.para[0].id);
+      });
+    });
+
+    it('undoes to remove new subject from memory', () => {
+      let tempId = cfg.page.id + '#temp';
+      let subject = graph.createSubject(tempId);
+      subject.insert();
+      graph.undo();
+
+      assert.throws(() => {
+        graph.getSubject(tempId);
+      });
+    });
+
+    it('undoes to recover #nextNode', () => {
+      let branch0 = graph.getSubject(cfg.para[0].id);
+      graph.setValue(branch0.id, ont.sdoc.next, branch0.id); // meaningless and illegal, but ok for test
+      graph.undo();
+
+      assert.strictEqual(
+        graph.getValue(branch0.id, ont.sdoc.next),
+        cfg.para[1].id,
+      );
+    });
+  });
+});

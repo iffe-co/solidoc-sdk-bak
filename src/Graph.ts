@@ -1,79 +1,106 @@
-import { Subject } from './Subject'
-import { createNode } from './Node'
-import { Node } from './interface'
+import { Subject } from './Subject';
+import { Literal } from './Object';
+import { Predicate } from './Predicate';
 import * as n3 from 'n3';
 
 const parser = new n3.Parser();
 
 // a graph could be a page or a database
-abstract class Graph {
-  private _id: string
-  protected _nodeMap = new Map<string, Subject>();
+class Graph {
+  protected _id: string = '';
+  protected _subjectMap = new Map<string, Subject>();
+  protected _predicateMap = new Map<string, Predicate>();
 
   constructor(id: string, turtle: string) {
     this._id = id;
-    turtle = `<${id}> a <http://www.solidoc.net/ontologies#Root>.\n` + turtle
-    this._parseTurtle(turtle)
+    this.createSubject(id);
+    this._parseTurtle(turtle);
   }
+
+  public createSubject = (subejectId: string): Subject => {
+    if (this._subjectMap.get(subejectId)) {
+      throw new Error('Duplicated subject creation: ' + subejectId);
+    }
+    const subject = new Subject(subejectId, this._id);
+    this._subjectMap.set(subejectId, subject);
+    return subject;
+  };
+
+  public getSubject = (subjectId: string): Subject => {
+    const subject = this._subjectMap.get(subjectId);
+    if (!subject) {
+      throw new Error('Subject not found: ' + subjectId);
+    }
+    return subject;
+  };
+
+  public getRoot = (): Subject => {
+    return this.getSubject(this._id);
+  };
+
+  public createPredicate = (predId: string): Predicate => {
+    let predicate =
+      this._predicateMap.get(predId) || new Predicate(predId, this._id);
+    this._predicateMap.set(predId, predicate);
+    return predicate;
+  };
+
+  public getPredicate = (predicateId: string): Predicate => {
+    const predicate = this._predicateMap.get(predicateId);
+    if (!predicate) {
+      throw new Error('Predicate not found: ' + predicateId);
+    }
+    return predicate;
+  };
 
   private _parseTurtle = (turtle: string) => {
     const quads: any[] = parser.parse(turtle);
     quads.forEach(quad => {
-      if (quad.predicate.id === 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type') {
-        // TODO: only create node for known types
-        let json: Node = {
-          id: quad.subject.id,
-          type: quad.object.id,
-          children: [],   // TODO: might be leaf
-        }    
-        createNode(json, this._nodeMap);
-      }
-    })
+      const subject =
+        this._subjectMap.get(quad.subject.id) ||
+        this.createSubject(quad.subject.id);
+      const predicate =
+        this._predicateMap.get(quad.predicate.id) ||
+        this.createPredicate(quad.predicate.id);
+      subject.fromQuad(predicate, quad.object);
+    });
+  };
 
-    quads.forEach(quad => {
-      let node = this._nodeMap.get(quad.subject.id)
-      if (!node) {
-        throw new Error('Node does not exist: ' + quad.subject.id)
-      }
-      node.fromQuad(quad, this._nodeMap)
-    })
-  }
+  public getValue = (subjectId: string, predicateId: string): Literal => {
+    const subject = this.getSubject(subjectId);
+    const predicate = this.getPredicate(predicateId);
+    return subject.getProperty(predicate);
+  };
 
-  public getRoot = (): Subject | undefined => {
-    return this._nodeMap.get(this._id)
-  }
+  public setValue = (
+    subjectId: string,
+    predicateId: string,
+    value: Literal,
+  ) => {
+    const subject = this.getSubject(subjectId);
+    const predicate = this.getPredicate(predicateId);
+    return subject.setProperty(predicate, value);
+  };
 
-  public getNode = (id: string): Subject | undefined => {
-    return this._nodeMap.get(id)
-  }
-
-  public getSparqlForUpdate = (): string => {
+  public getSparqlForUpdate(): string {
     let sparql = '';
-    for (let node of this._nodeMap.values()) {
-      sparql += node.getSparqlForUpdate(this._id);
+    for (let subject of this._subjectMap.values()) {
+      sparql += subject.getSparqlForUpdate();
     }
     return sparql;
   }
 
-  public commit = () => {
-    for (let [id, node] of this._nodeMap.entries()) {
-      if (node.isDeleted()) {
-        this._nodeMap.delete(id);
-      } else {
-        node.commit();
-      }
+  public commit() {
+    for (let [id, subject] of this._subjectMap.entries()) {
+      subject.isDeleted() ? this._subjectMap.delete(id) : subject.commit();
     }
   }
 
   public undo() {
-    for (let [id, node] of this._nodeMap.entries()) {
-      if (!node.isPersisted()) {
-        this._nodeMap.delete(id)
-      } else {
-        node.undo(this._nodeMap);
-      }
+    for (let [id, subject] of this._subjectMap.entries()) {
+      subject.isInserted() ? this._subjectMap.delete(id) : subject.undo();
     }
   }
 }
 
-export { Graph }
+export { Graph };

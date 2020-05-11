@@ -1,136 +1,159 @@
-import { Property, NamedNodeProperty, JsonProperty } from './Property';
-import { idToKey } from '../config/ontology'
+import { Predicate as Pred } from './Predicate';
+import { Object as Obj, Literal } from './Object';
+import { Node } from './interface';
+import * as _ from 'lodash';
+import { ont, defaultJson, idToLabel, labelToId } from '../config/ontology';
 
-abstract class Subject {
-  protected _id: string
-  protected _predicates: { [key: string]: Property } = {}
-  private _isDeleted: boolean
-  private _isPersisted: boolean
-  private _next: Subject | undefined
+class Subject {
+  private _id: string;
+  private _type: string;
+  private _graph: string;
+  private _isDeleted: boolean = false;
+  private _isInserted: boolean = false;
 
-  constructor(id: string) {
+  private _valuesUpdated = new Map<Pred, Obj>();
+  private _valuesFromPod = new Map<Pred, Obj>();
+
+  constructor(id: string, graph: string) {
     this._id = id;
-    this._isDeleted = false
-    this._isPersisted = false
-    this._predicates.type = new NamedNodeProperty('http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'type');
-    this._predicates.next = new NamedNodeProperty('http://www.solidoc.net/ontologies#nextNode', 'next');
-    this._predicates.option = new JsonProperty('http://www.solidoc.net/ontologies#option', 'option');
+    this._graph = graph;
   }
 
-  public fromQuad(quad: any, nodeMap: Map<string, Subject>) {
-    let key = idToKey[quad.predicate.id];
-    if (!key || !this._predicates[key]) {
-      console.log('Quad not matched: ' + JSON.stringify(quad));
-      return;
-    }
-    if (key == 'next') {
-      let next = nodeMap.get(quad.object.id)
-      if (!next || next._id != quad.object.id) {
-        throw new Error('#nextNode inconsistency: ' + quad.object.id)
+  public get id(): string {
+    return this._id;
+  }
+
+  public get type(): string {
+    return this._type;
+  }
+
+  public fromQuad(pred: Pred, obj: any) {
+    const result = Obj.fromQuad(obj);
+
+    this._valuesFromPod.set(pred, { ...result });
+
+    pred.id === ont.rdf.type && this._setType(result);
+  }
+
+  private _setType(typeObj: Obj) {
+    const typeId = <string>Obj.getValue(typeObj);
+    this._type = idToLabel[typeId];
+  }
+
+  public getProperty(pred: Pred): Literal {
+    const obj: Obj = this._valuesFromPod.get(pred) || pred.default;
+    return Obj.getValue(obj);
+  }
+
+  public setProperty(pred: Pred, value: Literal) {
+    const obj = Obj.fromValue(pred.range, value);
+    this._valuesUpdated.set(pred, obj);
+
+    pred.id === ont.rdf.type && this._setType(obj);
+  }
+
+  public toJson() {
+    const result = defaultJson(this.id, this.type);
+
+    for (let pred of this._valuesFromPod.keys()) {
+      switch (pred.id) {
+        case ont.sdoc.next:
+        case ont.sdoc.firstChild:
+        case ont.rdf.type:
+          break;
+        default:
+          result[pred.label] = this.getProperty(pred);
       }
-      this.setNext(next)
     }
-    this._predicates[key].fromQuad(quad)
-    this._isPersisted = true
+
+    return result;
   }
 
-  public toJson(): any {
-    let option = JSON.parse(this.get('option'))
-    return {
-      id: this._id,
-      type: this.get('type'),
-      ...option
-    };
-  }
-  public abstract toBlankJson(): any
+  public fromJson(node: Node, predMap: Map<string, Pred>) {
+    let pred: Pred | undefined;
+    let value: Literal;
 
-  public get = (key: string): string => {
-    if (key === 'id') return this._id;
-    if (!this._predicates[key]) {
-      throw new Error('Try to get an unknown property: ' + this._id + key)
-    }
-    return this._predicates[key].get();
-  }
-
-  public set(props: any) {
-    if (this._isDeleted) {
-      throw new Error('Trying to update a deleted subject: ' + this._id);
-    }
-
-    if (Object.keys(props).includes('next')) {
-      throw new Error('The "next" property may not be set: ' + this._id);
-    }
-
-    let option = {}
-    Object.keys(props).forEach(key => {
-      if (key === 'id' || key === 'children') {
-        //
-      } else if (this._predicates[key]) {
-        this._predicates[key].set(props[key]);
-      } else {
-        option[key] = props[key]
+    Object.keys(node).forEach(label => {
+      switch (label) {
+        case 'id':
+          break;
+        case 'children':
+          pred = predMap.get(ont.sdoc.firstChild);
+          value = node.children[0] ? node.children[0].id : undefined;
+          pred && this.setProperty(pred, value);
+          break;
+        case 'type':
+          pred = predMap.get(ont.rdf.type);
+          value = labelToId[node[label]];
+          pred && this.setProperty(pred, value);
+          break;
+        default:
+          pred = predMap.get(labelToId[label]);
+          value = node[label];
+          pred && this.setProperty(pred, value);
       }
     });
-    (<JsonProperty>(this._predicates['option'])).set(option);
   }
 
-  public setNext(node: Subject | undefined) {
-    let nextId = node ? node._id : '';
-    this._predicates['next'].set(nextId);
-    this._next = node;
-  }
-  public getNext(): Subject | undefined {
-    return this._next
-  }
-
-  public getSparqlForUpdate = (graph: string): string => {
+  public getSparqlForUpdate = (): string => {
     if (this._isDeleted) {
-      // TODO: for non-persisted nodes, this clause could be empty
-      return `WITH <${graph}> DELETE { <${this._id}> ?p ?o } WHERE { <${this._id}> ?p ?o };\n`;
+      // TODO: for non-persisted subjects, this clause should be empty
+      return `DELETE WHERE { GRAPH <${this._graph}> { <${this._id}> ?p ?o } };\n`;
     } else {
+      let allPred = new Set<Pred>([
+        ...this._valuesFromPod.keys(),
+        ...this._valuesUpdated.keys(),
+      ]);
+
       let sparql = '';
-      Object.keys(this._predicates).forEach(key => {
-        sparql += this._predicates[key].getSparqlForUpdate(graph, this._id);
-      });
+      for (let pred of allPred) {
+        const initial = this._valuesFromPod.get(pred);
+        const updated = this._valuesUpdated.get(pred);
+        sparql += pred.getSparql(this._id, updated, initial);
+      }
       return sparql;
     }
-  }
+  };
 
   public commit = () => {
     if (this._isDeleted) {
-      throw new Error('A deleted subject should not be committed')
+      throw new Error('A deleted subject should not be committed');
     }
-    Object.keys(this._predicates).forEach(key => {
-      this._predicates[key].commit();
-    });
-    this._isPersisted = true
-  }
 
-  public undo(nodeMap: Map<string, Subject>) {
-    if (!this._isPersisted) {
-      throw new Error('A non-persisted subject should not be undone')
+    this._valuesFromPod = _.cloneDeep(this._valuesUpdated);
+    this._valuesUpdated.clear();
+
+    this._isInserted = false;
+  };
+
+  public undo() {
+    if (this._isInserted) {
+      throw new Error('A non-persisted subject should not be undone');
     }
-    this._isDeleted = false
-    Object.keys(this._predicates).forEach(key => {
-      this._predicates[key].undo();
-    });
-    this._next = nodeMap.get(this.get('next'))
+
+    this._valuesUpdated.clear();
+
+    this._isDeleted = false;
   }
 
   public delete() {
-    this._isDeleted = true
+    if (this._id === this._graph) {
+      throw new Error('The root is not removable :' + this._id);
+    }
+    this._isDeleted = true;
   }
 
   public isDeleted = (): boolean => {
-    return this._isDeleted
-  }
+    return this._isDeleted;
+  };
 
-  public isPersisted = (): boolean => {
-    return this._isPersisted
-  }
+  public isInserted = (): boolean => {
+    return this._isInserted;
+  };
 
-  public abstract attachChildren(curr: Subject | string | undefined, offset: number)
-  public abstract detachChildren(offset: number, length: number): Subject | string | undefined
+  public insert = () => {
+    this._isInserted = true;
+  };
 }
 
-export { Subject }
+export { Subject };
