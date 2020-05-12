@@ -59,9 +59,11 @@ class Graph {
       const subject =
         this._subjectMap.get(quad.subject.id) ||
         this.createSubject(quad.subject.id);
+
       const predicate =
         this._predicateMap.get(quad.predicate.id) ||
         this.createPredicate(quad.predicate.id);
+
       subject.fromQuad(predicate, quad.object);
     });
   };
@@ -92,13 +94,13 @@ class Graph {
 
   public commit() {
     for (let [id, subject] of this._subjectMap.entries()) {
-      subject.isDeleted() ? this._subjectMap.delete(id) : subject.commit();
+      subject.isDeleted ? this._subjectMap.delete(id) : subject.commit();
     }
   }
 
   public undo() {
     for (let [id, subject] of this._subjectMap.entries()) {
-      subject.isInserted() ? this._subjectMap.delete(id) : subject.undo();
+      subject.isInserted ? this._subjectMap.delete(id) : subject.undo();
     }
   }
 }

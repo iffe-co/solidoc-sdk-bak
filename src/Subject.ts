@@ -99,20 +99,19 @@ class Subject {
     if (this._isDeleted) {
       // TODO: for non-persisted subjects, this clause should be empty
       return `DELETE WHERE { GRAPH <${this._graph}> { <${this._id}> ?p ?o } };\n`;
-    } else {
-      let allPred = new Set<Pred>([
-        ...this._valuesFromPod.keys(),
-        ...this._valuesUpdated.keys(),
-      ]);
-
-      let sparql = '';
-      for (let pred of allPred) {
-        const initial = this._valuesFromPod.get(pred);
-        const updated = this._valuesUpdated.get(pred);
-        sparql += pred.getSparql(this._id, updated, initial);
-      }
-      return sparql;
     }
+    let allPred = new Set<Pred>([
+      ...this._valuesFromPod.keys(),
+      ...this._valuesUpdated.keys(),
+    ]);
+
+    let sparql = '';
+    for (let pred of allPred) {
+      const initial = this._valuesFromPod.get(pred);
+      const updated = this._valuesUpdated.get(pred);
+      sparql += pred.getSparql(this._id, updated, initial);
+    }
+    return sparql;
   };
 
   public commit = () => {
@@ -136,24 +135,26 @@ class Subject {
     this._isDeleted = false;
   }
 
-  public delete() {
-    if (this._id === this._graph) {
+  public set isDeleted(val: boolean) {
+    if (this._id === this._graph && val === true) {
       throw new Error('The root is not removable :' + this._id);
     }
-    this._isDeleted = true;
+    this._isDeleted = val;
+
+    val === true && this._valuesUpdated.clear();
   }
 
-  public isDeleted = (): boolean => {
+  public get isDeleted(): boolean {
     return this._isDeleted;
-  };
+  }
 
-  public isInserted = (): boolean => {
+  public get isInserted(): boolean {
     return this._isInserted;
-  };
+  }
 
-  public insert = () => {
-    this._isInserted = true;
-  };
+  public set isInserted(val: boolean) {
+    this._isInserted = val;
+  }
 }
 
 export { Subject };

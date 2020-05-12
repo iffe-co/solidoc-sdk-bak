@@ -25,13 +25,18 @@ class Page extends Graph {
     transform(this._editor, opCloned);
 
     for (let node of subjToInsert.values()) {
-      let subject = this.createSubject(node.id);
-      subject.insert(); // TODO
+      let subject = this._subjectMap.get(node.id);
+      if (subject) {
+        subject.isDeleted = false;
+      } else {
+        subject = this.createSubject(node.id);
+        subject.isInserted = true;
+      }
     }
 
     for (let nodeId of subjToRemove.values()) {
       let subject = this.getSubject(nodeId);
-      subject.delete();
+      subject.isDeleted = true;
     }
   };
 
@@ -66,7 +71,8 @@ class Page extends Graph {
   }
 
   private _preInsertRecursive = (node: Node, subjToInsert: Set<Node>) => {
-    if (this._subjectMap.has(node.id)) {
+    const subject = this._subjectMap.get(node.id);
+    if (subject && !subject.isDeleted) {
       throw new Error('Duplicated node insertion: ' + node.id);
     }
     subjToInsert.add(node);
