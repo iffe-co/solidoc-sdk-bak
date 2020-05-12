@@ -21,16 +21,20 @@ class Graph {
     if (this._subjectMap.get(subejectId)) {
       throw new Error('Duplicated subject creation: ' + subejectId);
     }
+
     const subject = new Subject(subejectId, this._id);
     this._subjectMap.set(subejectId, subject);
+
     return subject;
   };
 
   public getSubject = (subjectId: string): Subject => {
     const subject = this._subjectMap.get(subjectId);
+
     if (!subject) {
       throw new Error('Subject not found: ' + subjectId);
     }
+
     return subject;
   };
 

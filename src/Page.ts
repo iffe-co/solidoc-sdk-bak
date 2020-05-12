@@ -26,6 +26,7 @@ class Page extends Graph {
 
     for (let node of subjToInsert.values()) {
       let subject = this._subjectMap.get(node.id);
+
       if (subject) {
         subject.isDeleted = false;
       } else {
