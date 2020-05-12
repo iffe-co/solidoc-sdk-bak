@@ -46,8 +46,8 @@ describe('test/Subject.test.ts', () => {
         branch2.getProperty(predicates[ont.sdoc.firstChild]),
         undefined,
       );
-      assert(!branch2.isDeleted());
-      assert(!branch2.isInserted());
+      assert(!branch2.isDeleted);
+      assert(!branch2.isInserted);
     });
 
     it('translates to Json', () => {
@@ -77,7 +77,7 @@ describe('test/Subject.test.ts', () => {
       let quads = parser.parse(turtle);
       branch2.fromQuad(predicates[quads[0].predicate.id], quads[0].object);
 
-      assert(!branch2.isInserted());
+      assert(!branch2.isInserted);
     });
   });
 
@@ -122,11 +122,11 @@ describe('test/Subject.test.ts', () => {
 
   describe('performs deletion', () => {
     beforeEach(() => {
-      branch2.delete();
+      branch2.isDeleted = true;
     });
 
     it('performs deletion', () => {
-      assert.strictEqual(branch2.isDeleted(), true);
+      assert(branch2.isDeleted);
     });
 
     // it('throws on setting a deleted node', () => {
@@ -153,11 +153,11 @@ describe('test/Subject.test.ts', () => {
       branch2.commit();
 
       assert.strictEqual(branch2.getProperty(pred), 'NumberedList');
-      assert(!branch2.isInserted());
+      assert(!branch2.isInserted);
     });
 
     it('disallows committing a deleted node', () => {
-      branch2.delete();
+      branch2.isDeleted = true;
 
       assert.throws(() => {
         branch2.commit();
@@ -171,17 +171,17 @@ describe('test/Subject.test.ts', () => {
     });
 
     it('disallows undoing a non-existOnPod node', () => {
-      branch2.insert();
+      branch2.isInserted = true;
       assert.throws(() => {
         branch2.undo();
       });
     });
 
     it('undoes deletion', () => {
-      branch2.delete();
+      branch2.isDeleted = true;
       branch2.undo();
 
-      assert.strictEqual(branch2.isDeleted(), false);
+      assert(!branch2.isDeleted);
     });
 
     it('undoes attributes', () => {
@@ -189,7 +189,7 @@ describe('test/Subject.test.ts', () => {
       branch2.setProperty(pred, ont.sdoc.paragraph);
       branch2.commit(); // so {type: Paragraph} becomes value
       branch2.setProperty(pred, ont.sdoc.numberedList);
-      branch2.delete();
+      branch2.isDeleted = true;
       branch2.undo();
 
       assert.strictEqual(branch2.getProperty(pred), ont.sdoc.paragraph);
@@ -251,7 +251,7 @@ describe('Root', () => {
 
   it('disallows deletion', () => {
     assert.throws(() => {
-      root.delete();
+      root.isDeleted = true;
     });
   });
 });

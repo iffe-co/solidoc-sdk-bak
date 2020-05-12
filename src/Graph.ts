@@ -17,12 +17,17 @@ class Graph {
     this._parseTurtle(turtle);
   }
 
-  public createSubject = (subejectId: string): Subject => {
-    if (this._subjectMap.get(subejectId)) {
-      throw new Error('Duplicated subject creation: ' + subejectId);
+  public createSubject = (subjectId: string): Subject => {
+    let subject = this._subjectMap.get(subjectId);
+
+    if (!subject) {
+      subject = new Subject(subjectId, this._id);
+      this._subjectMap.set(subjectId, subject);
+    } else if (subject.isDeleted) {
+      subject.isDeleted = false;
+    } else {
+      throw new Error('Duplicated subject creation: ' + subjectId);
     }
-    const subject = new Subject(subejectId, this._id);
-    this._subjectMap.set(subejectId, subject);
     return subject;
   };
 
@@ -59,9 +64,11 @@ class Graph {
       const subject =
         this._subjectMap.get(quad.subject.id) ||
         this.createSubject(quad.subject.id);
+
       const predicate =
         this._predicateMap.get(quad.predicate.id) ||
         this.createPredicate(quad.predicate.id);
+
       subject.fromQuad(predicate, quad.object);
     });
   };
@@ -92,13 +99,13 @@ class Graph {
 
   public commit() {
     for (let [id, subject] of this._subjectMap.entries()) {
-      subject.isDeleted() ? this._subjectMap.delete(id) : subject.commit();
+      subject.isDeleted ? this._subjectMap.delete(id) : subject.commit();
     }
   }
 
   public undo() {
     for (let [id, subject] of this._subjectMap.entries()) {
-      subject.isInserted() ? this._subjectMap.delete(id) : subject.undo();
+      subject.isInserted ? this._subjectMap.delete(id) : subject.undo();
     }
   }
 }

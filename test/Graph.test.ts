@@ -83,7 +83,7 @@ describe('Graph', () => {
   describe('Commits and Undoes', () => {
     it('commits to remove deleted subject from memory', () => {
       let branch0 = graph.getSubject(cfg.para[0].id);
-      branch0.delete();
+      branch0.isDeleted = true;
       graph.commit();
 
       assert.throws(() => {
@@ -94,7 +94,7 @@ describe('Graph', () => {
     it('undoes to remove new subject from memory', () => {
       let tempId = cfg.page.id + '#temp';
       let subject = graph.createSubject(tempId);
-      subject.insert();
+      subject.isInserted = true;
       graph.undo();
 
       assert.throws(() => {

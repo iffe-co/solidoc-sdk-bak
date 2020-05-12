@@ -58,8 +58,8 @@ describe('Insert Node', () => {
     page.apply(op0);
 
     assert.deepStrictEqual(page.toJson().children[0], cfg.para[0]);
-    assert(page.getSubject(cfg.para[0].id).isInserted());
-    assert(page.getSubject(cfg.text[0].id).isInserted());
+    assert(page.getSubject(cfg.para[0].id).isInserted);
+    assert(page.getSubject(cfg.text[0].id).isInserted);
   });
 
   it('applies no insertion if operation is failed', () => {
@@ -124,7 +124,7 @@ describe('Split Node', () => {
   it('splits a paragraph', () => {
     page.apply(op0);
 
-    assert(page.getSubject(cfg.page.id + '#temp').isInserted());
+    assert(page.getSubject(cfg.page.id + '#temp').isInserted);
   });
 
   it('disallows duplicated node', () => {
@@ -140,7 +140,7 @@ describe('Split Node', () => {
     page.update();
     page.commit();
 
-    assert(!page.getSubject(cfg.page.id + '#temp').isInserted());
+    assert(!page.getSubject(cfg.page.id + '#temp').isInserted);
   });
 
   it('undoes splitting', () => {
@@ -180,8 +180,8 @@ describe('Remove Node', () => {
   it('removes a paragraph', () => {
     page.apply(op0);
 
-    assert(page.getSubject(cfg.para[0].id).isDeleted());
-    assert(page.getSubject(cfg.text[0].id).isDeleted());
+    assert(page.getSubject(cfg.para[0].id).isDeleted);
+    assert(page.getSubject(cfg.text[0].id).isDeleted);
   });
 
   it('removes a text', () => {
@@ -197,12 +197,12 @@ describe('Remove Node', () => {
     );
   });
 
-  it('disallows inserting a deleted subject', () => {
+  it('inserts a deleted subject', () => {
     page.apply(op0);
+    page.apply(op2);
 
-    assert.throws(() => {
-      page.apply(op2);
-    }, /^Error: Duplicated node insertion/);
+    page.update();
+    assert.deepStrictEqual(page.toJson(), cfg.page);
   });
 
   it('commits removal', () => {
@@ -224,8 +224,8 @@ describe('Remove Node', () => {
     page.update();
     page.undo();
 
-    assert(!page.getSubject(cfg.para[0].id).isDeleted());
-    assert(!page.getSubject(cfg.text[0].id).isDeleted());
+    assert(!page.getSubject(cfg.para[0].id).isDeleted);
+    assert(!page.getSubject(cfg.text[0].id).isDeleted);
   });
 });
 
@@ -244,7 +244,7 @@ describe('Merge Node', () => {
   it('merges a paragraph', () => {
     page.apply(op0);
 
-    assert(page.getSubject(cfg.para[1].id).isDeleted());
+    assert(page.getSubject(cfg.para[1].id).isDeleted);
   });
 
   it('commits merging', () => {
@@ -262,7 +262,7 @@ describe('Merge Node', () => {
     page.update();
     page.undo();
 
-    assert(!page.getSubject(cfg.para[1].id).isDeleted());
+    assert(!page.getSubject(cfg.para[1].id).isDeleted);
   });
 });
 
