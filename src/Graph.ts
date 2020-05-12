@@ -17,25 +17,24 @@ class Graph {
     this._parseTurtle(turtle);
   }
 
-  public createSubject = (subjectId: string): Subject => {
-    let subject = this._subjectMap.get(subjectId);
-
-    if (!subject) {
-      subject = new Subject(subjectId, this._id);
-      this._subjectMap.set(subjectId, subject);
-    } else if (subject.isDeleted) {
-      subject.isDeleted = false;
-    } else {
-      throw new Error('Duplicated subject creation: ' + subjectId);
+  public createSubject = (subejectId: string): Subject => {
+    if (this._subjectMap.get(subejectId)) {
+      throw new Error('Duplicated subject creation: ' + subejectId);
     }
+
+    const subject = new Subject(subejectId, this._id);
+    this._subjectMap.set(subejectId, subject);
+
     return subject;
   };
 
   public getSubject = (subjectId: string): Subject => {
     const subject = this._subjectMap.get(subjectId);
+
     if (!subject) {
       throw new Error('Subject not found: ' + subjectId);
     }
+
     return subject;
   };
 

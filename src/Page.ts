@@ -25,8 +25,13 @@ class Page extends Graph {
     transform(this._editor, opCloned);
 
     for (let node of subjToInsert.values()) {
-      let subject = this.createSubject(node.id);
-      subject.isInserted = true; // TODO
+      let subject = this._subjectMap.get(node.id);
+      if (subject) {
+        subject.isDeleted = false;
+      } else {
+        subject = this.createSubject(node.id);
+        subject.isInserted = true;
+      }
     }
 
     for (let nodeId of subjToRemove.values()) {
