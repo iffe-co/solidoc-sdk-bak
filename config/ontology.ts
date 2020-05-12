@@ -27,6 +27,7 @@ const ont = {
     formula: 'http://www.solidoc.net/ontologies#formula',
     hintState: 'http://www.solidoc.net/ontologies#hintState',
     bold: 'http://www.solidoc.net/ontologies#bold',
+    link: 'http://www.solidoc.net/ontologies#link',
     // subjects
     root: 'http://www.solidoc.net/ontologies#Root',
     leaf: 'http://www.solidoc.net/ontologies#Leaf',
@@ -41,6 +42,7 @@ const ont = {
     pre: 'http://www.solidoc.net/ontologies#Pre',
     hint: 'http://www.solidoc.net/ontologies#Hint',
     divider: 'http://www.solidoc.net/ontologies#Divider',
+    page: 'http://www.solidoc.net/ontologies#Page',
   },
 };
 
@@ -56,6 +58,7 @@ const subjTypeToPredArray = [
   ont.sdoc.formula,
   ont.sdoc.hintState,
   ont.sdoc.bold,
+  ont.sdoc.link,
 ];
 
 const labelToId = {
@@ -71,6 +74,7 @@ const labelToId = {
   formula: 'http://www.solidoc.net/ontologies#formula',
   hintState: 'http://www.solidoc.net/ontologies#hintState',
   bold: 'http://www.solidoc.net/ontologies#bold',
+  link: 'http://www.solidoc.net/ontologies#link',
 
   // subjects
   Root: 'http://www.solidoc.net/ontologies#Root',
@@ -86,6 +90,7 @@ const labelToId = {
   Pre: 'http://www.solidoc.net/ontologies#Pre',
   Hint: 'http://www.solidoc.net/ontologies#Hint',
   Divider: 'http://www.solidoc.net/ontologies#Divider',
+  Page: 'http://www.solidoc.net/ontologies#Page',
 };
 
 const idToLabel = {
@@ -101,6 +106,7 @@ const idToLabel = {
   'http://www.solidoc.net/ontologies#formula': 'formula',
   'http://www.solidoc.net/ontologies#hintState': 'hintState',
   'http://www.solidoc.net/ontologies#bold': 'bold',
+  'http://www.solidoc.net/ontologies#link': 'link',
 
   // subjects
   'http://www.solidoc.net/ontologies#Root': 'Root',
@@ -116,6 +122,7 @@ const idToLabel = {
   'http://www.solidoc.net/ontologies#Pre': 'Pre',
   'http://www.solidoc.net/ontologies#Hint': 'Hint',
   'http://www.solidoc.net/ontologies#Divider': 'Divider',
+  'http://www.solidoc.net/ontologies#Page': 'Page',
 };
 
 const predIdToRange = {
@@ -130,6 +137,7 @@ const predIdToRange = {
   'http://www.solidoc.net/ontologies#formula': ont.xsd.string,
   'http://www.solidoc.net/ontologies#hintState': ont.xsd.string,
   'http://www.solidoc.net/ontologies#bold': ont.xsd.boolean,
+  'http://www.solidoc.net/ontologies#link': ont.xsd.anyURI,
 };
 
 // TODO: use pred.default
@@ -186,6 +194,13 @@ const defaultJson = (id: string, type: string): Node => {
         id: id,
         type: type,
         hitState: '',
+        children: [],
+      };
+    case ont.sdoc.page:
+      return {
+        id: id,
+        type: type,
+        link: undefined,
         children: [],
       };
     default:

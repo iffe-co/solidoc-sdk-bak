@@ -66,6 +66,9 @@ export const Object = {
   escape(obj: Object): string {
     switch (obj.type) {
       case ont.xsd.anyURI:
+        if (obj.value === undefined) {
+          throw new Error('NamedNode Object with undefined value');
+        }
         return `<${obj.value}>`;
       case ont.xsd.boolean:
         return `"${obj.value}"^^<${ont.xsd.boolean}>`;

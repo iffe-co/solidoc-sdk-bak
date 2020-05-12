@@ -228,9 +228,10 @@ describe('Root', () => {
       root.fromQuad(predicates[quad.predicate.id], quad.object);
     });
     root.setProperty(predicates[ont.sdoc.firstChild], undefined);
-    let sparql = root.getSparqlForUpdate();
 
-    assert(sparql.startsWith('DELETE WHERE'));
+    assert.throws(() => {
+      root.getSparqlForUpdate();
+    }, /^Error: NamedNode Object with undefined value/);
   });
 
   it('allows parsing #nextNode predicate', () => {
