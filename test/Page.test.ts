@@ -17,7 +17,10 @@ describe('Create Page', () => {
     assert.deepStrictEqual(page.toJson(), cfg.page);
 
     page.update();
-    assert.strictEqual(page.getSparqlForUpdate(), '');
+    let deleteCount = page.getSparqlForUpdate().match(/DELETE WHERE/g)?.length;
+    let insertCount = page.getSparqlForUpdate().match(/INSERT DATA/g)?.length;
+    assert(deleteCount === 1);
+    assert(insertCount === 1);
   });
 
   it('inserts type definition if not defined', () => {
@@ -29,10 +32,10 @@ describe('Create Page', () => {
     );
 
     page.update();
-    assert.strictEqual(
-      page.getSparqlForUpdate(),
-      `INSERT DATA { GRAPH <${cfg.page.id}> { <${cfg.page.id}> <${ont.rdf.type}> <${ont.sdoc.root}>} };\n`,
-    );
+    let deleteCount = page.getSparqlForUpdate().match(/DELETE WHERE/g)?.length;
+    let insertCount = page.getSparqlForUpdate().match(/INSERT DATA/g)?.length;
+    assert(deleteCount === 1);
+    assert(insertCount === 2);
   });
 });
 

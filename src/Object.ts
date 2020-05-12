@@ -56,17 +56,13 @@ export const Object = {
         result.type = ont.xsd.anyURI;
         break;
       case 'object':
-        if (!(value instanceof Date)) {
-          throw new Error('Input value is an object, but not a dateTime');
-        }
-        result.type = ont.xsd.dateTime;
+        value instanceof Date && (result.type = ont.xsd.dateTime);
       // TODO: more types
     }
 
     return result;
   },
 
-  // TODO: extract from Predicate
   escape(obj: Object): string {
     switch (obj.type) {
       case ont.xsd.anyURI:
@@ -83,6 +79,32 @@ export const Object = {
         );
         const quoteEscaped: string = backSlashEscaped.replace(/"/g, '\\"');
         return `"${quoteEscaped}"`;
+    }
+  },
+
+  nil(predRange: string): Object {
+    switch (predRange) {
+      case ont.xsd.string:
+        return {
+          value: '',
+          type: predRange,
+        };
+      case ont.xsd.boolean:
+        return {
+          value: false,
+          type: predRange,
+        };
+      case ont.xsd.dateTime:
+        return {
+          value: new Date(0),
+          type: predRange,
+        };
+      default:
+        // NamedNode
+        return {
+          value: undefined,
+          type: predRange,
+        };
     }
   },
 };

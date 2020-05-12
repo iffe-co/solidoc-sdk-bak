@@ -91,6 +91,7 @@ class Page extends Graph {
 
   public update() {
     this._updateRecursive(this._editor);
+    this.setValue(this._id, ont.dct.modified, new Date());
   }
 
   private _updateRecursive(node: Node, nextNode?: Node) {
