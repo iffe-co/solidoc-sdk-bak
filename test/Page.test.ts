@@ -15,6 +15,24 @@ describe('Create Page', () => {
   it('parses from quads', () => {
     page = new Page(cfg.page.id, turtleAll);
     assert.deepStrictEqual(page.toJson(), cfg.page);
+
+    page.update();
+    assert.strictEqual(page.getSparqlForUpdate(), '');
+  });
+
+  it('inserts type definition if not defined', () => {
+    page = new Page(
+      cfg.page.id,
+      `<${cfg.page.id}> <${ont.dct.modified}> "${new Date(0)}"^^<${
+        ont.xsd.dateTime
+      }> .`,
+    );
+
+    page.update();
+    assert.strictEqual(
+      page.getSparqlForUpdate(),
+      `INSERT DATA { GRAPH <${cfg.page.id}> { <${cfg.page.id}> <${ont.rdf.type}> <${ont.sdoc.root}>} };\n`,
+    );
   });
 });
 

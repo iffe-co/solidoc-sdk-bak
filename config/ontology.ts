@@ -6,6 +6,7 @@ const ont = {
   },
   dct: {
     title: 'http://purl.org/dc/terms/title',
+    modified: 'http://purl.org/dc/terms/modified',
   },
   xsd: {
     anyURI: 'http://www.w3.org/2001/XMLSchema#anyURI',
@@ -46,6 +47,7 @@ const ont = {
 const subjTypeToPredArray = [
   ont.rdf.type,
   ont.dct.title,
+  ont.dct.modified,
   ont.sdoc.firstChild,
   ont.sdoc.next,
   ont.sdoc.text,
@@ -60,6 +62,7 @@ const labelToId = {
   // predicates
   type: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
   title: 'http://purl.org/dc/terms/title',
+  modified: 'http://purl.org/dc/terms/modified',
   firstChild: 'http://www.solidoc.net/ontologies#firstChild',
   next: 'http://www.solidoc.net/ontologies#nextNode',
   text: 'http://www.solidoc.net/ontologies#text',
@@ -89,6 +92,7 @@ const idToLabel = {
   // predicates
   'http://www.w3.org/1999/02/22-rdf-syntax-ns#type': 'type',
   'http://purl.org/dc/terms/title': 'title',
+  'http://purl.org/dc/terms/modified': 'modified',
   'http://www.solidoc.net/ontologies#firstChild': 'firstChild',
   'http://www.solidoc.net/ontologies#nextNode': 'next',
   'http://www.solidoc.net/ontologies#text': 'text',
@@ -117,6 +121,7 @@ const idToLabel = {
 const predIdToRange = {
   'http://www.w3.org/1999/02/22-rdf-syntax-ns#type': ont.xsd.anyURI,
   'http://purl.org/dc/terms/title': ont.xsd.string,
+  'http://purl.org/dc/terms/modified': ont.xsd.dateTime,
   'http://www.solidoc.net/ontologies#firstChild': ont.xsd.anyURI,
   'http://www.solidoc.net/ontologies#nextNode': ont.xsd.anyURI,
   'http://www.solidoc.net/ontologies#text': ont.xsd.string,
@@ -134,7 +139,7 @@ const defaultJson = (id: string, type: string): Node => {
       return {
         id: id,
         type: type,
-        title: '',
+        modified: new Date(0),
         children: [],
       };
     case ont.sdoc.leaf:

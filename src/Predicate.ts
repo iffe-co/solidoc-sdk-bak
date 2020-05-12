@@ -48,6 +48,12 @@ class Predicate {
           type: this._range,
         };
         break;
+      case ont.xsd.dateTime:
+        this._default = {
+          value: new Date(0),
+          type: this._range,
+        };
+        break;
       default:
         // NamedNode
         this._default = {

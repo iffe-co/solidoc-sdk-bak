@@ -88,6 +88,9 @@ describe('Boolean Object', () => {
   });
 
   it('escapes value of a boolean object', () => {
-    assert.strictEqual(Object.escape(target), '"true"^^' + ont.xsd.boolean);
+    assert.strictEqual(
+      Object.escape(target),
+      '"true"^^<' + ont.xsd.boolean + '>',
+    );
   });
 });
