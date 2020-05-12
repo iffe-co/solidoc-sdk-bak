@@ -1,6 +1,6 @@
 import { ont } from '../config/ontology';
 
-export type Literal = string | boolean | undefined;
+export type Literal = string | boolean | object | undefined;
 
 export interface Object {
   value: Literal;
@@ -27,10 +27,14 @@ export const Object = {
     } else if (input.id.endsWith('boolean')) {
       result.type = ont.xsd.boolean;
       result.value = input.id.startsWith('"true"');
+    } else if (input.id.endsWith('dateTime')) {
+      result.type = ont.xsd.dateTime;
+      let dtStr: string = input.id.substring(1, input.id.lastIndexOf('"'));
+      result.value = new Date(dtStr);
     } else {
-      // throw new Error('Unknown data type');
-      // TODO: more types
+      throw new Error('Unknown data type');
     }
+    // TODO: more types
 
     return result;
   },
@@ -51,19 +55,22 @@ export const Object = {
       case 'undefined':
         result.type = ont.xsd.anyURI;
         break;
+      case 'object':
+        value instanceof Date && (result.type = ont.xsd.dateTime);
       // TODO: more types
     }
 
     return result;
   },
 
-  // TODO: extract from Predicate
   escape(obj: Object): string {
     switch (obj.type) {
       case ont.xsd.anyURI:
         return `<${obj.value}>`;
       case ont.xsd.boolean:
-        return `"${obj.value}"^^${ont.xsd.boolean}`;
+        return `"${obj.value}"^^<${ont.xsd.boolean}>`;
+      case ont.xsd.dateTime:
+        return `"${obj.value}"^^<${ont.xsd.dateTime}>`;
       default:
         // xsd:string
         const backSlashEscaped: string = (<string>obj.value).replace(
@@ -72,6 +79,32 @@ export const Object = {
         );
         const quoteEscaped: string = backSlashEscaped.replace(/"/g, '\\"');
         return `"${quoteEscaped}"`;
+    }
+  },
+
+  nil(predRange: string): Object {
+    switch (predRange) {
+      case ont.xsd.string:
+        return {
+          value: '',
+          type: predRange,
+        };
+      case ont.xsd.boolean:
+        return {
+          value: false,
+          type: predRange,
+        };
+      case ont.xsd.dateTime:
+        return {
+          value: new Date(0),
+          type: predRange,
+        };
+      default:
+        // NamedNode
+        return {
+          value: undefined,
+          type: predRange,
+        };
     }
   },
 };

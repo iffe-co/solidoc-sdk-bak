@@ -33,6 +33,7 @@ config.page = {
   ...config.page,
   type: idToLabel[ont.sdoc.root],
   title: 'Homepage',
+  modified: new Date(0),
   children: [config.para[0], config.para[1], config.para[2]],
 };
 
@@ -43,6 +44,7 @@ export const turtle: any = {
 };
 
 turtle.page = `<${config.page.id}> a <${ont.sdoc.root}>;
+  <${ont.dct.modified}> "1970-01-01T00:00:00.000Z"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
   <${ont.dct.title}> "${config.page.title}";
   <${ont.sdoc.firstChild}> <${config.para[0].id}>.`;
 

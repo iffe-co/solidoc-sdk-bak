@@ -1,5 +1,5 @@
 import * as _ from 'lodash';
-import { idToLabel, predIdToRange, ont } from '../config/ontology';
+import { idToLabel, predIdToRange } from '../config/ontology';
 import { Object } from './Object';
 
 class Predicate {
@@ -35,27 +35,7 @@ class Predicate {
 
   public _setRange(range: string) {
     this._range = range;
-    switch (this._range) {
-      case ont.xsd.string:
-        this._default = {
-          value: '',
-          type: this._range,
-        };
-        break;
-      case ont.xsd.boolean:
-        this._default = {
-          value: false,
-          type: this._range,
-        };
-        break;
-      default:
-        // NamedNode
-        this._default = {
-          value: undefined,
-          type: this._range,
-        };
-        break;
-    }
+    this._default = Object.nil(range);
   }
 
   public getSparql(

@@ -15,6 +15,27 @@ describe('Create Page', () => {
   it('parses from quads', () => {
     page = new Page(cfg.page.id, turtleAll);
     assert.deepStrictEqual(page.toJson(), cfg.page);
+
+    page.update();
+    let deleteCount = page.getSparqlForUpdate().match(/DELETE WHERE/g)?.length;
+    let insertCount = page.getSparqlForUpdate().match(/INSERT DATA/g)?.length;
+    assert(deleteCount === 1);
+    assert(insertCount === 1);
+  });
+
+  it('inserts type definition if not defined', () => {
+    page = new Page(
+      cfg.page.id,
+      `<${cfg.page.id}> <${ont.dct.modified}> "${new Date(0)}"^^<${
+        ont.xsd.dateTime
+      }> .`,
+    );
+
+    page.update();
+    let deleteCount = page.getSparqlForUpdate().match(/DELETE WHERE/g)?.length;
+    let insertCount = page.getSparqlForUpdate().match(/INSERT DATA/g)?.length;
+    assert(deleteCount === 1);
+    assert(insertCount === 2);
   });
 });
 

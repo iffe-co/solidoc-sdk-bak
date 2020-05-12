@@ -38,12 +38,12 @@ describe('NamedNode Object', () => {
     assert.strictEqual(Object.escape(target), '<' + cfg.text[1].id + '>');
   });
 
-  // it('throws on unknown data type', () => {
-  //   const obj = { id: `"100"^^` };
-  //   assert.throws(() => {
-  //     Object.fromQuad(obj);
-  //   }, /^Error: Unknown data type/);
-  // });
+  it('throws on unknown data type', () => {
+    const obj = { id: `"100"^^` };
+    assert.throws(() => {
+      Object.fromQuad(obj);
+    }, /^Error: Unknown data type/);
+  });
 });
 
 describe('Text Object', () => {
@@ -88,6 +88,9 @@ describe('Boolean Object', () => {
   });
 
   it('escapes value of a boolean object', () => {
-    assert.strictEqual(Object.escape(target), '"true"^^' + ont.xsd.boolean);
+    assert.strictEqual(
+      Object.escape(target),
+      '"true"^^<' + ont.xsd.boolean + '>',
+    );
   });
 });
