@@ -3,17 +3,17 @@ import { Literal } from './Object';
 import { Predicate } from './Predicate';
 import * as n3 from 'n3';
 
-const parser = new n3.Parser();
-
 // a graph could be a page or a database
 class Graph {
   protected _id: string = '';
   protected _subjectMap = new Map<string, Subject>();
   protected _predicateMap = new Map<string, Predicate>();
+  private _parser;
 
   constructor(id: string, turtle: string) {
     this._id = id;
     this.createSubject(id);
+    this._parser = new n3.Parser({ baseIRI: id });
     this._parseTurtle(turtle);
   }
 
@@ -58,7 +58,7 @@ class Graph {
   };
 
   private _parseTurtle = (turtle: string) => {
-    const quads: any[] = parser.parse(turtle);
+    const quads: any[] = this._parser.parse(turtle);
     quads.forEach(quad => {
       const subject =
         this._subjectMap.get(quad.subject.id) ||

@@ -73,7 +73,7 @@ export const Object = {
       case ont.xsd.boolean:
         return `"${obj.value}"^^<${ont.xsd.boolean}>`;
       case ont.xsd.dateTime:
-        return `"${obj.value}"^^<${ont.xsd.dateTime}>`;
+        return `"${(<Date>obj.value).toISOString()}"^^<${ont.xsd.dateTime}>`;
       default:
         // xsd:string
         const backSlashEscaped: string = (<string>obj.value).replace(

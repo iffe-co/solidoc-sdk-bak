@@ -3,6 +3,7 @@ import { config as cfg, turtle } from '../config/test';
 import { ont } from '../config/ontology';
 import { Operation } from '../src/interface';
 import * as assert from 'power-assert';
+import { updatePod } from './MockPod.test';
 
 let page: Page;
 
@@ -17,25 +18,27 @@ describe('Create Page', () => {
     assert.deepStrictEqual(page.toJson(), cfg.page);
 
     page.update();
-    let deleteCount = page.getSparqlForUpdate().match(/DELETE WHERE/g)?.length;
-    let insertCount = page.getSparqlForUpdate().match(/INSERT DATA/g)?.length;
-    assert(deleteCount === 1);
-    assert(insertCount === 1);
+    const sparql = page.getSparqlForUpdate();
+    const turtleNew = updatePod(turtleAll, sparql, cfg.page.id);
+
+    const pageNew = new Page(cfg.page.id, turtleNew);
+    assert.deepStrictEqual(pageNew.toJson(), page.toJson());
+
+    assert(page.toJson().modified.getFullYear() > 1970);
   });
 
   it('inserts type definition if not defined', () => {
-    page = new Page(
-      cfg.page.id,
-      `<${cfg.page.id}> <${ont.dct.modified}> "${new Date(0)}"^^<${
-        ont.xsd.dateTime
-      }> .`,
-    );
+    let turtle = `<${cfg.page.id}> <${ont.dct.modified}> "${new Date(0)}"^^<${
+      ont.xsd.dateTime
+    }> .`;
+    page = new Page(cfg.page.id, turtle);
 
     page.update();
-    let deleteCount = page.getSparqlForUpdate().match(/DELETE WHERE/g)?.length;
-    let insertCount = page.getSparqlForUpdate().match(/INSERT DATA/g)?.length;
-    assert(deleteCount === 1);
-    assert(insertCount === 2);
+    const sparql = page.getSparqlForUpdate();
+    const turtleNew = updatePod(turtle, sparql, cfg.page.id);
+
+    const pageNew = new Page(cfg.page.id, turtleNew);
+    assert.deepStrictEqual(pageNew.toJson(), page.toJson());
   });
 });
 
@@ -202,7 +205,7 @@ describe('Remove Node', () => {
     page.apply(op2);
 
     page.update();
-    assert.deepStrictEqual(page.toJson(), cfg.page);
+    assert.deepStrictEqual(page.toJson().children[0], cfg.para[0]);
   });
 
   it('commits removal', () => {
