@@ -82,29 +82,18 @@ describe('Insert Node', () => {
     }, /^Error: Duplicated node insertion/);
   });
 
-  it('gets sparql', () => {
-    page.apply(op0);
-    page.update();
-    page.commit();
-
-    assert.strictEqual(
-      page.getValue(cfg.page.id, ont.sdoc.firstChild),
-      cfg.para[0].id,
-    );
-    // assert(page.getSubject(cfg.para[0].id).toJson(), cfg.para[0]);
-  });
-
   it('undoes', () => {
     page.apply(op0);
     page.undo();
 
-    // assert.deepStrictEqual(page.get(), page.getRoot().toJson());
     assert.throws(() => {
       page.getSubject(cfg.para[0].id);
     });
     assert.throws(() => {
       page.getSubject(cfg.text[0].id);
     });
+
+    checkPodConsistency(turtle, page);
   });
 });
 
@@ -128,6 +117,8 @@ describe('Split Node', () => {
     page.apply(op0);
 
     assert(page.getSubject(cfg.page.id + '#temp').isInserted);
+
+    checkPodConsistency(turtleAll, page);
   });
 
   it('disallows duplicated node', () => {
@@ -154,6 +145,8 @@ describe('Split Node', () => {
     assert.throws(() => {
       page.getSubject(cfg.page.id + '#temp');
     }, /^Error: Subject not found/);
+
+    checkPodConsistency(turtleAll, page);
   });
 });
 
@@ -185,6 +178,8 @@ describe('Remove Node', () => {
 
     assert(page.getSubject(cfg.para[0].id).isDeleted);
     assert(page.getSubject(cfg.text[0].id).isDeleted);
+
+    checkPodConsistency(turtleAll, page);
   });
 
   it('removes a text', () => {

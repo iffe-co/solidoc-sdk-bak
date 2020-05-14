@@ -135,14 +135,14 @@ describe('test/Subject.test.ts', () => {
     //   });
     // });
 
-    it('generates sparql after deletion', () => {
-      const sparql = branch2.getSparqlForUpdate();
+    // it('generates sparql after deletion', () => {
+    //   const sparql = branch2.getSparqlForUpdate();
 
-      assert.strictEqual(
-        sparql,
-        `DELETE WHERE { GRAPH <${config.page.id}> { <${config.para[2].id}> ?p ?o } };\n`,
-      );
-    });
+    //   assert.strictEqual(
+    //     sparql,
+    //     `DELETE WHERE { GRAPH <${config.page.id}> { <${config.para[2].id}> ?p ?o } };\n`,
+    //   );
+    // });
   });
 
   describe('commits', () => {

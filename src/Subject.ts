@@ -96,10 +96,6 @@ class Subject {
   }
 
   public getSparqlForUpdate = (): string => {
-    if (this._isDeleted) {
-      // TODO: for non-persisted subjects, this clause should be empty
-      return `DELETE WHERE { GRAPH <${this._graph}> { <${this._id}> ?p ?o } };\n`;
-    }
     let allPred = new Set<Pred>([
       ...this._valuesFromPod.keys(),
       ...this._valuesUpdated.keys(),

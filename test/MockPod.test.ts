@@ -34,16 +34,6 @@ export const updatePod = (
   const kb = init(turtle, baseURI);
   const target = kb.sym(baseURI);
 
-  // // preprocess
-  // sparqlAll = sparqlAll.split('\n').map(transform).join('\n');
-  // const patchObject = $rdf.sparqlUpdateParser(sparqlAll, kb, baseURI);
-
-  // // apply changes
-  // kb.applyPatch(patchObject, target, (msg: string) => {
-  //   if (msg) {
-  //     throw new Error(msg);
-  //   }
-  // });
   sparqlAll.split('\n').forEach(sparql => {
     sparql = transform(sparql);
     const patchObject = $rdf.sparqlUpdateParser(sparql, kb, baseURI);
