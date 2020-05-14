@@ -1,6 +1,6 @@
 import { Page } from '../src/Page';
 import { config as cfg, turtle } from '../config/test';
-import { ont } from '../config/ontology';
+import { ont, idToLabel } from '../config/ontology';
 import { Operation } from '../src/interface';
 import * as assert from 'power-assert';
 import { updatePod } from './MockPod.test';
@@ -26,6 +26,10 @@ describe('Create Page', () => {
     page = new Page(cfg.page.id, turtleAll);
 
     assert.deepStrictEqual(page.toJson(), cfg.page);
+  });
+
+  it('updates and sets modified time', () => {
+    page = new Page(cfg.page.id, turtleAll);
 
     checkPodConsistency(turtleAll, page);
 
@@ -39,6 +43,8 @@ describe('Create Page', () => {
     page = new Page(cfg.page.id, turtle);
 
     checkPodConsistency(turtle, page);
+
+    assert.strictEqual(page.toJson().type, idToLabel[ont.sdoc.root]);
   });
 });
 
@@ -80,6 +86,15 @@ describe('Insert Node', () => {
     assert.throws(() => {
       page.apply(op0);
     }, /^Error: Duplicated node insertion/);
+  });
+
+  it('commits', () => {
+    page.apply(op0);
+    page.update();
+    page.commit();
+
+    assert(!page.getSubject(cfg.para[0].id).isInserted);
+    assert(!page.getSubject(cfg.text[0].id).isInserted);
   });
 
   it('undoes', () => {
@@ -186,21 +201,20 @@ describe('Remove Node', () => {
     page.apply(op1);
     page.apply(op1);
     page.apply(op1);
-    page.update();
-    page.commit();
 
-    assert.strictEqual(
-      page.getValue(cfg.para[0].id, ont.sdoc.firstChild),
-      undefined,
-    );
+    checkPodConsistency(turtleAll, page);
+
+    assert.deepStrictEqual(page.toJson().children[0].children, []);
   });
 
   it('inserts a deleted subject', () => {
     page.apply(op0);
     page.apply(op2);
 
-    page.update();
-    assert.deepStrictEqual(page.toJson().children[0], cfg.para[0]);
+    checkPodConsistency(turtleAll, page);
+
+    assert(!page.getSubject(cfg.para[0].id).isDeleted);
+    assert(!page.getSubject(cfg.para[0].id).isInserted);
   });
 
   it('commits removal', () => {
@@ -224,6 +238,8 @@ describe('Remove Node', () => {
 
     assert(!page.getSubject(cfg.para[0].id).isDeleted);
     assert(!page.getSubject(cfg.text[0].id).isDeleted);
+
+    checkPodConsistency(turtleAll, page);
   });
 });
 
@@ -241,6 +257,8 @@ describe('Merge Node', () => {
 
   it('merges a paragraph', () => {
     page.apply(op0);
+
+    checkPodConsistency(turtleAll, page);
 
     assert(page.getSubject(cfg.para[1].id).isDeleted);
   });
@@ -261,6 +279,8 @@ describe('Merge Node', () => {
     page.undo();
 
     assert(!page.getSubject(cfg.para[1].id).isDeleted);
+
+    checkPodConsistency(turtleAll, page);
   });
 });
 
@@ -287,6 +307,8 @@ describe('Set Node', () => {
       type: cfg.text[0].type,
       text: cfg.text[0].text,
     });
+
+    checkPodConsistency(turtleAll, page);
   });
 
   it('updates the subject', () => {
