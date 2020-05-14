@@ -12,17 +12,22 @@ turtleAll += turtle.page + '\n';
 turtleAll += turtle.para.join('\n') + '\n';
 turtleAll += turtle.text.join('\n') + '\n';
 
+const checkPodConsistency = (turtle: string, page: Page) => {
+  page.update();
+  const sparql = page.getSparqlForUpdate();
+  const turtleNew = updatePod(turtle, sparql, page.id);
+
+  const pageNew = new Page(page.id, turtleNew);
+  assert.deepStrictEqual(pageNew.toJson(), page.toJson());
+};
+
 describe('Create Page', () => {
   it('parses from quads', () => {
     page = new Page(cfg.page.id, turtleAll);
+
     assert.deepStrictEqual(page.toJson(), cfg.page);
 
-    page.update();
-    const sparql = page.getSparqlForUpdate();
-    const turtleNew = updatePod(turtleAll, sparql, cfg.page.id);
-
-    const pageNew = new Page(cfg.page.id, turtleNew);
-    assert.deepStrictEqual(pageNew.toJson(), page.toJson());
+    checkPodConsistency(turtleAll, page);
 
     assert(page.toJson().modified > 0);
   });
@@ -33,23 +38,16 @@ describe('Create Page', () => {
     }> .`;
     page = new Page(cfg.page.id, turtle);
 
-    page.update();
-    const sparql = page.getSparqlForUpdate();
-    const turtleNew = updatePod(turtle, sparql, cfg.page.id);
-
-    const pageNew = new Page(cfg.page.id, turtleNew);
-    assert.deepStrictEqual(pageNew.toJson(), page.toJson());
+    checkPodConsistency(turtle, page);
   });
 });
 
 describe('Insert Node', () => {
   let op0: Operation;
+  let turtle = `<${cfg.page.id}> a <${ont.sdoc.root}>; <${ont.dct.title}> "${cfg.page.title}".`;
 
   beforeEach(() => {
-    page = new Page(
-      cfg.page.id,
-      `<${cfg.page.id}> a <${ont.sdoc.root}>; <${ont.dct.title}> "${cfg.page.title}".`,
-    );
+    page = new Page(cfg.page.id, turtle);
     op0 = {
       type: 'insert_node',
       path: [0],
@@ -63,6 +61,8 @@ describe('Insert Node', () => {
     assert.deepStrictEqual(page.toJson().children[0], cfg.para[0]);
     assert(page.getSubject(cfg.para[0].id).isInserted);
     assert(page.getSubject(cfg.text[0].id).isInserted);
+
+    checkPodConsistency(turtle, page);
   });
 
   it('applies no insertion if operation is failed', () => {

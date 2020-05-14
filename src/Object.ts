@@ -26,7 +26,8 @@ export const Object = {
       result.value = input.id.substring(1, input.id.lastIndexOf('"'));
     } else if (input.id.endsWith('boolean')) {
       result.type = ont.xsd.boolean;
-      result.value = input.id.startsWith('"true"');
+      result.value =
+        input.id.startsWith('"true"') || input.id.startsWith('"1"');
     } else if (input.id.endsWith('dateTime')) {
       result.type = ont.xsd.dateTime;
       let dtStr: string = input.id.substring(1, input.id.lastIndexOf('"'));
@@ -72,7 +73,7 @@ export const Object = {
         }
         return `<${obj.value}>`;
       case ont.xsd.boolean:
-        return `"${obj.value}"^^<${ont.xsd.boolean}>`;
+        return `"${obj.value ? 1 : 0}"^^<${ont.xsd.boolean}>`;
       case ont.xsd.dateTime:
         return `"${new Date(<number>obj.value).toISOString()}"^^<${
           ont.xsd.dateTime

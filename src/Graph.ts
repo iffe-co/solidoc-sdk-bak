@@ -17,6 +17,10 @@ class Graph {
     this._parseTurtle(turtle);
   }
 
+  public get id(): string {
+    return this._id;
+  }
+
   public createSubject = (subejectId: string): Subject => {
     if (this._subjectMap.get(subejectId)) {
       throw new Error('Duplicated subject creation: ' + subejectId);
