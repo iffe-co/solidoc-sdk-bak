@@ -33,7 +33,7 @@ config.page = {
   ...config.page,
   type: idToLabel[ont.sdoc.root],
   title: 'Homepage',
-  modified: new Date(0),
+  modified: 0,
   children: [config.para[0], config.para[1], config.para[2]],
 };
 

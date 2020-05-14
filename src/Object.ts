@@ -1,6 +1,6 @@
 import { ont } from '../config/ontology';
 
-export type Literal = string | boolean | object | undefined;
+export type Literal = string | boolean | number | undefined;
 
 export interface Object {
   value: Literal;
@@ -30,7 +30,7 @@ export const Object = {
     } else if (input.id.endsWith('dateTime')) {
       result.type = ont.xsd.dateTime;
       let dtStr: string = input.id.substring(1, input.id.lastIndexOf('"'));
-      result.value = new Date(dtStr);
+      result.value = Date.parse(dtStr);
     } else {
       throw new Error('Unknown data type');
     }
@@ -55,8 +55,9 @@ export const Object = {
       case 'undefined':
         result.type = ont.xsd.anyURI;
         break;
-      case 'object':
-        value instanceof Date && (result.type = ont.xsd.dateTime);
+      case 'number':
+        result.type =
+          predRange === ont.xsd.dateTime ? predRange : ont.xsd.integer;
       // TODO: more types
     }
 
@@ -73,7 +74,9 @@ export const Object = {
       case ont.xsd.boolean:
         return `"${obj.value}"^^<${ont.xsd.boolean}>`;
       case ont.xsd.dateTime:
-        return `"${(<Date>obj.value).toISOString()}"^^<${ont.xsd.dateTime}>`;
+        return `"${new Date(<number>obj.value).toISOString()}"^^<${
+          ont.xsd.dateTime
+        }>`;
       default:
         // xsd:string
         const backSlashEscaped: string = (<string>obj.value).replace(
@@ -99,7 +102,7 @@ export const Object = {
         };
       case ont.xsd.dateTime:
         return {
-          value: new Date(0),
+          value: 0,
           type: predRange,
         };
       default:

@@ -215,11 +215,7 @@ describe('Root', () => {
     root.commit();
 
     assert.strictEqual(root.getProperty(pred), 'Welcome');
-    assert.deepStrictEqual(root.toJson(), {
-      ...page,
-      title: 'Welcome',
-      children: [],
-    });
+    assert.deepStrictEqual(root.toJson().title, 'Welcome');
   });
 
   it('gets sparql', () => {

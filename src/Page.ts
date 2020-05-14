@@ -97,9 +97,9 @@ class Page extends Graph {
 
   public update() {
     this._updateRecursive(this._editor);
-    const time = new Date();
-    this.setValue(this._id, ont.dct.modified, time);
-    this._editor.modified = _.cloneDeep(time);
+    const timestamp = Date.parse(new Date().toISOString());
+    this.setValue(this._id, ont.dct.modified, timestamp);
+    this._editor.modified = _.cloneDeep(timestamp);
   }
 
   private _updateRecursive(node: Node, nextNode?: Node) {

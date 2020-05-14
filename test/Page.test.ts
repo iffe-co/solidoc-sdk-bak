@@ -24,7 +24,7 @@ describe('Create Page', () => {
     const pageNew = new Page(cfg.page.id, turtleNew);
     assert.deepStrictEqual(pageNew.toJson(), page.toJson());
 
-    assert(page.toJson().modified.getFullYear() > 1970);
+    assert(page.toJson().modified > 0);
   });
 
   it('inserts type definition if not defined', () => {

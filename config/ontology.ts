@@ -147,7 +147,7 @@ const defaultJson = (id: string, type: string): Node => {
       return {
         id: id,
         type: type,
-        modified: new Date(0),
+        modified: 0,
         children: [],
       };
     case ont.sdoc.leaf:
