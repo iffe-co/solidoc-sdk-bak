@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 import { Object } from '../src/Object';
 import { config as cfg, turtle } from '../config/test';
 import * as assert from 'power-assert';

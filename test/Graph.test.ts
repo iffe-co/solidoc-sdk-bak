@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 import { config as cfg, turtle, config } from '../config/test';
 import { ont } from '../config/ontology';
 import * as assert from 'power-assert';

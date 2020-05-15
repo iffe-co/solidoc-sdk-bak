@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 import { Predicate } from '../src/Predicate';
 import { Object } from '../src/Object';
 import { ont } from '../config/ontology';

@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 import { Page } from '../src/Page';
 import { config as cfg, turtle } from '../config/test';
 import { ont, idToLabel } from '../config/ontology';

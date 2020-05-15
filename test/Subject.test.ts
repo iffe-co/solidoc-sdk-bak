@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 import { Subject } from '../src/Subject';
 import { Predicate } from '../src/Predicate';
 import { ont, subjTypeToPredArray } from '../config/ontology';

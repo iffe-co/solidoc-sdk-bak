@@ -80,10 +80,12 @@ export const Object = {
         }>`;
       default:
         // xsd:string
+        // eslint-disable-next-line no-case-declarations
         const backSlashEscaped: string = (<string>obj.value).replace(
           /\\/g,
           '\\\\',
         );
+        // eslint-disable-next-line no-case-declarations
         const quoteEscaped: string = backSlashEscaped.replace(/"/g, '\\"');
         return `"${quoteEscaped}"`;
     }
