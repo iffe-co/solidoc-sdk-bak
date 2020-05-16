@@ -1,4 +1,4 @@
-import { Node } from '../src/interface';
+import { myNode as Node } from '../src/interface';
 
 const ont = {
   rdf: {

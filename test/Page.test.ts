@@ -303,13 +303,15 @@ describe('Set Node', () => {
   it('set a paragraph', () => {
     page.apply(op0);
 
-    assert.deepStrictEqual(page.toJson().children[0].children[0], {
+    checkPodConsistency(turtleAll, page);
+
+    page.commit();
+    let leaf = page.getSubject(cfg.text[0].id);
+    assert.deepStrictEqual(leaf.toJson(), {
       id: cfg.text[0].id,
       type: cfg.text[0].type,
       text: cfg.text[0].text,
     });
-
-    checkPodConsistency(turtleAll, page);
   });
 
   it('updates the subject', () => {

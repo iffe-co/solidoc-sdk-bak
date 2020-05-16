@@ -1,6 +1,6 @@
 import { Predicate as Pred } from './Predicate';
 import { Object as Obj, Literal } from './Object';
-import { Node } from './interface';
+import { myNode as Node } from './interface';
 import * as _ from 'lodash';
 import { ont, defaultJson, idToLabel, labelToId } from '../config/ontology';
 
@@ -52,7 +52,7 @@ class Subject {
     pred.id === ont.rdf.type && this._setType(obj);
   }
 
-  public toJson() {
+  public toJson(): Node {
     const result = defaultJson(this.id, this.type);
 
     for (let pred of this._valuesFromPod.keys()) {
@@ -76,11 +76,7 @@ class Subject {
     Object.keys(node).forEach(label => {
       switch (label) {
         case 'id':
-          break;
         case 'children':
-          pred = predMap.get(ont.sdoc.firstChild);
-          value = node.children[0] ? node.children[0].id : undefined;
-          pred && value !== undefined && this.setProperty(pred, value);
           break;
         case 'type':
           pred = predMap.get(ont.rdf.type);
@@ -89,7 +85,7 @@ class Subject {
           break;
         default:
           pred = predMap.get(labelToId[label]);
-          value = node[label];
+          value = <Literal>node[label];
           pred && this.setProperty(pred, value);
       }
     });

@@ -3,7 +3,7 @@ import { Subject } from '../src/Subject';
 import { Predicate } from '../src/Predicate';
 import { ont, subjTypeToPredArray } from '../config/ontology';
 import { config, turtle } from '../config/test';
-import { Element } from '../src/interface';
+import { myElement as Element } from '../src/interface';
 import * as assert from 'power-assert';
 import * as _ from 'lodash';
 

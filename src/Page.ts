@@ -1,20 +1,26 @@
 import { Graph } from './Graph';
 import { ont, labelToId, subjTypeToPredArray } from '../config/ontology';
-import { Element, Node, Operation, transform, Path, Text } from './interface';
+import {
+  myEditor as Editor,
+  myElement as Element,
+  myNode as Node,
+  Operation,
+} from './interface';
+import { Transforms, Text, Path } from 'slate';
 import * as _ from 'lodash';
 import { Subject } from './Subject';
 
 class Page extends Graph {
-  private _editor: Element;
+  private _editor: Editor;
 
   constructor(id: string, turtle: string) {
     super(id, turtle);
     subjTypeToPredArray.forEach(this.createPredicate);
     this.setValue(id, ont.rdf.type, ont.sdoc.root);
-    this._editor = <Element>this._toJsonRecursive(this.getRoot());
+    this._editor = <Editor>this._toJsonRecursive(this.getRoot());
   }
 
-  public toJson = (): Element => {
+  public toJson = (): Editor => {
     return this._editor;
   };
 
@@ -22,7 +28,8 @@ class Page extends Graph {
     const opCloned = _.cloneDeep(op);
     const { subjToInsert, subjToRemove } = this._preprocess(opCloned);
 
-    transform(this._editor, opCloned);
+    Transforms.transform(this._editor, opCloned);
+    delete this._editor.selection;
 
     for (let node of subjToInsert.values()) {
       let subject = this._subjectMap.get(node.id);
@@ -54,7 +61,7 @@ class Page extends Graph {
         this._preInsertRecursive(
           {
             id: <string>op.properties.id,
-            type: Node.get(this._editor, op.path).type,
+            type: <string>Node.get(this._editor, op.path).type,
             children: [], // TODO: this is a workaround
           },
           subjToInsert,
@@ -64,7 +71,7 @@ class Page extends Graph {
         this._preRemoveRecursive(op.path, subjToRemove);
         break;
       case 'merge_node':
-        subjToRemove.add(Node.get(this._editor, op.path).id);
+        subjToRemove.add(<string>Node.get(this._editor, op.path).id);
         break;
     }
     return { subjToInsert, subjToRemove };
@@ -86,7 +93,7 @@ class Page extends Graph {
 
   private _preRemoveRecursive = (path: Path, subjToRemove: Set<string>) => {
     const node = Node.get(this._editor, path);
-    subjToRemove.add(node.id);
+    subjToRemove.add(<string>node.id);
 
     if (Text.isText(node)) return;
 
@@ -109,21 +116,22 @@ class Page extends Graph {
       this.setValue(node.id, ont.sdoc.next, nextNode.id);
     }
 
-    if (!node.children) return;
+    if (Text.isText(node)) return;
 
     node.children.forEach((childNode: Node, index: number) => {
       this._updateRecursive(childNode, node.children[index + 1]);
+      index === 0 && this.setValue(node.id, ont.sdoc.firstChild, childNode.id);
     });
   }
 
   public undo() {
     super.undo();
-    this._editor = <Element>this._toJsonRecursive(this.getRoot());
+    this._editor = <Editor>this._toJsonRecursive(this.getRoot());
   }
 
   private _toJsonRecursive(subject: Subject): Node {
-    let result = subject.toJson();
-    if (!result.children) return result;
+    let result: Node = subject.toJson();
+    if (Text.isText(result)) return result;
 
     let child = this._getRelative(subject, 'firstChild');
 
