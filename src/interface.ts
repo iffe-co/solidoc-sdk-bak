@@ -1,4 +1,5 @@
-import { Editor, Element, Text, Node, Path } from 'slate';
+import { Editor, Element, Text, Node, Path, Transforms } from 'slate';
+import * as _ from 'lodash';
 
 export interface myText extends Text {
   id: string;
@@ -109,3 +110,9 @@ export type TextOperation = InsertTextOperation | RemoveTextOperation;
  */
 
 export type Operation = NodeOperation | SelectionOperation | TextOperation;
+
+export const transform = (editor: myEditor, op: Operation) => {
+  const opCloned = _.cloneDeep(op);
+  Transforms.transform(editor, opCloned);
+  delete editor.selection;
+};

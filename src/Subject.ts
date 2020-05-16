@@ -86,6 +86,7 @@ class Subject {
         default:
           pred = predMap.get(labelToId[label]);
           value = <Literal>node[label];
+          // skip undefined predicates
           pred && this.setProperty(pred, value);
       }
     });

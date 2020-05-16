@@ -5,9 +5,9 @@ import {
   myElement as Element,
   myNode as Node,
   Operation,
+  transform,
 } from './interface';
-import { Transforms, Text, Path } from 'slate';
-import * as _ from 'lodash';
+import { Text, Path } from 'slate';
 import { Subject } from './Subject';
 
 class Page extends Graph {
@@ -25,11 +25,9 @@ class Page extends Graph {
   };
 
   public apply = (op: Operation) => {
-    const opCloned = _.cloneDeep(op);
-    const { subjToInsert, subjToRemove } = this._preprocess(opCloned);
+    const { subjToInsert, subjToRemove } = this._preprocess(op);
 
-    Transforms.transform(this._editor, opCloned);
-    delete this._editor.selection;
+    transform(this._editor, op);
 
     for (let node of subjToInsert.values()) {
       let subject = this._subjectMap.get(node.id);
@@ -106,7 +104,7 @@ class Page extends Graph {
     this._updateRecursive(this._editor);
     const timestamp = Date.parse(new Date().toISOString());
     this.setValue(this._id, ont.dct.modified, timestamp);
-    this._editor.modified = _.cloneDeep(timestamp);
+    this._editor.modified = timestamp;
   }
 
   private _updateRecursive(node: Node, nextNode?: Node) {

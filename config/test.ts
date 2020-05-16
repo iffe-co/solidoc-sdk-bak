@@ -3,6 +3,9 @@ import { ont, idToLabel } from './ontology';
 export const config: any = {
   page: {
     id: 'http://example.org/alice',
+    type: idToLabel[ont.sdoc.root],
+    title: 'Homepage',
+    modified: 0,
   },
   para: [{}, {}, {}],
   text: [{}, {}, {}, {}, {}, {}, {}, {}, {}],
@@ -31,9 +34,6 @@ for (let i = 0; i < 3; i++) {
 
 config.page = {
   ...config.page,
-  type: idToLabel[ont.sdoc.root],
-  title: 'Homepage',
-  modified: 0,
   children: [config.para[0], config.para[1], config.para[2]],
 };
 
