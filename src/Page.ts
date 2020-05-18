@@ -31,16 +31,14 @@ class Page extends Graph {
     for (let node of subjToInsert.values()) {
       let subject = this._subjectMap.get(node.id);
       if (subject) {
-        subject.isDeleted = false;
+        this.undeleteSubject(node.id);
       } else {
         subject = this.createSubject(node.id);
-        subject.isInserted = true;
       }
     }
 
     for (let nodeId of subjToRemove.values()) {
-      let subject = this.getSubject(nodeId);
-      subject.isDeleted = true;
+      this.deleteSubject(nodeId);
     }
   };
 
@@ -107,7 +105,10 @@ class Page extends Graph {
   }
 
   private _updateRecursive(node: Node, nextNode?: Node) {
-    this.getSubject(node.id).fromJson(node, this._predicateMap);
+    const subject = this.getSubject(node.id);
+    subject.fromJson(node, this._predicateMap);
+
+    this._updatedSet.add(subject);
 
     if (nextNode) {
       this.setValue(node.id, ont.sdoc.next, nextNode.id);
