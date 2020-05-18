@@ -123,6 +123,7 @@ describe('Split Node', () => {
       type: 'split_node',
       path: [0],
       position: 1,
+      target: null,
       properties: {
         id: cfg.page.id + '#temp',
       },
@@ -177,10 +178,20 @@ describe('Remove Node', () => {
     op0 = {
       type: 'remove_node',
       path: [0],
+      node: {
+        id: '',
+        type: '',
+        text: '',
+      },
     };
     op1 = {
       type: 'remove_node',
       path: [0, 0],
+      node: {
+        id: '',
+        type: '',
+        text: '',
+      },
     };
     op2 = {
       type: 'insert_node',
@@ -252,7 +263,10 @@ describe('Merge Node', () => {
 
     op0 = {
       type: 'merge_node',
+      position: 0,
+      target: null,
       path: [1],
+      properties: {},
     };
   });
 
@@ -294,6 +308,7 @@ describe('Set Node', () => {
     op0 = {
       type: 'set_node',
       path: [0, 0],
+      properties: {},
       newProperties: {
         bold: null,
       },

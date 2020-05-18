@@ -2,7 +2,6 @@ import { Graph } from './Graph';
 import { ont, labelToId, subjTypeToPredArray } from '../config/ontology';
 import {
   myEditor as Editor,
-  myElement as Element,
   myNode as Node,
   Operation,
   transform,
@@ -84,7 +83,7 @@ class Page extends Graph {
 
     if (Text.isText(node)) return;
 
-    (<Element>node).children.forEach(child => {
+    node.children.forEach(child => {
       this._preInsertRecursive(child, subjToInsert);
     });
   };
@@ -95,7 +94,7 @@ class Page extends Graph {
 
     if (Text.isText(node)) return;
 
-    (<Element>node).children.forEach((_child, index) => {
+    node.children.forEach((_child, index) => {
       this._preRemoveRecursive([...path, index], subjToRemove);
     });
   };

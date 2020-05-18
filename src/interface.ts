@@ -1,4 +1,4 @@
-import { Editor, Element, Text, Node, Path, Transforms } from 'slate';
+import { Editor, Element, Text, Node, Path, Transforms, Range } from 'slate';
 import * as _ from 'lodash';
 
 export interface myText extends Text {
@@ -13,7 +13,7 @@ export interface myElement extends Element {
 export interface myEditor extends Editor {
   id: string;
   type: string;
-  title?: string;
+  title: string;
   modified: number;
   children: myNode[];
 }
@@ -39,9 +39,9 @@ export type InsertTextOperation = {
 export type MergeNodeOperation = {
   type: 'merge_node';
   path: Path;
-  // position: number
-  // target: number | null
-  // properties: Partial<Node>
+  position: number;
+  target: number | null;
+  properties: Partial<myNode>;
   [key: string]: any;
 };
 
@@ -55,7 +55,7 @@ export type MoveNodeOperation = {
 export type RemoveNodeOperation = {
   type: 'remove_node';
   path: Path;
-  // node: Node
+  node: myNode;
   [key: string]: any;
 };
 
@@ -70,22 +70,36 @@ export type RemoveTextOperation = {
 export type SetNodeOperation = {
   type: 'set_node';
   path: Path;
+  properties: Partial<myNode>;
   newProperties: Partial<myNode>;
   [key: string]: any;
 };
 
-export type SetSelectionOperation = {
-  type: 'set_selection';
-  [key: string]: any;
-  properties: null;
-  newProperties: null;
-};
+export declare type SetSelectionOperation =
+  | {
+      type: 'set_selection';
+      [key: string]: unknown;
+      properties: null;
+      newProperties: Range;
+    }
+  | {
+      type: 'set_selection';
+      [key: string]: unknown;
+      properties: Partial<Range>;
+      newProperties: Partial<Range>;
+    }
+  | {
+      type: 'set_selection';
+      [key: string]: unknown;
+      properties: Range;
+      newProperties: null;
+    };
 
 export type SplitNodeOperation = {
   type: 'split_node';
   path: Path;
   position: number;
-  // target: number | null
+  target: number | null;
   properties: Partial<myNode>;
   [key: string]: any;
 };
