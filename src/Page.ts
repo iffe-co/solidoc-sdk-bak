@@ -24,71 +24,49 @@ class Page extends Graph {
   };
 
   public apply = (op: Operation) => {
-    const { subjToInsert, subjToRemove } = this._preprocess(op);
-
-    for (let node of subjToInsert.values()) {
-      this.createSubject(node.id);
-    }
-
-    for (let nodeId of subjToRemove.values()) {
-      this.deleteSubject(nodeId);
-    }
+    this._preprocess(op);
 
     transform(this._editor, op);
   };
 
   private _preprocess(op: Operation) {
-    const subjToInsert = new Set<Node>();
-    const subjToRemove = new Set<string>();
-
     // TODO: should operation on a deleted subject allowed?
     switch (op.type) {
       case 'insert_node':
-        this._preInsertRecursive(op.node, subjToInsert);
+        this._preInsertRecursive(op.node);
         break;
 
       case 'split_node':
-        this._preInsertRecursive(
-          {
-            id: <string>op.properties.id,
-            type: <string>Node.get(this._editor, op.path).type,
-            children: [], // TODO: this is a workaround
-          },
-          subjToInsert,
-        );
+        this.createSubject(<string>op.properties.id);
         break;
       case 'remove_node':
-        this._preRemoveRecursive(op.path, subjToRemove);
+        this._preRemoveRecursive(op.path);
         break;
       case 'merge_node':
-        subjToRemove.add(<string>Node.get(this._editor, op.path).id);
+        this.deleteSubject(<string>Node.get(this._editor, op.path).id);
         break;
     }
-    return { subjToInsert, subjToRemove };
+    return;
   }
 
-  private _preInsertRecursive = (node: Node, subjToInsert: Set<Node>) => {
-    const subject = this._subjectMap.get(node.id);
-    if (subject && !subject.isDeleted) {
-      throw new Error('Duplicated node insertion: ' + node.id);
-    }
-    subjToInsert.add(node);
+  private _preInsertRecursive = (node: Node) => {
+    this.createSubject(node.id);
 
     if (Text.isText(node)) return;
 
     node.children.forEach(child => {
-      this._preInsertRecursive(child, subjToInsert);
+      this._preInsertRecursive(child);
     });
   };
 
-  private _preRemoveRecursive = (path: Path, subjToRemove: Set<string>) => {
-    const node = Node.get(this._editor, path);
-    subjToRemove.add(<string>node.id);
+  private _preRemoveRecursive = (path: Path) => {
+    const node = <Node>Node.get(this._editor, path);
+    this.deleteSubject(node.id);
 
     if (Text.isText(node)) return;
 
     node.children.forEach((_child, index) => {
-      this._preRemoveRecursive([...path, index], subjToRemove);
+      this._preRemoveRecursive([...path, index]);
     });
   };
 

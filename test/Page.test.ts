@@ -86,7 +86,7 @@ describe('Insert Node', () => {
     page.apply(op0);
     assert.throws(() => {
       page.apply(op0);
-    }, /^Error: Duplicated node insertion/);
+    }, /^Error: Duplicated subject creation/);
   });
 
   it('commits', () => {
@@ -143,7 +143,7 @@ describe('Split Node', () => {
 
     assert.throws(() => {
       page.apply(op0);
-    }, /^Error: Duplicated node insertion/);
+    }, /^Error: Duplicated subject creation/);
   });
 
   it('commits splitting', () => {
