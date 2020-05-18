@@ -26,20 +26,15 @@ class Page extends Graph {
   public apply = (op: Operation) => {
     const { subjToInsert, subjToRemove } = this._preprocess(op);
 
-    transform(this._editor, op);
-
     for (let node of subjToInsert.values()) {
-      let subject = this._subjectMap.get(node.id);
-      if (subject) {
-        this.undeleteSubject(node.id);
-      } else {
-        subject = this.createSubject(node.id);
-      }
+      this.createSubject(node.id);
     }
 
     for (let nodeId of subjToRemove.values()) {
       this.deleteSubject(nodeId);
     }
+
+    transform(this._editor, op);
   };
 
   private _preprocess(op: Operation) {

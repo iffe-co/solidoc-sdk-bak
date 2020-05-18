@@ -48,7 +48,7 @@ describe('test/Subject.test.ts', () => {
         undefined,
       );
       assert(!branch2.isDeleted);
-      assert(!branch2.isInserted);
+      assert(branch2.isInserted);
     });
 
     it('translates to Json', () => {
@@ -78,7 +78,7 @@ describe('test/Subject.test.ts', () => {
       let quads = parser.parse(turtle);
       branch2.fromQuad(predicates[quads[0].predicate.id], quads[0].object);
 
-      assert(!branch2.isInserted);
+      assert(branch2.isInserted);
     });
   });
 
@@ -179,6 +179,8 @@ describe('test/Subject.test.ts', () => {
     });
 
     it('undoes deletion', () => {
+      branch2.isInserted = false; // make it undoable
+
       branch2.isDeleted = true;
       branch2.undo();
 

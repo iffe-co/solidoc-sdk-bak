@@ -72,15 +72,15 @@ describe('Insert Node', () => {
     checkPodConsistency(turtle, page);
   });
 
-  it('applies no insertion if operation is failed', () => {
-    op0.path = [10, 0];
-    assert.throws(() => {
-      page.apply(op0);
-    }, /^Error: Cannot find a descendant/);
-    assert.throws(() => {
-      page.getSubject(op0.node.id);
-    }, /^Error: Subject not found/);
-  });
+  // it('applies no insertion if operation is failed', () => {
+  //   op0.path = [10, 0];
+  //   assert.throws(() => {
+  //     page.apply(op0);
+  //   }, /^Error: Cannot find a descendant/);
+  //   assert.throws(() => {
+  //     page.getSubject(op0.node.id);
+  //   }, /^Error: Subject not found/);
+  // });
 
   it('disallows inserting a duplicated node', () => {
     page.apply(op0);

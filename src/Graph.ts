@@ -14,6 +14,8 @@ class Graph {
     this._id = id;
     this.createSubject(id);
     this._parseTurtle(turtle);
+
+    this._subjectMap.forEach(subject => (subject.isInserted = false));
     this._updatedSet.clear();
   }
 
@@ -22,14 +24,17 @@ class Graph {
   }
 
   public createSubject = (subjectId: string): Subject => {
-    if (this._subjectMap.get(subjectId)) {
+    let subject = this._subjectMap.get(subjectId);
+
+    if (subject && !subject.isDeleted) {
       throw new Error('Duplicated subject creation: ' + subjectId);
+    } else if (subject) {
+      this.undeleteSubject(subjectId);
+    } else {
+      subject = new Subject(subjectId, this._id);
+      this._subjectMap.set(subjectId, subject);
     }
 
-    const subject = new Subject(subjectId, this._id);
-    subject.isInserted = true;
-
-    this._subjectMap.set(subjectId, subject);
     this._updatedSet.add(subject);
 
     return subject;
@@ -83,8 +88,6 @@ class Graph {
       const subject =
         this._subjectMap.get(quad.subject.id) ||
         this.createSubject(quad.subject.id);
-
-      subject.isInserted = false;
 
       const predicate =
         this._predicateMap.get(quad.predicate.id) ||

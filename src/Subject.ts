@@ -9,7 +9,7 @@ class Subject {
   private _type: string;
   private _graph: string;
   private _isDeleted: boolean = false;
-  private _isInserted: boolean = false;
+  private _isInserted: boolean = true;
 
   private _valuesUpdated = new Map<Pred, Obj>();
   private _valuesFromPod = new Map<Pred, Obj>();
