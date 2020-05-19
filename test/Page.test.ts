@@ -14,7 +14,6 @@ turtleAll += turtle.para.join('\n') + '\n';
 turtleAll += turtle.text.join('\n') + '\n';
 
 const checkPodConsistency = (turtle: string, page: Page) => {
-  page.update();
   const sparql = page.getSparqlForUpdate();
   const turtleNew = updatePod(turtle, sparql, page.id);
 
@@ -29,13 +28,13 @@ describe('Create Page', () => {
     assert.deepStrictEqual(page.toJson(), cfg.page);
   });
 
-  it('updates and sets modified time', () => {
-    page = new Page(cfg.page.id, turtleAll);
+  // it('updates and sets modified time', () => {
+  //   page = new Page(cfg.page.id, turtleAll);
 
-    checkPodConsistency(turtleAll, page);
+  //   checkPodConsistency(turtleAll, page);
 
-    assert(page.toJson().modified > 0);
-  });
+  //   assert(page.toJson().modified > 0);
+  // });
 
   it('inserts type definition if not defined', () => {
     let turtle = `<${cfg.page.id}> <${ont.dct.modified}> "${new Date(0)}"^^<${
@@ -66,21 +65,22 @@ describe('Insert Node', () => {
     page.apply(op0);
 
     assert.deepStrictEqual(page.toJson().children[0], cfg.para[0]);
-    assert(page.getSubject(cfg.para[0].id).isInserted);
-    assert(page.getSubject(cfg.text[0].id).isInserted);
 
     checkPodConsistency(turtle, page);
+
+    assert(page.getSubject(cfg.para[0].id).isInserted);
+    assert(page.getSubject(cfg.text[0].id).isInserted);
   });
 
-  // it('applies no insertion if operation is failed', () => {
-  //   op0.path = [10, 0];
-  //   assert.throws(() => {
-  //     page.apply(op0);
-  //   }, /^Error: Cannot find a descendant/);
-  //   assert.throws(() => {
-  //     page.getSubject(op0.node.id);
-  //   }, /^Error: Subject not found/);
-  // });
+  it('applies no insertion if operation is failed', () => {
+    op0.path = [10, 0];
+    assert.throws(() => {
+      page.apply(op0);
+    }, /^Error: Cannot find a descendant/);
+    assert.throws(() => {
+      page.getSubject(op0.node.id);
+    }, /^Error: Subject not found/);
+  });
 
   it('disallows inserting a duplicated node', () => {
     page.apply(op0);
@@ -91,7 +91,6 @@ describe('Insert Node', () => {
 
   it('commits', () => {
     page.apply(op0);
-    page.update();
     page.commit();
 
     assert(!page.getSubject(cfg.para[0].id).isInserted);
@@ -115,6 +114,7 @@ describe('Insert Node', () => {
 
 describe('Split Node', () => {
   let op0: Operation;
+  let op1: Operation;
 
   beforeEach(() => {
     page = new Page(cfg.page.id, turtleAll);
@@ -122,6 +122,16 @@ describe('Split Node', () => {
     op0 = {
       type: 'split_node',
       path: [0],
+      position: 1,
+      target: null,
+      properties: {
+        id: cfg.page.id + '#temp',
+      },
+    };
+
+    op1 = {
+      type: 'split_node',
+      path: [0, 0],
       position: 1,
       target: null,
       properties: {
@@ -138,6 +148,14 @@ describe('Split Node', () => {
     checkPodConsistency(turtleAll, page);
   });
 
+  it('splits a text', () => {
+    page.apply(op1);
+
+    assert(page.getSubject(cfg.page.id + '#temp').isInserted);
+
+    checkPodConsistency(turtleAll, page);
+  });
+
   it('disallows duplicated node', () => {
     page.apply(op0);
 
@@ -148,7 +166,6 @@ describe('Split Node', () => {
 
   it('commits splitting', () => {
     page.apply(op0);
-    page.update();
     page.commit();
 
     assert(!page.getSubject(cfg.page.id + '#temp').isInserted);
@@ -156,7 +173,6 @@ describe('Split Node', () => {
 
   it('undoes splitting', () => {
     page.apply(op0);
-    page.update();
     page.undo();
 
     assert.throws(() => {
@@ -231,7 +247,6 @@ describe('Remove Node', () => {
 
   it('commits removal', () => {
     page.apply(op0);
-    page.update();
     page.commit();
 
     assert.throws(() => {
@@ -245,7 +260,6 @@ describe('Remove Node', () => {
 
   it('undoes removal', () => {
     page.apply(op0);
-    page.update();
     page.undo();
 
     assert(!page.getSubject(cfg.para[0].id).isDeleted);
@@ -257,6 +271,7 @@ describe('Remove Node', () => {
 
 describe('Merge Node', () => {
   let op0: Operation;
+  let op1: Operation;
 
   beforeEach(() => {
     page = new Page(cfg.page.id, turtleAll);
@@ -268,9 +283,16 @@ describe('Merge Node', () => {
       path: [1],
       properties: {},
     };
+    op1 = {
+      type: 'merge_node',
+      position: 0,
+      target: null,
+      path: [0, 1],
+      properties: {},
+    };
   });
 
-  it('merges a paragraph', () => {
+  it('merges paragraphs', () => {
     page.apply(op0);
 
     checkPodConsistency(turtleAll, page);
@@ -278,9 +300,16 @@ describe('Merge Node', () => {
     assert(page.getSubject(cfg.para[1].id).isDeleted);
   });
 
+  it('merges texts', () => {
+    page.apply(op1);
+
+    checkPodConsistency(turtleAll, page);
+
+    assert(page.getSubject(cfg.text[1].id).isDeleted);
+  });
+
   it('commits merging', () => {
     page.apply(op0);
-    page.update();
     page.commit();
 
     assert.throws(() => {
@@ -290,7 +319,6 @@ describe('Merge Node', () => {
 
   it('undoes merging', () => {
     page.apply(op0);
-    page.update();
     page.undo();
 
     assert(!page.getSubject(cfg.para[1].id).isDeleted);
@@ -331,7 +359,6 @@ describe('Set Node', () => {
 
   it('updates the subject', () => {
     page.apply(op0);
-    page.update();
     page.commit();
 
     assert.strictEqual(page.getValue(cfg.text[0].id, ont.sdoc.bold), false);

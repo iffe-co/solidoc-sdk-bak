@@ -8,7 +8,7 @@ class Graph {
   protected _id: string = '';
   protected _subjectMap = new Map<string, Subject>();
   protected _predicateMap = new Map<string, Predicate>();
-  protected _updatedSet = new Set<Subject>();
+  protected _updatedSubjs = new Set<Subject>();
 
   constructor(id: string, turtle: string) {
     this._id = id;
@@ -16,7 +16,7 @@ class Graph {
     this._parseTurtle(turtle);
 
     this._subjectMap.forEach(subject => (subject.isInserted = false));
-    this._updatedSet.clear();
+    this._updatedSubjs.clear();
   }
 
   public get id(): string {
@@ -30,12 +30,14 @@ class Graph {
       throw new Error('Duplicated subject creation: ' + subjectId);
     } else if (subject) {
       this.undeleteSubject(subjectId);
-    } else {
-      subject = new Subject(subjectId, this._id);
-      this._subjectMap.set(subjectId, subject);
+      return subject;
     }
 
-    this._updatedSet.add(subject);
+    subject = new Subject(subjectId, this._id);
+
+    this._subjectMap.set(subjectId, subject);
+
+    this._updatedSubjs.add(subject);
 
     return subject;
   };
@@ -57,13 +59,13 @@ class Graph {
   public deleteSubject = (subjectId: string) => {
     const subject = this.getSubject(subjectId);
     subject.isDeleted = true;
-    this._updatedSet.add(subject);
+    this._updatedSubjs.add(subject);
   };
 
   public undeleteSubject = (subjectId: string) => {
     const subject = this.getSubject(subjectId);
     subject.isDeleted = false;
-    this._updatedSet.add(subject);
+    this._updatedSubjs.add(subject);
   };
 
   public createPredicate = (predId: string): Predicate => {
@@ -111,31 +113,31 @@ class Graph {
     const subject = this.getSubject(subjectId);
     const predicate = this.getPredicate(predicateId);
     subject.setProperty(predicate, value);
-    this._updatedSet.add(subject);
+    this._updatedSubjs.add(subject);
   };
 
   public getSparqlForUpdate(): string {
     let sparql = '';
-    for (let subject of this._updatedSet.values()) {
+    for (let subject of this._updatedSubjs.values()) {
       sparql += subject.getSparqlForUpdate();
     }
     return sparql;
   }
 
   public commit() {
-    for (let subject of this._updatedSet.values()) {
+    for (let subject of this._updatedSubjs.values()) {
       subject.isDeleted
         ? this._subjectMap.delete(subject.id)
         : subject.commit();
     }
-    this._updatedSet.clear();
+    this._updatedSubjs.clear();
   }
 
   public undo() {
-    for (let subject of this._updatedSet.values()) {
+    for (let subject of this._updatedSubjs.values()) {
       subject.isInserted ? this._subjectMap.delete(subject.id) : subject.undo();
     }
-    this._updatedSet.clear();
+    this._updatedSubjs.clear();
   }
 }
 

@@ -19,7 +19,14 @@ export interface myEditor extends Editor {
 }
 export type myNode = myEditor | myText | myElement;
 
-export const myNode = Node;
+export const myNode = {
+  ...Node,
+
+  get: (root: myNode, path: Path): myNode => {
+    const node = Node.get(root, path);
+    return <myNode>node;
+  },
+};
 
 export type InsertNodeOperation = {
   type: 'insert_node';
@@ -129,4 +136,18 @@ export const transform = (editor: myEditor, op: Operation) => {
   const opCloned = _.cloneDeep(op);
   Transforms.transform(editor, opCloned);
   delete editor.selection;
+};
+
+export type myPath = Path;
+export const myPath = {
+  ...Path,
+
+  anchor: (path: Path): Path => {
+    const lastOffset = path[path.length - 1];
+    if (lastOffset === undefined) {
+      throw new Error('Root node does not have anchor');
+    }
+
+    return lastOffset <= 0 ? Path.parent(path) : Path.previous(path);
+  },
 };
