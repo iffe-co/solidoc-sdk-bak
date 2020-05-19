@@ -70,8 +70,16 @@ class Page extends Graph {
       }
 
       case 'move_node': {
-        dirtyPaths.add(Path.anchor(op.path));
-        dirtyPaths.add(Path.anchor(op.newPath));
+        const path = op.path.slice();
+        const anchor = Path.anchor(path);
+
+        const tPath = <Path>Path.transform(path, op);
+        const tAnchor = <Path>Path.transform(anchor, op);
+
+        dirtyPaths.add(tPath);
+        dirtyPaths.add(tAnchor);
+        dirtyPaths.add(Path.anchor(tPath));
+
         break;
       }
 
@@ -79,14 +87,13 @@ class Page extends Graph {
         const node = Node.get(this._editor, op.path);
         this.deleteSubject(node.id);
 
-        dirtyPaths.add(Path.previous(op.path));
+        const prevPath = Path.previous(op.path);
+        dirtyPaths.add(prevPath);
 
-        const prev = Node.get(this._editor, Path.previous(op.path));
+        const prev = Node.get(this._editor, prevPath);
 
         Text.isText(prev) ||
-          dirtyPaths.add(
-            Path.anchor([...Path.previous(op.path), prev.children.length]),
-          );
+          dirtyPaths.add(Path.anchor([...prevPath, prev.children.length]));
         break;
       }
 

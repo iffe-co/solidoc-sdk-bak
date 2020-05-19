@@ -364,3 +364,35 @@ describe('Set Node', () => {
     assert.strictEqual(page.getValue(cfg.text[0].id, ont.sdoc.bold), false);
   });
 });
+
+describe('Move Node', () => {
+  let op0: Operation;
+  let op1: Operation;
+
+  beforeEach(() => {
+    page = new Page(cfg.page.id, turtleAll);
+
+    op0 = {
+      type: 'move_node',
+      path: [0],
+      newPath: [1, 0],
+    };
+    op1 = {
+      type: 'move_node',
+      path: [0, 0],
+      newPath: [1, 1],
+    };
+  });
+
+  it('move a paragraph', () => {
+    page.apply(op0);
+
+    checkPodConsistency(turtleAll, page);
+  });
+
+  it('move a text', () => {
+    page.apply(op1);
+
+    checkPodConsistency(turtleAll, page);
+  });
+});
