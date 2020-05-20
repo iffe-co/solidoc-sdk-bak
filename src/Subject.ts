@@ -134,7 +134,7 @@ class Subject {
     }
     this._isDeleted = val;
 
-    val === true && this._valuesUpdated.clear();
+    this._valuesUpdated.clear();
   }
 
   public get isDeleted(): boolean {

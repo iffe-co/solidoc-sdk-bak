@@ -1,5 +1,5 @@
 import { Graph } from './Graph';
-import { ont, labelToId, subjTypeToPredArray } from '../config/ontology';
+import { ont, subjTypeToPredArray } from '../config/ontology';
 import {
   myEditor as Editor,
   myNode as Node,
@@ -29,6 +29,26 @@ class Page extends Graph {
     return this._editor;
   };
 
+  private _toJsonRecursive(subject: Subject): Node {
+    let result: Node = subject.toJson();
+
+    if (Text.isText(result)) return result;
+
+    let childId = this.getValue(subject.id, ont.sdoc.firstChild);
+
+    while (childId && typeof childId === 'string') {
+      let child = this.getSubject(childId);
+
+      let node = this._toJsonRecursive(child);
+
+      result.children.push(node);
+
+      childId = this.getValue(childId, ont.sdoc.next);
+    }
+
+    return result;
+  }
+
   public apply = (op: Operation) => {
     try {
       this._preprocess(op);
@@ -42,10 +62,6 @@ class Page extends Graph {
       throw e;
     }
   };
-
-  private _addDirtyPath(path: Path | null) {
-    this._dirtyPaths.add(path!.join(','));
-  }
 
   private _preprocess(op: Operation) {
     switch (op.type) {
@@ -90,7 +106,6 @@ class Page extends Graph {
         this._addDirtyPath(prevPath);
 
         const prev = Node.get(this._editor, prevPath);
-
         Text.isText(prev) ||
           this._addDirtyPath(Path.anchor([...prevPath, prev.children.length]));
         break;
@@ -106,18 +121,15 @@ class Page extends Graph {
           this._addDirtyPath(Path.anchor([...op.path, op.position]));
         break;
       }
-
-      default: {
-        break;
-      }
     }
   }
 
+  private _addDirtyPath(path: Path | null) {
+    this._dirtyPaths.add(path!.join(','));
+  }
+
   private _update() {
-    const timestamp = Date.parse(new Date().toISOString());
-    this.setValue(this._id, ont.dct.modified, timestamp);
-    this._editor.modified = timestamp;
-    this._addDirtyPath([]);
+    this._updateModifiedTime();
 
     for (let path of this._dirtyPaths.values()) {
       path.length === 0
@@ -126,6 +138,13 @@ class Page extends Graph {
     }
 
     this._dirtyPaths.clear();
+  }
+
+  private _updateModifiedTime() {
+    const timestamp = Date.parse(new Date().toISOString());
+    this.setValue(this._id, ont.dct.modified, timestamp);
+    this._editor.modified = timestamp;
+    this._addDirtyPath([]);
   }
 
   private _updateNode(path: Path) {
@@ -154,31 +173,6 @@ class Page extends Graph {
     super.undo();
     this._editor = <Editor>this._toJsonRecursive(this.getRoot());
     this._dirtyPaths.clear();
-  }
-
-  private _toJsonRecursive(subject: Subject): Node {
-    let result: Node = subject.toJson();
-    if (Text.isText(result)) return result;
-
-    let child = this._getRelative(subject, 'firstChild');
-
-    while (child) {
-      result.children.push(this._toJsonRecursive(child));
-      child = this._getRelative(child, 'next');
-    }
-
-    return result;
-  }
-
-  private _getRelative(
-    subject: Subject,
-    label: 'firstChild' | 'next',
-  ): Subject | undefined {
-    const relId = this.getValue(subject.id, labelToId[label]);
-    if (relId === undefined) {
-      return undefined;
-    }
-    return this._subjectMap.get(<string>relId);
   }
 }
 
