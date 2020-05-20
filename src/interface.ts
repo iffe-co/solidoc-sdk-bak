@@ -26,6 +26,24 @@ export const myNode = {
     const node = Node.get(root, path);
     return <myNode>node;
   },
+
+  getNext: (root: myNode, path: Path): myNode | undefined => {
+    if (path.length === 0) {
+      return undefined;
+    }
+    const parent = Node.parent(root, path);
+    const offset = path[path.length - 1];
+    return parent.children.length <= offset + 1
+      ? undefined
+      : <myNode>parent.children[offset + 1];
+  },
+
+  getFirstChild: (node: myNode): myNode | undefined => {
+    if (Text.isText(node)) {
+      return undefined;
+    }
+    return node.children.length === 0 ? undefined : node.children[0];
+  },
 };
 
 export type InsertNodeOperation = {

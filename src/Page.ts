@@ -12,7 +12,7 @@ import { Subject } from './Subject';
 
 class Page extends Graph {
   private _editor: Editor;
-  private _dirtyPaths: Set<string>;
+  private _dirtyPaths: Set<string> = new Set();
 
   constructor(id: string, turtle: string) {
     super(id, turtle);
@@ -21,8 +21,6 @@ class Page extends Graph {
     this.setValue(id, ont.rdf.type, ont.sdoc.root);
 
     this._editor = <Editor>this._toJsonRecursive(this.getRoot());
-
-    this._dirtyPaths = new Set<string>();
   }
 
   public toJson = (): Editor => {
@@ -142,8 +140,10 @@ class Page extends Graph {
 
   private _updateModifiedTime() {
     const timestamp = Date.parse(new Date().toISOString());
+
     this.setValue(this._id, ont.dct.modified, timestamp);
     this._editor.modified = timestamp;
+
     this._addDirtyPath([]);
   }
 
@@ -156,17 +156,11 @@ class Page extends Graph {
     this.undeleteSubject(node.id);
     subject.fromJson(node, this._predicateMap);
 
-    try {
-      const next = Node.get(this._editor, Path.next(path));
-      this.setValue(node.id, ont.sdoc.next, next.id);
-      // eslint-disable-next-line no-empty
-    } catch (_) {}
+    const next = Node.getNext(this._editor, path);
+    next && this.setValue(node.id, ont.sdoc.next, next.id);
 
-    try {
-      const firstChild = Node.get(this._editor, [...path, 0]);
-      this.setValue(node.id, ont.sdoc.firstChild, firstChild.id);
-      // eslint-disable-next-line no-empty
-    } catch (_) {}
+    const firstChild = Node.getFirstChild(node);
+    firstChild && this.setValue(node.id, ont.sdoc.firstChild, firstChild.id);
   }
 
   public undo() {
