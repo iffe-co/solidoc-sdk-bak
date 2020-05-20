@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
 import { Page } from '../src/Page';
-import { config as cfg, turtle } from '../config/test';
+import { config as cfg, turtle } from './test.config';
 import { ont, idToLabel } from '../config/ontology';
 import { Operation } from '../src/interface';
 import * as assert from 'power-assert';
@@ -71,6 +71,13 @@ describe('Insert Node', () => {
     assert(page.getSubject(cfg.para[0].id).isInserted);
     assert(page.getSubject(cfg.text[0].id).isInserted);
   });
+
+  // it('inserts a paragraph', () => {
+  //   op0.path = [10];
+  //   page.apply(op0);
+
+  //   checkPodConsistency(turtle, page);
+  // });
 
   it('applies no insertion if operation is failed', () => {
     op0.path = [10, 0];

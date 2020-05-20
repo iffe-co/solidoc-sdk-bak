@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-import { config as cfg, turtle, config } from '../config/test';
+import { config as cfg, turtle, config } from './test.config';
 import { ont } from '../config/ontology';
 import * as assert from 'power-assert';
 

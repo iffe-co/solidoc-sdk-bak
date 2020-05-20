@@ -1,4 +1,4 @@
-import { ont, idToLabel } from './ontology';
+import { ont, idToLabel } from '../config/ontology';
 
 export const config: any = {
   page: {

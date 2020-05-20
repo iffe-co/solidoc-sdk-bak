@@ -150,8 +150,7 @@ class Page extends Graph {
   private _updateNode(path: Path) {
     const node = Node.get(this._editor, path);
 
-    const subject =
-      this._subjectMap.get(node.id) || this.createSubject(node.id);
+    const subject = this.getSubject(node.id);
 
     this.undeleteSubject(node.id);
     subject.fromJson(node, this._predicateMap);

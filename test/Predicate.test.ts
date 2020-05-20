@@ -2,7 +2,7 @@
 import { Predicate } from '../src/Predicate';
 import { Object } from '../src/Object';
 import { ont } from '../config/ontology';
-import { config } from '../config/test';
+import { config } from './test.config';
 import * as assert from 'power-assert';
 
 const node = config.text[8];

@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
 import { Object } from '../src/Object';
-import { config as cfg, turtle } from '../config/test';
+import { config as cfg, turtle } from './test.config';
 import * as assert from 'power-assert';
 
 import * as n3 from 'n3';
