@@ -12,6 +12,7 @@ import { Subject } from './Subject';
 
 class Page extends Graph {
   private _editor: Editor;
+  private _dirtyPaths: Set<string>;
 
   constructor(id: string, turtle: string) {
     super(id, turtle);
@@ -20,6 +21,8 @@ class Page extends Graph {
     this.setValue(id, ont.rdf.type, ont.sdoc.root);
 
     this._editor = <Editor>this._toJsonRecursive(this.getRoot());
+
+    this._dirtyPaths = new Set<string>();
   }
 
   public toJson = (): Editor => {
@@ -28,11 +31,11 @@ class Page extends Graph {
 
   public apply = (op: Operation) => {
     try {
-      const dirtyPaths = this._preprocess(op);
+      this._preprocess(op);
 
       transform(this._editor, op);
 
-      this._update(dirtyPaths);
+      this._update();
     } catch (e) {
       this.undo();
 
@@ -40,23 +43,25 @@ class Page extends Graph {
     }
   };
 
-  private _preprocess(op: Operation): Set<Path> {
-    const dirtyPaths = new Set<Path>();
+  private _addDirtyPath(path: Path | null) {
+    this._dirtyPaths.add(path!.join(','));
+  }
 
+  private _preprocess(op: Operation) {
     switch (op.type) {
       case 'insert_text':
       case 'remove_text':
       case 'set_node': {
-        dirtyPaths.add(op.path);
+        this._addDirtyPath(op.path);
         break;
       }
 
       case 'insert_node': {
         for (let [n, p] of Node.nodes(op.node)) {
-          dirtyPaths.add([...op.path, ...p]);
+          this._addDirtyPath([...op.path, ...p]);
           this.createSubject(<string>n.id);
         }
-        dirtyPaths.add(Path.anchor(op.path));
+        this._addDirtyPath(Path.anchor(op.path));
         break;
       }
 
@@ -65,20 +70,14 @@ class Page extends Graph {
         for (let [n] of Node.nodes(node)) {
           this.deleteSubject(<string>n.id);
         }
-        dirtyPaths.add(Path.anchor(op.path));
+        this._addDirtyPath(Path.anchor(op.path));
         break;
       }
 
       case 'move_node': {
-        const path = op.path.slice();
-        const anchor = Path.anchor(path);
-
-        const tPath = <Path>Path.transform(path, op);
-        const tAnchor = <Path>Path.transform(anchor, op);
-
-        dirtyPaths.add(tPath);
-        dirtyPaths.add(tAnchor);
-        dirtyPaths.add(Path.anchor(tPath));
+        this._addDirtyPath(Path.transform(op.path, op));
+        this._addDirtyPath(Path.transform(Path.anchor(op.path), op));
+        this._addDirtyPath(Path.transform(Path.anchor(op.newPath), op));
 
         break;
       }
@@ -88,23 +87,23 @@ class Page extends Graph {
         this.deleteSubject(node.id);
 
         const prevPath = Path.previous(op.path);
-        dirtyPaths.add(prevPath);
+        this._addDirtyPath(prevPath);
 
         const prev = Node.get(this._editor, prevPath);
 
         Text.isText(prev) ||
-          dirtyPaths.add(Path.anchor([...prevPath, prev.children.length]));
+          this._addDirtyPath(Path.anchor([...prevPath, prev.children.length]));
         break;
       }
 
       case 'split_node': {
-        dirtyPaths.add(op.path);
+        this._addDirtyPath(op.path);
 
-        dirtyPaths.add(Path.next(op.path));
+        this._addDirtyPath(Path.next(op.path));
         this.createSubject(<string>op.properties.id);
 
         Text.isText(Node.get(this._editor, op.path)) ||
-          dirtyPaths.add(Path.anchor([...op.path, op.position]));
+          this._addDirtyPath(Path.anchor([...op.path, op.position]));
         break;
       }
 
@@ -112,19 +111,21 @@ class Page extends Graph {
         break;
       }
     }
-
-    return dirtyPaths;
   }
 
-  private _update(dirtyPaths: Set<Path>) {
+  private _update() {
     const timestamp = Date.parse(new Date().toISOString());
     this.setValue(this._id, ont.dct.modified, timestamp);
     this._editor.modified = timestamp;
-    dirtyPaths.add([]);
+    this._addDirtyPath([]);
 
-    for (let path of dirtyPaths.values()) {
-      this._updateNode(path);
+    for (let path of this._dirtyPaths.values()) {
+      path.length === 0
+        ? this._updateNode([])
+        : this._updateNode(path.split(',').map(v => parseInt(v, 10)));
     }
+
+    this._dirtyPaths.clear();
   }
 
   private _updateNode(path: Path) {
@@ -152,6 +153,7 @@ class Page extends Graph {
   public undo() {
     super.undo();
     this._editor = <Editor>this._toJsonRecursive(this.getRoot());
+    this._dirtyPaths.clear();
   }
 
   private _toJsonRecursive(subject: Subject): Node {
