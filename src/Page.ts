@@ -8,7 +8,6 @@ import {
   transform,
 } from './interface';
 import { Text } from 'slate';
-import { Subject } from './Subject';
 
 class Page extends Graph {
   private _editor: Editor;
@@ -20,26 +19,26 @@ class Page extends Graph {
     subjTypeToPredArray.forEach(this.createPredicate);
     this.setValue(id, ont.rdf.type, ont.sdoc.root);
 
-    this._editor = <Editor>this._toJsonRecursive(this.getRoot());
+    this._editor = <Editor>this._toJsonRecursive(id);
   }
 
   public toJson = (): Editor => {
     return this._editor;
   };
 
-  private _toJsonRecursive(subject: Subject): Node {
+  private _toJsonRecursive(subjectId: string): Node {
+    let subject = this.getSubject(subjectId);
+
     let result: Node = subject.toJson();
 
     if (Text.isText(result)) return result;
 
-    let childId = this.getValue(subject.id, ont.sdoc.firstChild);
+    let childId = this.getValue(subjectId, ont.sdoc.firstChild);
 
     while (childId && typeof childId === 'string') {
-      let child = this.getSubject(childId);
+      let child = this._toJsonRecursive(childId);
 
-      let node = this._toJsonRecursive(child);
-
-      result.children.push(node);
+      result.children.push(child);
 
       childId = this.getValue(childId, ont.sdoc.next);
     }
@@ -72,19 +71,16 @@ class Page extends Graph {
 
       case 'insert_node': {
         for (let [n, p] of Node.nodes(op.node)) {
-          this._addDirtyPath([...op.path, ...p]);
-          this.createSubject(<string>n.id);
+          this._insertNode(<string>n.id, [...op.path, ...p]);
         }
-        this._addDirtyPath(Path.anchor(op.path));
         break;
       }
 
       case 'remove_node': {
         const node = Node.get(this._editor, op.path);
-        for (let [n] of Node.nodes(node)) {
-          this.deleteSubject(<string>n.id);
+        for (let [n, p] of Node.nodes(node)) {
+          this._removeNode(<string>n.id, [...op.path, ...p]);
         }
-        this._addDirtyPath(Path.anchor(op.path));
         break;
       }
 
@@ -97,29 +93,40 @@ class Page extends Graph {
       }
 
       case 'merge_node': {
-        const node = Node.get(this._editor, op.path);
-        this.deleteSubject(node.id);
+        const { node, prev } = Node.getContext(this._editor, op.path);
+        this._removeNode(node.id, op.path);
 
-        const prevPath = Path.previous(op.path);
-        this._addDirtyPath(prevPath);
-
-        const prev = Node.get(this._editor, prevPath);
         Text.isText(prev) ||
-          this._addDirtyPath(Path.anchor([...prevPath, prev.children.length]));
+          this._addDirtyPath([
+            ...Path.previous(op.path),
+            ...Path.offset(prev, Infinity),
+          ]);
         break;
       }
 
       case 'split_node': {
-        this._addDirtyPath(op.path);
+        const { node } = Node.getContext(this._editor, op.path);
+        this._insertNode(<string>op.properties.id, Path.next(op.path));
 
-        this._addDirtyPath(Path.next(op.path));
-        this.createSubject(<string>op.properties.id);
-
-        Text.isText(Node.get(this._editor, op.path)) ||
-          this._addDirtyPath(Path.anchor([...op.path, op.position]));
+        Text.isText(node) ||
+          this._addDirtyPath([
+            ...op.path,
+            ...Path.offset(node, op.position - 1),
+          ]);
         break;
       }
     }
+  }
+
+  private _insertNode(nodeId: string, path: Path) {
+    this.createSubject(nodeId);
+    this._addDirtyPath(path);
+    this._addDirtyPath(Path.anchor(path));
+  }
+
+  private _removeNode(nodeId: string, path: Path) {
+    this.deleteSubject(nodeId);
+    this._addDirtyPath(Path.anchor(path));
   }
 
   private _addDirtyPath(path: Path | null) {
@@ -148,23 +155,20 @@ class Page extends Graph {
   }
 
   private _updateNode(path: Path) {
-    const node = Node.get(this._editor, path);
+    const { node, next, firstChild } = Node.getContext(this._editor, path);
 
     const subject = this.getSubject(node.id);
+    this._updatedSubjs.add(subject); // TODO: better done in _addDirtyPath()?
 
-    this.undeleteSubject(node.id);
     subject.fromJson(node, this._predicateMap);
 
-    const next = Node.getNext(this._editor, path);
     next && this.setValue(node.id, ont.sdoc.next, next.id);
-
-    const firstChild = Node.getFirstChild(node);
     firstChild && this.setValue(node.id, ont.sdoc.firstChild, firstChild.id);
   }
 
   public undo() {
     super.undo();
-    this._editor = <Editor>this._toJsonRecursive(this.getRoot());
+    this._editor = <Editor>this._toJsonRecursive(this._id);
     this._dirtyPaths.clear();
   }
 }

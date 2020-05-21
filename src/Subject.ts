@@ -73,6 +73,8 @@ class Subject {
     let pred: Pred | undefined;
     let value: Literal;
 
+    this._valuesUpdated.clear();
+
     Object.keys(node).forEach(label => {
       switch (label) {
         case 'id':
@@ -133,8 +135,6 @@ class Subject {
       throw new Error('The root is not removable :' + this._id);
     }
     this._isDeleted = val;
-
-    this._valuesUpdated.clear();
   }
 
   public get isDeleted(): boolean {

@@ -72,13 +72,6 @@ describe('Insert Node', () => {
     assert(page.getSubject(cfg.text[0].id).isInserted);
   });
 
-  // it('inserts a paragraph', () => {
-  //   op0.path = [10];
-  //   page.apply(op0);
-
-  //   checkPodConsistency(turtle, page);
-  // });
-
   it('applies no insertion if operation is failed', () => {
     op0.path = [10, 0];
     assert.throws(() => {

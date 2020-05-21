@@ -27,22 +27,28 @@ export const myNode = {
     return <myNode>node;
   },
 
-  getNext: (root: myNode, path: Path): myNode | undefined => {
-    if (path.length === 0) {
-      return undefined;
-    }
-    const parent = Node.parent(root, path);
-    const offset = path[path.length - 1];
-    return parent.children.length <= offset + 1
-      ? undefined
-      : <myNode>parent.children[offset + 1];
-  },
+  getContext: (root: myNode, path: Path) => {
+    // const node = <myNode>Node.get(root, path);
+    // let parent: myNode | undefined;
 
-  getFirstChild: (node: myNode): myNode | undefined => {
-    if (Text.isText(node)) {
-      return undefined;
+    if (path.length === 0) {
+      const node = root;
+      const firstChild = !Text.isText(root) ? root.children[0] : undefined;
+      return { node, firstChild };
     }
-    return node.children.length === 0 ? undefined : node.children[0];
+
+    const parent = <myEditor | myElement>Node.parent(root, path);
+
+    const offset = path[path.length - 1];
+    const node = <myNode>Node.get(parent, [offset]);
+
+    const prev = parent.children[offset - 1]; // can be undefined
+    const next = parent.children[offset + 1]; // can be undefined
+
+    const firstChild =
+      node && !Text.isText(node) ? node.children[0] : undefined;
+
+    return { node, parent, prev, next, firstChild };
   },
 };
 
@@ -167,5 +173,17 @@ export const myPath = {
     }
 
     return lastOffset <= 0 ? Path.parent(path) : Path.previous(path);
+  },
+
+  offset: (node: myEditor | myElement | undefined, position: number): Path => {
+    if (!node) {
+      throw new Error('Node is empty');
+    }
+
+    if (node.children.length === 0 || position < 0) {
+      return [];
+    }
+
+    return [Math.min(position, node.children.length - 1)];
   },
 };
