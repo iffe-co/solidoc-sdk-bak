@@ -172,18 +172,18 @@ export const myPath = {
       throw new Error('Root node does not have anchor');
     }
 
-    return lastOffset <= 0 ? Path.parent(path) : Path.previous(path);
+    return lastOffset === 0 ? Path.parent(path) : Path.previous(path);
   },
 
-  offset: (node: myEditor | myElement | undefined, position: number): Path => {
+  lastChild: (node: myEditor | myElement | undefined, path: Path): Path => {
     if (!node) {
       throw new Error('Node is empty');
     }
 
-    if (node.children.length === 0 || position < 0) {
-      return [];
+    if (node.children.length === 0) {
+      return path;
     }
 
-    return [Math.min(position, node.children.length - 1)];
+    return [...path, node.children.length - 1];
   },
 };

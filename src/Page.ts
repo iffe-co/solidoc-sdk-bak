@@ -27,16 +27,16 @@ class Page extends Graph {
   };
 
   private _toJsonRecursive(subjectId: string): Node {
-    let subject = this.getSubject(subjectId);
+    const subject = this.getSubject(subjectId);
 
-    let result: Node = subject.toJson();
+    const result: Node = subject.toJson();
 
     if (Text.isText(result)) return result;
 
     let childId = this.getValue(subjectId, ont.sdoc.firstChild);
 
     while (childId && typeof childId === 'string') {
-      let child = this._toJsonRecursive(childId);
+      const child = this._toJsonRecursive(childId);
 
       result.children.push(child);
 
@@ -97,10 +97,7 @@ class Page extends Graph {
         this._removeNode(node.id, op.path);
 
         Text.isText(prev) ||
-          this._addDirtyPath([
-            ...Path.previous(op.path),
-            ...Path.offset(prev, Infinity),
-          ]);
+          this._addDirtyPath(Path.lastChild(prev, Path.previous(op.path)));
         break;
       }
 
@@ -109,10 +106,7 @@ class Page extends Graph {
         this._insertNode(<string>op.properties.id, Path.next(op.path));
 
         Text.isText(node) ||
-          this._addDirtyPath([
-            ...op.path,
-            ...Path.offset(node, op.position - 1),
-          ]);
+          this._addDirtyPath(Path.anchor([...op.path, op.position]));
         break;
       }
     }
@@ -130,7 +124,8 @@ class Page extends Graph {
   }
 
   private _addDirtyPath(path: Path | null) {
-    this._dirtyPaths.add(path!.join(','));
+    if (!path) return;
+    this._dirtyPaths.add(path.join(','));
   }
 
   private _update() {
@@ -161,7 +156,6 @@ class Page extends Graph {
     this._updatedSubjs.add(subject); // TODO: better done in _addDirtyPath()?
 
     subject.fromJson(node, this._predicateMap);
-
     next && this.setValue(node.id, ont.sdoc.next, next.id);
     firstChild && this.setValue(node.id, ont.sdoc.firstChild, firstChild.id);
   }

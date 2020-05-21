@@ -122,7 +122,7 @@ describe('Split Node', () => {
     op0 = {
       type: 'split_node',
       path: [0],
-      position: 1,
+      position: 0,
       target: null,
       properties: {
         id: cfg.page.id + '#temp',
@@ -140,12 +140,35 @@ describe('Split Node', () => {
     };
   });
 
-  it('splits a paragraph', () => {
+  it('splits a paragraph at position = 0', () => {
     page.apply(op0);
 
     assert(page.getSubject(cfg.page.id + '#temp').isInserted);
 
     checkPodConsistency(turtleAll, page);
+  });
+
+  it('disallow splitting a paragraph at position < 0', () => {
+    op0.position = -1;
+
+    assert.throws(() => {
+      page.apply(op0);
+    });
+  });
+
+  it('splits a paragraph at position = length', () => {
+    op0.position = 3;
+    page.apply(op0);
+
+    checkPodConsistency(turtleAll, page);
+  });
+
+  it('disallows spltting a paragraph at position > length', () => {
+    op0.position = 4;
+
+    assert.throws(() => {
+      page.apply(op0);
+    });
   });
 
   it('splits a text', () => {
