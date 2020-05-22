@@ -17,7 +17,7 @@ class Page extends Graph {
     super(id, turtle);
 
     subjTypeToPredArray.forEach(this.createPredicate);
-    this.setValue(id, ont.rdf.type, ont.sdoc.root);
+    this.setValue(id, ont.rdf.type, ont.sdoc.Root);
 
     this._editor = <Editor>this._toJsonRecursive(id);
   }

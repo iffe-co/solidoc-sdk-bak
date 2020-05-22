@@ -53,7 +53,7 @@ describe('test/Subject.test.ts', () => {
 
     it('translates to Json', () => {
       let pred = predicates[ont.rdf.type];
-      branch2.setProperty(pred, ont.sdoc.paragraph);
+      branch2.setProperty(pred, ont.sdoc.Paragraph);
 
       assert.deepStrictEqual(branch2.toJson(), {
         ...para2,
@@ -189,13 +189,13 @@ describe('test/Subject.test.ts', () => {
 
     it('undoes attributes', () => {
       let pred = predicates[ont.rdf.type];
-      branch2.setProperty(pred, ont.sdoc.paragraph);
+      branch2.setProperty(pred, ont.sdoc.Paragraph);
       branch2.commit(); // so {type: Paragraph} becomes value
-      branch2.setProperty(pred, ont.sdoc.numberedList);
+      branch2.setProperty(pred, ont.sdoc.NumberedList);
       branch2.isDeleted = true;
       branch2.undo();
 
-      assert.strictEqual(branch2.getProperty(pred), ont.sdoc.paragraph);
+      assert.strictEqual(branch2.getProperty(pred), ont.sdoc.Paragraph);
     });
   });
 });
@@ -209,7 +209,7 @@ describe('Root', () => {
     root = new Subject(page.id, config.page.id);
 
     let pred = predicates[ont.rdf.type];
-    root.setProperty(pred, ont.sdoc.root);
+    root.setProperty(pred, ont.sdoc.Root);
   });
 
   it('sets title', () => {
@@ -270,7 +270,7 @@ describe('Leaf', () => {
   it('parses from quads', () => {
     assert.strictEqual(
       leaf.getProperty(predicates[ont.rdf.type]),
-      ont.sdoc.leaf,
+      ont.sdoc.Leaf,
     );
     assert.strictEqual(leaf.getProperty(predicates[ont.sdoc.text]), text.text);
   });

@@ -17,12 +17,12 @@ describe('Type: a NamedNode Predicate', () => {
   };
 
   const updated: Object = {
-    value: ont.sdoc.paragraph,
+    value: ont.sdoc.Paragraph,
     type: ont.xsd.anyURI,
   };
 
   const deleteClause = `DELETE WHERE { GRAPH <${page.id}> { <${node.id}> <${ont.rdf.type}> ?o } };\n`;
-  const insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.rdf.type}> <${ont.sdoc.paragraph}>} };\n`;
+  const insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.rdf.type}> <${ont.sdoc.Paragraph}>} };\n`;
 
   beforeEach(() => {
     type = new Predicate(ont.rdf.type, page.id);

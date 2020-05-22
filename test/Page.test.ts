@@ -44,13 +44,13 @@ describe('Create Page', () => {
 
     checkPodConsistency(turtle, page);
 
-    assert.strictEqual(page.toJson().type, idToLabel[ont.sdoc.root]);
+    assert.strictEqual(page.toJson().type, idToLabel[ont.sdoc.Root]);
   });
 });
 
 describe('Insert Node', () => {
   let op0: Operation;
-  let turtle = `<${cfg.page.id}> a <${ont.sdoc.root}>; <${ont.dct.title}> "${cfg.page.title}".`;
+  let turtle = `<${cfg.page.id}> a <${ont.sdoc.Root}>; <${ont.dct.title}> "${cfg.page.title}".`;
 
   beforeEach(() => {
     page = new Page(cfg.page.id, turtle);

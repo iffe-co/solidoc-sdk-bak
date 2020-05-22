@@ -29,20 +29,34 @@ const ont = {
     bold: 'http://www.solidoc.net/ontologies#bold',
     link: 'http://www.solidoc.net/ontologies#link',
     // subjects
-    root: 'http://www.solidoc.net/ontologies#Root',
-    leaf: 'http://www.solidoc.net/ontologies#Leaf',
-    heading1: 'http://www.solidoc.net/ontologies#Heading1',
-    heading2: 'http://www.solidoc.net/ontologies#Heading2',
-    heading3: 'http://www.solidoc.net/ontologies#Heading3',
-    paragraph: 'http://www.solidoc.net/ontologies#Paragraph',
-    numberedList: 'http://www.solidoc.net/ontologies#NumberedList',
-    bulletedList: 'http://www.solidoc.net/ontologies#BulletedList',
-    taskList: 'http://www.solidoc.net/ontologies#TaskList',
-    mathEquation: 'http://www.solidoc.net/ontologies#MathEquation',
-    pre: 'http://www.solidoc.net/ontologies#Pre',
-    hint: 'http://www.solidoc.net/ontologies#Hint',
-    divider: 'http://www.solidoc.net/ontologies#Divider',
-    page: 'http://www.solidoc.net/ontologies#Page',
+    Root: 'http://www.solidoc.net/ontologies#Root',
+    Leaf: 'http://www.solidoc.net/ontologies#Leaf',
+    Heading1: 'http://www.solidoc.net/ontologies#Heading1',
+    Heading2: 'http://www.solidoc.net/ontologies#Heading2',
+    Heading3: 'http://www.solidoc.net/ontologies#Heading3',
+    NumberedList: 'http://www.solidoc.net/ontologies#NumberedList',
+    NumberedSubList: 'http://www.solidoc.net/ontologies#NumberedSubList',
+    NumberedRow: 'http://www.solidoc.net/ontologies#NumberedRow',
+    BulletedList: 'http://www.solidoc.net/ontologies#BulletedList',
+    BulletedSubList: 'http://www.solidoc.net/ontologies#BulletedSubList',
+    BulletedRow: 'http://www.solidoc.net/ontologies#BulletedRow',
+    TaskList: 'http://www.solidoc.net/ontologies#TaskList',
+    TaskSubList: 'http://www.solidoc.net/ontologies#TaskSubList',
+    TaskRow: 'http://www.solidoc.net/ontologies#TaskRow',
+    Quote: 'http://www.solidoc.net/ontologies#Quote',
+    Pre: 'http://www.solidoc.net/ontologies#Pre',
+    PreRow: 'http://www.solidoc.net/ontologies#PreRow',
+    Paragraph: 'http://www.solidoc.net/ontologies#Paragraph',
+    Divider: 'http://www.solidoc.net/ontologies#Divider',
+    Hint: 'http://www.solidoc.net/ontologies#Hint',
+    Image: 'http://www.solidoc.net/ontologies#Image',
+    Video: 'http://www.solidoc.net/ontologies#Video',
+    File: 'http://www.solidoc.net/ontologies#File',
+    MathEquation: 'http://www.solidoc.net/ontologies#MathEquation',
+    Page: 'http://www.solidoc.net/ontologies#Page',
+    Table: 'http://www.solidoc.net/ontologies#Table',
+    TableRow: 'http://www.solidoc.net/ontologies#TableRow',
+    TableCell: 'http://www.solidoc.net/ontologies#Cell',
   },
 };
 
@@ -143,7 +157,7 @@ const predIdToRange = {
 // TODO: use pred.default
 const defaultJson = (id: string, type: string): Node => {
   switch (labelToId[type]) {
-    case ont.sdoc.root:
+    case ont.sdoc.Root:
       return {
         id: id,
         type: type,
@@ -151,53 +165,53 @@ const defaultJson = (id: string, type: string): Node => {
         modified: 0,
         children: [],
       };
-    case ont.sdoc.leaf:
+    case ont.sdoc.Leaf:
       return {
         id: id,
         type: type,
         text: '',
       };
-    case ont.sdoc.heading1:
-    case ont.sdoc.heading2:
-    case ont.sdoc.heading3:
-    case ont.sdoc.divider:
-    case ont.sdoc.paragraph:
-    case ont.sdoc.numberedList:
-    case ont.sdoc.bulletedList:
+    case ont.sdoc.Heading1:
+    case ont.sdoc.Heading2:
+    case ont.sdoc.Heading3:
+    case ont.sdoc.Divider:
+    case ont.sdoc.Paragraph:
+    case ont.sdoc.NumberedList:
+    case ont.sdoc.BulletedList:
       return {
         id: id,
         type: type,
         children: [],
       };
-    case ont.sdoc.taskList:
+    case ont.sdoc.TaskList:
       return {
         id: id,
         type: type,
         checked: false,
         children: [],
       };
-    case ont.sdoc.mathEquation:
+    case ont.sdoc.MathEquation:
       return {
         id: id,
         type: type,
         formula: '',
         children: [],
       };
-    case ont.sdoc.pre:
+    case ont.sdoc.Pre:
       return {
         id: id,
         type: type,
         language: '',
         children: [],
       };
-    case ont.sdoc.hint:
+    case ont.sdoc.Hint:
       return {
         id: id,
         type: type,
         hitState: '',
         children: [],
       };
-    case ont.sdoc.page:
+    case ont.sdoc.Page:
       return {
         id: id,
         type: type,
