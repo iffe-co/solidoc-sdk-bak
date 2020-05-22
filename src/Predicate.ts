@@ -12,7 +12,7 @@ class Predicate {
   constructor(id: string, graph: string) {
     this._id = id;
     this._graph = graph;
-    this._label = idToLabel[id];
+    this._label = idToLabel(id);
     const range = predIdToRange[id];
     this._setRange(range);
   }

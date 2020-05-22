@@ -3,7 +3,7 @@ import { ont, idToLabel } from '../config/ontology';
 export const config: any = {
   page: {
     id: 'http://example.org/alice',
-    type: idToLabel[ont.sdoc.Root],
+    type: idToLabel(ont.sdoc.Root),
     title: 'Homepage',
     modified: 0,
   },
@@ -14,7 +14,7 @@ export const config: any = {
 for (let i = 0; i < 9; i++) {
   config.text[i] = {
     id: config.page.id + '#t' + i,
-    type: idToLabel[ont.sdoc.Leaf],
+    type: idToLabel(ont.sdoc.Leaf),
     text: 'text ' + i,
     bold: true,
   };
@@ -23,7 +23,7 @@ for (let i = 0; i < 9; i++) {
 for (let i = 0; i < 3; i++) {
   config.para[i] = {
     id: config.page.id + '#p' + i,
-    type: idToLabel[ont.sdoc.Paragraph],
+    type: idToLabel(ont.sdoc.Paragraph),
     children: [
       config.text[i * 3],
       config.text[i * 3 + 1],

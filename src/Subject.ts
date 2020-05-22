@@ -37,7 +37,7 @@ class Subject {
 
   private _setType(typeObj: Obj) {
     const typeId = <string>Obj.getValue(typeObj);
-    this._type = idToLabel[typeId];
+    this._type = idToLabel(typeId);
   }
 
   public getProperty(pred: Pred): Literal {

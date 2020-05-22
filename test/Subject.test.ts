@@ -1,7 +1,7 @@
 /* eslint-disable no-undef */
 import { Subject } from '../src/Subject';
 import { Predicate } from '../src/Predicate';
-import { ont, subjTypeToPredArray } from '../config/ontology';
+import { ont, sdocAllPreds } from '../config/ontology';
 import { config, turtle } from './test.config';
 import { myElement as Element } from '../src/interface';
 import * as assert from 'power-assert';
@@ -13,7 +13,7 @@ let quads: any[];
 
 const predicates: { [key: string]: Predicate } = {};
 const createPredicates = () => {
-  const predIdArray: string[] = subjTypeToPredArray;
+  const predIdArray: string[] = sdocAllPreds;
   predIdArray.forEach(predId => {
     predicates[predId] = new Predicate(predId, config.page._id);
   });

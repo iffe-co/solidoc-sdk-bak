@@ -44,7 +44,7 @@ describe('Create Page', () => {
 
     checkPodConsistency(turtle, page);
 
-    assert.strictEqual(page.toJson().type, idToLabel[ont.sdoc.Root]);
+    assert.strictEqual(page.toJson().type, idToLabel(ont.sdoc.Root));
   });
 });
 
