@@ -71,7 +71,7 @@ class Page extends Graph {
 
       case 'insert_node': {
         for (let [n, p] of Node.nodes(op.node)) {
-          this._insertNode(<string>n.id, [...op.path, ...p]);
+          this._insertNode(<Node>n, [...op.path, ...p]);
         }
         break;
       }
@@ -103,7 +103,10 @@ class Page extends Graph {
 
       case 'split_node': {
         const { node } = Node.getContext(this._editor, op.path);
-        this._insertNode(<string>op.properties.id, Path.next(op.path));
+        this._insertNode(
+          { id: <string>op.properties.id, type: node.type, text: '' }, // TODO: workaround
+          Path.next(op.path),
+        );
 
         Text.isText(node) ||
           this._addDirtyPath(Path.anchor([...op.path, op.position]));
@@ -112,8 +115,11 @@ class Page extends Graph {
     }
   }
 
-  private _insertNode(nodeId: string, path: Path) {
-    this.createSubject(nodeId);
+  private _insertNode(node: Node, path: Path) {
+    if (!node.id || !node.type) {
+      throw new Error('Invalid node to insert: ' + JSON.stringify(node));
+    }
+    this.createSubject(node.id);
     this._addDirtyPath(path);
     this._addDirtyPath(Path.anchor(path));
   }
