@@ -75,37 +75,44 @@ const subjTypeToPredArray = [
   ont.sdoc.link,
 ];
 
-const labelToId = {
-  // predicates
-  type: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
-  title: 'http://purl.org/dc/terms/title',
-  modified: 'http://purl.org/dc/terms/modified',
-  firstChild: 'http://www.solidoc.net/ontologies#firstChild',
-  next: 'http://www.solidoc.net/ontologies#nextNode',
-  text: 'http://www.solidoc.net/ontologies#text',
-  checked: 'http://www.solidoc.net/ontologies#checked',
-  language: 'http://www.solidoc.net/ontologies#language',
-  formula: 'http://www.solidoc.net/ontologies#formula',
-  hintState: 'http://www.solidoc.net/ontologies#hintState',
-  bold: 'http://www.solidoc.net/ontologies#bold',
-  link: 'http://www.solidoc.net/ontologies#link',
-
-  // subjects
-  Root: 'http://www.solidoc.net/ontologies#Root',
-  Leaf: 'http://www.solidoc.net/ontologies#Leaf',
-  Heading1: 'http://www.solidoc.net/ontologies#Heading1',
-  Heading2: 'http://www.solidoc.net/ontologies#Heading2',
-  Heading3: 'http://www.solidoc.net/ontologies#Heading3',
-  Paragraph: 'http://www.solidoc.net/ontologies#Paragraph',
-  NumberedList: 'http://www.solidoc.net/ontologies#NumberedList',
-  BulletedList: 'http://www.solidoc.net/ontologies#BulletedList',
-  TaskList: 'http://www.solidoc.net/ontologies#TaskList',
-  MathEquation: 'http://www.solidoc.net/ontologies#MathEquation',
-  Pre: 'http://www.solidoc.net/ontologies#Pre',
-  Hint: 'http://www.solidoc.net/ontologies#Hint',
-  Divider: 'http://www.solidoc.net/ontologies#Divider',
-  Page: 'http://www.solidoc.net/ontologies#Page',
+const labelToId = (label: string): string => {
+  if (ont.sdoc[label]) return ont.sdoc[label];
+  if (ont.rdf[label]) return ont.rdf[label];
+  if (ont.xsd[label]) return ont.xsd[label];
+  if (ont.dct[label]) return ont.dct[label];
+  throw new Error('Cannot find id for: ' + label);
 };
+// {
+//   // predicates
+//   type: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+//   title: 'http://purl.org/dc/terms/title',
+//   modified: 'http://purl.org/dc/terms/modified',
+//   firstChild: 'http://www.solidoc.net/ontologies#firstChild',
+//   next: 'http://www.solidoc.net/ontologies#nextNode',
+//   text: 'http://www.solidoc.net/ontologies#text',
+//   checked: 'http://www.solidoc.net/ontologies#checked',
+//   language: 'http://www.solidoc.net/ontologies#language',
+//   formula: 'http://www.solidoc.net/ontologies#formula',
+//   hintState: 'http://www.solidoc.net/ontologies#hintState',
+//   bold: 'http://www.solidoc.net/ontologies#bold',
+//   link: 'http://www.solidoc.net/ontologies#link',
+
+//   // subjects
+//   Root: 'http://www.solidoc.net/ontologies#Root',
+//   Leaf: 'http://www.solidoc.net/ontologies#Leaf',
+//   Heading1: 'http://www.solidoc.net/ontologies#Heading1',
+//   Heading2: 'http://www.solidoc.net/ontologies#Heading2',
+//   Heading3: 'http://www.solidoc.net/ontologies#Heading3',
+//   Paragraph: 'http://www.solidoc.net/ontologies#Paragraph',
+//   NumberedList: 'http://www.solidoc.net/ontologies#NumberedList',
+//   BulletedList: 'http://www.solidoc.net/ontologies#BulletedList',
+//   TaskList: 'http://www.solidoc.net/ontologies#TaskList',
+//   MathEquation: 'http://www.solidoc.net/ontologies#MathEquation',
+//   Pre: 'http://www.solidoc.net/ontologies#Pre',
+//   Hint: 'http://www.solidoc.net/ontologies#Hint',
+//   Divider: 'http://www.solidoc.net/ontologies#Divider',
+//   Page: 'http://www.solidoc.net/ontologies#Page',
+// };
 
 const idToLabel = {
   // predicates
@@ -156,7 +163,7 @@ const predIdToRange = {
 
 // TODO: use pred.default
 const defaultJson = (id: string, type: string): Node => {
-  switch (labelToId[type]) {
+  switch (labelToId(type)) {
     case ont.sdoc.Root:
       return {
         id: id,

@@ -82,11 +82,11 @@ class Subject {
           break;
         case 'type':
           pred = predMap.get(ont.rdf.type);
-          value = labelToId[node[label]];
+          value = labelToId(node[label]);
           pred && this.setProperty(pred, value);
           break;
         default:
-          pred = predMap.get(labelToId[label]);
+          pred = predMap.get(labelToId(label));
           value = <Literal>node[label];
           // skip undefined predicates
           pred && this.setProperty(pred, value);
