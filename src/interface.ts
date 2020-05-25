@@ -158,7 +158,24 @@ export type Operation = NodeOperation | SelectionOperation | TextOperation;
 
 export const transform = (editor: myEditor, op: Operation) => {
   const opCloned = _.cloneDeep(op);
-  Transforms.transform(editor, opCloned);
+
+  if (op.type === 'set_node' && op.path.length === 0) {
+    for (const key in op.newProperties) {
+      if (key === 'id' || key === 'type' || key === 'children') {
+        throw new Error(`Cannot set the "${key}" property of nodes!`);
+      }
+
+      const value = op.newProperties[key];
+
+      if (value == null) {
+        delete editor[key];
+      } else {
+        editor[key] = value;
+      }
+    }
+  } else {
+    Transforms.transform(editor, opCloned);
+  }
   delete editor.selection;
 };
 

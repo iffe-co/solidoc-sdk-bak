@@ -5,6 +5,7 @@ export const config: any = {
     id: 'http://example.org/alice',
     type: idToLabel(ont.sdoc.Root),
     title: 'Homepage',
+    description: "Alice's profile",
     modified: 0,
   },
   para: [{}, {}, {}],
@@ -46,6 +47,7 @@ export const turtle: any = {
 turtle.page = `<${config.page.id}> a <${ont.sdoc.Root}>;
   <${ont.dct.modified}> "1970-01-01T00:00:00.000Z"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
   <${ont.dct.title}> "${config.page.title}";
+  <${ont.dct.description}> "${config.page.description}";
   <${ont.sdoc.firstChild}> <${config.para[0].id}>.`;
 
 turtle.para[0] = `<${config.para[0].id}> a <${ont.sdoc.Paragraph}>;

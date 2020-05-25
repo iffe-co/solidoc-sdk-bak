@@ -352,6 +352,7 @@ describe('Merge Node', () => {
 
 describe('Set Node', () => {
   let op0: Operation;
+  let op1: Operation;
 
   beforeEach(() => {
     page = new Page(cfg.page.id, turtleAll);
@@ -364,9 +365,18 @@ describe('Set Node', () => {
         bold: null,
       },
     };
+
+    op1 = {
+      type: 'set_node',
+      path: [],
+      properties: {},
+      newProperties: {
+        description: 'A quick brown fox jumps over the lazy dog',
+      },
+    };
   });
 
-  it('set a paragraph', () => {
+  it('set a text', () => {
     page.apply(op0);
 
     checkPodConsistency(turtleAll, page);
@@ -380,11 +390,17 @@ describe('Set Node', () => {
     });
   });
 
-  it('updates the subject', () => {
+  it('commits the subject', () => {
     page.apply(op0);
     page.commit();
 
     assert.strictEqual(page.getValue(cfg.text[0].id, ont.sdoc.bold), false);
+  });
+
+  it('sets the root', () => {
+    page.apply(op1);
+
+    checkPodConsistency(turtleAll, page);
   });
 });
 

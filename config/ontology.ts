@@ -7,6 +7,7 @@ const ont = {
   dct: {
     title: 'http://purl.org/dc/terms/title',
     modified: 'http://purl.org/dc/terms/modified',
+    description: 'http://purl.org/dc/terms/description',
   },
   xsd: {
     anyURI: 'http://www.w3.org/2001/XMLSchema#anyURI',
@@ -64,6 +65,7 @@ const sdocAllPreds = [
   ont.rdf.type,
   ont.dct.title,
   ont.dct.modified,
+  ont.dct.description,
   ont.sdoc.firstChild,
   ont.sdoc.next,
   ont.sdoc.text,
@@ -92,6 +94,7 @@ const predIdToRange = {
   'http://www.w3.org/1999/02/22-rdf-syntax-ns#type': ont.xsd.anyURI,
   'http://purl.org/dc/terms/title': ont.xsd.string,
   'http://purl.org/dc/terms/modified': ont.xsd.dateTime,
+  'http://purl.org/dc/terms/description': ont.xsd.string,
   'http://www.solidoc.net/ontologies#firstChild': ont.xsd.anyURI,
   'http://www.solidoc.net/ontologies#nextNode': ont.xsd.anyURI,
   'http://www.solidoc.net/ontologies#text': ont.xsd.string,
@@ -111,6 +114,7 @@ const defaultJson = (id: string, type: string): Node => {
         id: id,
         type: type,
         title: '',
+        description: '',
         modified: 0,
         children: [],
       };
