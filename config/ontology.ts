@@ -156,6 +156,7 @@ const defaultJson = (id: string, type: string): Node => {
       return {
         id: id,
         type: type,
+        title: '',
         link: undefined,
         children: [],
       };
