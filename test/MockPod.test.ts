@@ -31,6 +31,9 @@ export const updatePod = (
   sparqlAll: string,
   baseURI: string,
 ): string => {
+  const temp = console.log;
+  console.log = () => {};
+
   const kb = init(turtle, baseURI);
   const target = kb.sym(baseURI);
 
@@ -43,6 +46,8 @@ export const updatePod = (
       }
     });
   });
+
+  console.log = temp;
 
   // obtain result
   return $rdf.serialize(target, kb, baseURI);
