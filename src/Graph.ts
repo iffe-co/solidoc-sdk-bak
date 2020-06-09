@@ -3,39 +3,69 @@ import { Literal } from './Object';
 import { Predicate } from './Predicate';
 import * as n3 from 'n3';
 
-const parser = new n3.Parser();
-
 // a graph could be a page or a database
 class Graph {
   protected _id: string = '';
   protected _subjectMap = new Map<string, Subject>();
   protected _predicateMap = new Map<string, Predicate>();
+  protected _updatedSubjs = new Set<Subject>();
 
   constructor(id: string, turtle: string) {
     this._id = id;
     this.createSubject(id);
     this._parseTurtle(turtle);
+
+    this._subjectMap.forEach(subject => (subject.isInserted = false));
+    this._updatedSubjs.clear();
   }
 
-  public createSubject = (subejectId: string): Subject => {
-    if (this._subjectMap.get(subejectId)) {
-      throw new Error('Duplicated subject creation: ' + subejectId);
+  public get id(): string {
+    return this._id;
+  }
+
+  public createSubject = (subjectId: string): Subject => {
+    let subject = this._subjectMap.get(subjectId);
+
+    if (subject && !subject.isDeleted) {
+      throw new Error('Duplicated subject creation: ' + subjectId);
+    } else if (subject) {
+      this.undeleteSubject(subjectId);
+      return subject;
     }
-    const subject = new Subject(subejectId, this._id);
-    this._subjectMap.set(subejectId, subject);
+
+    subject = new Subject(subjectId, this._id);
+
+    this._subjectMap.set(subjectId, subject);
+
+    this._updatedSubjs.add(subject);
+
     return subject;
   };
 
   public getSubject = (subjectId: string): Subject => {
     const subject = this._subjectMap.get(subjectId);
+
     if (!subject) {
       throw new Error('Subject not found: ' + subjectId);
     }
+
     return subject;
   };
 
   public getRoot = (): Subject => {
     return this.getSubject(this._id);
+  };
+
+  public deleteSubject = (subjectId: string) => {
+    const subject = this.getSubject(subjectId);
+    subject.isDeleted = true;
+    this._updatedSubjs.add(subject);
+  };
+
+  public undeleteSubject = (subjectId: string) => {
+    const subject = this.getSubject(subjectId);
+    subject.isDeleted = false;
+    this._updatedSubjs.add(subject);
   };
 
   public createPredicate = (predId: string): Predicate => {
@@ -54,14 +84,17 @@ class Graph {
   };
 
   private _parseTurtle = (turtle: string) => {
+    const parser = new n3.Parser({ baseIRI: this._id });
     const quads: any[] = parser.parse(turtle);
     quads.forEach(quad => {
       const subject =
         this._subjectMap.get(quad.subject.id) ||
         this.createSubject(quad.subject.id);
+
       const predicate =
         this._predicateMap.get(quad.predicate.id) ||
         this.createPredicate(quad.predicate.id);
+
       subject.fromQuad(predicate, quad.object);
     });
   };
@@ -79,27 +112,32 @@ class Graph {
   ) => {
     const subject = this.getSubject(subjectId);
     const predicate = this.getPredicate(predicateId);
-    return subject.setProperty(predicate, value);
+    subject.setProperty(predicate, value);
+    this._updatedSubjs.add(subject);
   };
 
   public getSparqlForUpdate(): string {
     let sparql = '';
-    for (let subject of this._subjectMap.values()) {
+    for (let subject of this._updatedSubjs.values()) {
       sparql += subject.getSparqlForUpdate();
     }
     return sparql;
   }
 
   public commit() {
-    for (let [id, subject] of this._subjectMap.entries()) {
-      subject.isDeleted() ? this._subjectMap.delete(id) : subject.commit();
+    for (let subject of this._updatedSubjs.values()) {
+      subject.isDeleted
+        ? this._subjectMap.delete(subject.id)
+        : subject.commit();
     }
+    this._updatedSubjs.clear();
   }
 
   public undo() {
-    for (let [id, subject] of this._subjectMap.entries()) {
-      subject.isInserted() ? this._subjectMap.delete(id) : subject.undo();
+    for (let subject of this._updatedSubjs.values()) {
+      subject.isInserted ? this._subjectMap.delete(subject.id) : subject.undo();
     }
+    this._updatedSubjs.clear();
   }
 }
 

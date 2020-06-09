@@ -1,4 +1,4 @@
-import { Node } from '../src/interface';
+import { myNode as Node } from '../src/interface';
 
 const ont = {
   rdf: {
@@ -6,6 +6,8 @@ const ont = {
   },
   dct: {
     title: 'http://purl.org/dc/terms/title',
+    modified: 'http://purl.org/dc/terms/modified',
+    description: 'http://purl.org/dc/terms/description',
   },
   xsd: {
     anyURI: 'http://www.w3.org/2001/XMLSchema#anyURI',
@@ -26,26 +28,44 @@ const ont = {
     formula: 'http://www.solidoc.net/ontologies#formula',
     hintState: 'http://www.solidoc.net/ontologies#hintState',
     bold: 'http://www.solidoc.net/ontologies#bold',
+    link: 'http://www.solidoc.net/ontologies#link',
     // subjects
-    root: 'http://www.solidoc.net/ontologies#Root',
-    leaf: 'http://www.solidoc.net/ontologies#Leaf',
-    heading1: 'http://www.solidoc.net/ontologies#Heading1',
-    heading2: 'http://www.solidoc.net/ontologies#Heading2',
-    heading3: 'http://www.solidoc.net/ontologies#Heading3',
-    paragraph: 'http://www.solidoc.net/ontologies#Paragraph',
-    numberedList: 'http://www.solidoc.net/ontologies#NumberedList',
-    bulletedList: 'http://www.solidoc.net/ontologies#BulletedList',
-    taskList: 'http://www.solidoc.net/ontologies#TaskList',
-    mathEquation: 'http://www.solidoc.net/ontologies#MathEquation',
-    pre: 'http://www.solidoc.net/ontologies#Pre',
-    hint: 'http://www.solidoc.net/ontologies#Hint',
-    divider: 'http://www.solidoc.net/ontologies#Divider',
+    Root: 'http://www.solidoc.net/ontologies#Root',
+    Leaf: 'http://www.solidoc.net/ontologies#Leaf',
+    Heading1: 'http://www.solidoc.net/ontologies#Heading1',
+    Heading2: 'http://www.solidoc.net/ontologies#Heading2',
+    Heading3: 'http://www.solidoc.net/ontologies#Heading3',
+    NumberedList: 'http://www.solidoc.net/ontologies#NumberedList',
+    NumberedSubList: 'http://www.solidoc.net/ontologies#NumberedSubList',
+    NumberedRow: 'http://www.solidoc.net/ontologies#NumberedRow',
+    BulletedList: 'http://www.solidoc.net/ontologies#BulletedList',
+    BulletedSubList: 'http://www.solidoc.net/ontologies#BulletedSubList',
+    BulletedRow: 'http://www.solidoc.net/ontologies#BulletedRow',
+    TaskList: 'http://www.solidoc.net/ontologies#TaskList',
+    TaskSubList: 'http://www.solidoc.net/ontologies#TaskSubList',
+    TaskRow: 'http://www.solidoc.net/ontologies#TaskRow',
+    Quote: 'http://www.solidoc.net/ontologies#Quote',
+    Pre: 'http://www.solidoc.net/ontologies#Pre',
+    PreRow: 'http://www.solidoc.net/ontologies#PreRow',
+    Paragraph: 'http://www.solidoc.net/ontologies#Paragraph',
+    Divider: 'http://www.solidoc.net/ontologies#Divider',
+    Hint: 'http://www.solidoc.net/ontologies#Hint',
+    Image: 'http://www.solidoc.net/ontologies#Image',
+    Video: 'http://www.solidoc.net/ontologies#Video',
+    File: 'http://www.solidoc.net/ontologies#File',
+    MathEquation: 'http://www.solidoc.net/ontologies#MathEquation',
+    Page: 'http://www.solidoc.net/ontologies#Page',
+    Table: 'http://www.solidoc.net/ontologies#Table',
+    TableRow: 'http://www.solidoc.net/ontologies#TableRow',
+    TableCell: 'http://www.solidoc.net/ontologies#Cell',
   },
 };
 
-const subjTypeToPredArray = [
+const sdocAllPreds = [
   ont.rdf.type,
   ont.dct.title,
+  ont.dct.modified,
+  ont.dct.description,
   ont.sdoc.firstChild,
   ont.sdoc.next,
   ont.sdoc.text,
@@ -54,69 +74,27 @@ const subjTypeToPredArray = [
   ont.sdoc.formula,
   ont.sdoc.hintState,
   ont.sdoc.bold,
+  ont.sdoc.link,
 ];
 
-const labelToId = {
-  // predicates
-  type: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
-  title: 'http://purl.org/dc/terms/title',
-  firstChild: 'http://www.solidoc.net/ontologies#firstChild',
-  next: 'http://www.solidoc.net/ontologies#nextNode',
-  text: 'http://www.solidoc.net/ontologies#text',
-  checked: 'http://www.solidoc.net/ontologies#checked',
-  language: 'http://www.solidoc.net/ontologies#language',
-  formula: 'http://www.solidoc.net/ontologies#formula',
-  hintState: 'http://www.solidoc.net/ontologies#hintState',
-  bold: 'http://www.solidoc.net/ontologies#bold',
-
-  // subjects
-  Root: 'http://www.solidoc.net/ontologies#Root',
-  Leaf: 'http://www.solidoc.net/ontologies#Leaf',
-  Heading1: 'http://www.solidoc.net/ontologies#Heading1',
-  Heading2: 'http://www.solidoc.net/ontologies#Heading2',
-  Heading3: 'http://www.solidoc.net/ontologies#Heading3',
-  Paragraph: 'http://www.solidoc.net/ontologies#Paragraph',
-  NumberedList: 'http://www.solidoc.net/ontologies#NumberedList',
-  BulletedList: 'http://www.solidoc.net/ontologies#BulletedList',
-  TaskList: 'http://www.solidoc.net/ontologies#TaskList',
-  MathEquation: 'http://www.solidoc.net/ontologies#MathEquation',
-  Pre: 'http://www.solidoc.net/ontologies#Pre',
-  Hint: 'http://www.solidoc.net/ontologies#Hint',
-  Divider: 'http://www.solidoc.net/ontologies#Divider',
+const labelToId = (label: string): string => {
+  if (ont.sdoc[label]) return ont.sdoc[label];
+  if (ont.rdf[label]) return ont.rdf[label];
+  if (ont.xsd[label]) return ont.xsd[label];
+  if (ont.dct[label]) return ont.dct[label];
+  throw new Error('Cannot find id for: ' + label);
 };
 
-const idToLabel = {
-  // predicates
-  'http://www.w3.org/1999/02/22-rdf-syntax-ns#type': 'type',
-  'http://purl.org/dc/terms/title': 'title',
-  'http://www.solidoc.net/ontologies#firstChild': 'firstChild',
-  'http://www.solidoc.net/ontologies#nextNode': 'next',
-  'http://www.solidoc.net/ontologies#text': 'text',
-  'http://www.solidoc.net/ontologies#checked': 'checked',
-  'http://www.solidoc.net/ontologies#language': 'language',
-  'http://www.solidoc.net/ontologies#formula': 'formula',
-  'http://www.solidoc.net/ontologies#hintState': 'hintState',
-  'http://www.solidoc.net/ontologies#bold': 'bold',
-
-  // subjects
-  'http://www.solidoc.net/ontologies#Root': 'Root',
-  'http://www.solidoc.net/ontologies#Leaf': 'Leaf',
-  'http://www.solidoc.net/ontologies#Heading1': 'Heading1',
-  'http://www.solidoc.net/ontologies#Heading2': 'Heading2',
-  'http://www.solidoc.net/ontologies#Heading3': 'Heading3',
-  'http://www.solidoc.net/ontologies#Paragraph': 'Paragraph',
-  'http://www.solidoc.net/ontologies#NumberedList': 'NumberedList',
-  'http://www.solidoc.net/ontologies#BulletedList': 'BulletedList',
-  'http://www.solidoc.net/ontologies#TaskList': 'TaskList',
-  'http://www.solidoc.net/ontologies#MathEquation': 'MathEquation',
-  'http://www.solidoc.net/ontologies#Pre': 'Pre',
-  'http://www.solidoc.net/ontologies#Hint': 'Hint',
-  'http://www.solidoc.net/ontologies#Divider': 'Divider',
+const idToLabel = (id: string): string => {
+  let begin = id.lastIndexOf('#') + 1 || id.lastIndexOf('/') + 1;
+  return id.substr(begin);
 };
 
 const predIdToRange = {
   'http://www.w3.org/1999/02/22-rdf-syntax-ns#type': ont.xsd.anyURI,
   'http://purl.org/dc/terms/title': ont.xsd.string,
+  'http://purl.org/dc/terms/modified': ont.xsd.dateTime,
+  'http://purl.org/dc/terms/description': ont.xsd.string,
   'http://www.solidoc.net/ontologies#firstChild': ont.xsd.anyURI,
   'http://www.solidoc.net/ontologies#nextNode': ont.xsd.anyURI,
   'http://www.solidoc.net/ontologies#text': ont.xsd.string,
@@ -125,74 +103,70 @@ const predIdToRange = {
   'http://www.solidoc.net/ontologies#formula': ont.xsd.string,
   'http://www.solidoc.net/ontologies#hintState': ont.xsd.string,
   'http://www.solidoc.net/ontologies#bold': ont.xsd.boolean,
+  'http://www.solidoc.net/ontologies#link': ont.xsd.anyURI,
 };
 
 // TODO: use pred.default
 const defaultJson = (id: string, type: string): Node => {
-  switch (labelToId[type]) {
-    case ont.sdoc.root:
+  switch (labelToId(type)) {
+    case ont.sdoc.Root:
       return {
         id: id,
         type: type,
         title: '',
+        description: '',
+        modified: 0,
         children: [],
       };
-    case ont.sdoc.leaf:
+    case ont.sdoc.Leaf:
       return {
         id: id,
         type: type,
         text: '',
       };
-    case ont.sdoc.heading1:
-    case ont.sdoc.heading2:
-    case ont.sdoc.heading3:
-    case ont.sdoc.divider:
-    case ont.sdoc.paragraph:
-    case ont.sdoc.numberedList:
-    case ont.sdoc.bulletedList:
-      return {
-        id: id,
-        type: type,
-        children: [],
-      };
-    case ont.sdoc.taskList:
+    case ont.sdoc.TaskList:
       return {
         id: id,
         type: type,
         checked: false,
         children: [],
       };
-    case ont.sdoc.mathEquation:
+    case ont.sdoc.MathEquation:
       return {
         id: id,
         type: type,
         formula: '',
         children: [],
       };
-    case ont.sdoc.pre:
+    case ont.sdoc.Pre:
       return {
         id: id,
         type: type,
         language: '',
         children: [],
       };
-    case ont.sdoc.hint:
+    case ont.sdoc.Hint:
       return {
         id: id,
         type: type,
         hitState: '',
         children: [],
       };
+    case ont.sdoc.Page:
+      return {
+        id: id,
+        type: type,
+        title: '',
+        link: undefined,
+        children: [],
+      };
     default:
-      throw new Error('Unknown type: ' + type);
+      return {
+        id: id,
+        type: type,
+        children: [],
+      };
   }
 };
 
-export {
-  ont,
-  idToLabel,
-  predIdToRange,
-  subjTypeToPredArray,
-  labelToId,
-  defaultJson,
-};
+export { ont, idToLabel, predIdToRange, sdocAllPreds, labelToId, defaultJson };

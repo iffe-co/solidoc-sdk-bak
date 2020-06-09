@@ -1,6 +1,6 @@
 import { ont } from '../config/ontology';
 
-export type Literal = string | boolean | undefined;
+export type Literal = string | boolean | number | undefined;
 
 export interface Object {
   value: Literal;
@@ -26,7 +26,12 @@ export const Object = {
       result.value = input.id.substring(1, input.id.lastIndexOf('"'));
     } else if (input.id.endsWith('boolean')) {
       result.type = ont.xsd.boolean;
-      result.value = input.id.startsWith('"true"');
+      result.value =
+        input.id.startsWith('"true"') || input.id.startsWith('"1"');
+    } else if (input.id.endsWith('dateTime')) {
+      result.type = ont.xsd.dateTime;
+      let dtStr: string = input.id.substring(1, input.id.lastIndexOf('"'));
+      result.value = Date.parse(dtStr);
     } else {
       throw new Error('Unknown data type');
     }
@@ -51,27 +56,64 @@ export const Object = {
       case 'undefined':
         result.type = ont.xsd.anyURI;
         break;
+      case 'number':
+        result.type =
+          predRange === ont.xsd.dateTime ? predRange : ont.xsd.integer;
       // TODO: more types
     }
 
     return result;
   },
 
-  // TODO: extract from Predicate
   escape(obj: Object): string {
     switch (obj.type) {
       case ont.xsd.anyURI:
+        if (obj.value === undefined) {
+          throw new Error('NamedNode Object with undefined value');
+        }
         return `<${obj.value}>`;
       case ont.xsd.boolean:
-        return `"${obj.value}"^^${ont.xsd.boolean}`;
+        return `"${obj.value ? 1 : 0}"^^<${ont.xsd.boolean}>`;
+      case ont.xsd.dateTime:
+        return `"${new Date(<number>obj.value).toISOString()}"^^<${
+          ont.xsd.dateTime
+        }>`;
       default:
         // xsd:string
+        // eslint-disable-next-line no-case-declarations
         const backSlashEscaped: string = (<string>obj.value).replace(
           /\\/g,
           '\\\\',
         );
+        // eslint-disable-next-line no-case-declarations
         const quoteEscaped: string = backSlashEscaped.replace(/"/g, '\\"');
         return `"${quoteEscaped}"`;
+    }
+  },
+
+  nil(predRange: string): Object {
+    switch (predRange) {
+      case ont.xsd.string:
+        return {
+          value: '',
+          type: predRange,
+        };
+      case ont.xsd.boolean:
+        return {
+          value: false,
+          type: predRange,
+        };
+      case ont.xsd.dateTime:
+        return {
+          value: 0,
+          type: predRange,
+        };
+      default:
+        // NamedNode
+        return {
+          value: undefined,
+          type: predRange,
+        };
     }
   },
 };

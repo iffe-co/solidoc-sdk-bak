@@ -1,6 +1,6 @@
 import { Predicate as Pred } from './Predicate';
 import { Object as Obj, Literal } from './Object';
-import { Node } from './interface';
+import { myNode as Node } from './interface';
 import * as _ from 'lodash';
 import { ont, defaultJson, idToLabel, labelToId } from '../config/ontology';
 
@@ -9,7 +9,7 @@ class Subject {
   private _type: string;
   private _graph: string;
   private _isDeleted: boolean = false;
-  private _isInserted: boolean = false;
+  private _isInserted: boolean = true;
 
   private _valuesUpdated = new Map<Pred, Obj>();
   private _valuesFromPod = new Map<Pred, Obj>();
@@ -37,7 +37,7 @@ class Subject {
 
   private _setType(typeObj: Obj) {
     const typeId = <string>Obj.getValue(typeObj);
-    this._type = idToLabel[typeId];
+    this._type = idToLabel(typeId);
   }
 
   public getProperty(pred: Pred): Literal {
@@ -52,7 +52,7 @@ class Subject {
     pred.id === ont.rdf.type && this._setType(obj);
   }
 
-  public toJson() {
+  public toJson(): Node {
     const result = defaultJson(this.id, this.type);
 
     for (let pred of this._valuesFromPod.keys()) {
@@ -73,46 +73,40 @@ class Subject {
     let pred: Pred | undefined;
     let value: Literal;
 
+    this._valuesUpdated.clear();
+
     Object.keys(node).forEach(label => {
       switch (label) {
         case 'id':
-          break;
         case 'children':
-          pred = predMap.get(ont.sdoc.firstChild);
-          value = node.children[0] ? node.children[0].id : undefined;
-          pred && this.setProperty(pred, value);
           break;
         case 'type':
           pred = predMap.get(ont.rdf.type);
-          value = labelToId[node[label]];
+          value = labelToId(node[label]);
           pred && this.setProperty(pred, value);
           break;
         default:
-          pred = predMap.get(labelToId[label]);
-          value = node[label];
+          pred = predMap.get(labelToId(label));
+          value = <Literal>node[label];
+          // skip undefined predicates
           pred && this.setProperty(pred, value);
       }
     });
   }
 
   public getSparqlForUpdate = (): string => {
-    if (this._isDeleted) {
-      // TODO: for non-persisted subjects, this clause should be empty
-      return `DELETE WHERE { GRAPH <${this._graph}> { <${this._id}> ?p ?o } };\n`;
-    } else {
-      let allPred = new Set<Pred>([
-        ...this._valuesFromPod.keys(),
-        ...this._valuesUpdated.keys(),
-      ]);
+    let allPred = new Set<Pred>([
+      ...this._valuesFromPod.keys(),
+      ...this._valuesUpdated.keys(),
+    ]);
 
-      let sparql = '';
-      for (let pred of allPred) {
-        const initial = this._valuesFromPod.get(pred);
-        const updated = this._valuesUpdated.get(pred);
-        sparql += pred.getSparql(this._id, updated, initial);
-      }
-      return sparql;
+    let sparql = '';
+    for (let pred of allPred) {
+      const initial = this._valuesFromPod.get(pred);
+      const updated = this._valuesUpdated.get(pred);
+      sparql += pred.getSparql(this._id, updated, initial);
     }
+    return sparql;
   };
 
   public commit = () => {
@@ -136,24 +130,24 @@ class Subject {
     this._isDeleted = false;
   }
 
-  public delete() {
-    if (this._id === this._graph) {
+  public set isDeleted(val: boolean) {
+    if (this._id === this._graph && val === true) {
       throw new Error('The root is not removable :' + this._id);
     }
-    this._isDeleted = true;
+    this._isDeleted = val;
   }
 
-  public isDeleted = (): boolean => {
+  public get isDeleted(): boolean {
     return this._isDeleted;
-  };
+  }
 
-  public isInserted = (): boolean => {
+  public get isInserted(): boolean {
     return this._isInserted;
-  };
+  }
 
-  public insert = () => {
-    this._isInserted = true;
-  };
+  public set isInserted(val: boolean) {
+    this._isInserted = val;
+  }
 }
 
 export { Subject };

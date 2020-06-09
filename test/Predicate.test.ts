@@ -1,7 +1,8 @@
+/* eslint-disable no-undef */
 import { Predicate } from '../src/Predicate';
 import { Object } from '../src/Object';
 import { ont } from '../config/ontology';
-import { config } from '../config/test';
+import { config } from './test.config';
 import * as assert from 'power-assert';
 
 const node = config.text[8];
@@ -16,12 +17,12 @@ describe('Type: a NamedNode Predicate', () => {
   };
 
   const updated: Object = {
-    value: ont.sdoc.paragraph,
+    value: ont.sdoc.Paragraph,
     type: ont.xsd.anyURI,
   };
 
   const deleteClause = `DELETE WHERE { GRAPH <${page.id}> { <${node.id}> <${ont.rdf.type}> ?o } };\n`;
-  const insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.rdf.type}> <${ont.sdoc.paragraph}>} };\n`;
+  const insertClause = `INSERT DATA { GRAPH <${page.id}> { <${node.id}> <${ont.rdf.type}> <${ont.sdoc.Paragraph}>} };\n`;
 
   beforeEach(() => {
     type = new Predicate(ont.rdf.type, page.id);

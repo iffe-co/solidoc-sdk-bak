@@ -1,4 +1,5 @@
-import { config as cfg, turtle, config } from '../config/test';
+/* eslint-disable no-undef */
+import { config as cfg, turtle, config } from './test.config';
 import { ont } from '../config/ontology';
 import * as assert from 'power-assert';
 
@@ -67,7 +68,7 @@ describe('Graph', () => {
 
     it('parses from an empty string', () => {
       graph = new Graph(cfg.page.id, '');
-      assert.deepStrictEqual(graph.getRoot().id, config.page.id);
+      assert.deepStrictEqual(graph.id, config.page.id);
     });
   });
 
@@ -82,8 +83,7 @@ describe('Graph', () => {
 
   describe('Commits and Undoes', () => {
     it('commits to remove deleted subject from memory', () => {
-      let branch0 = graph.getSubject(cfg.para[0].id);
-      branch0.delete();
+      graph.deleteSubject(cfg.para[0].id);
       graph.commit();
 
       assert.throws(() => {
@@ -94,7 +94,7 @@ describe('Graph', () => {
     it('undoes to remove new subject from memory', () => {
       let tempId = cfg.page.id + '#temp';
       let subject = graph.createSubject(tempId);
-      subject.insert();
+      subject.isInserted = true;
       graph.undo();
 
       assert.throws(() => {

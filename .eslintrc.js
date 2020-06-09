@@ -11,6 +11,7 @@ module.exports = {
     'no-console': 0,
     'no-cond-assign': 0,
     'no-unused-vars': 0,
+    'no-case-declarations': 0,
     'no-extra-semi': 'warn',
     semi: 'warn',
   },

@@ -1,139 +1,175 @@
 import { Graph } from './Graph';
-import { ont, labelToId, subjTypeToPredArray } from '../config/ontology';
-import { Element, Node, Operation, transform, Path, Text } from './interface';
-import * as _ from 'lodash';
-import { Subject } from './Subject';
+import { ont, sdocAllPreds } from '../config/ontology';
+import {
+  myEditor as Editor,
+  myNode as Node,
+  myPath as Path,
+  Operation,
+  transform,
+} from './interface';
+import { Text } from 'slate';
 
 class Page extends Graph {
-  private _editor: Element;
+  private _editor: Editor;
+  private _dirtyPaths: Set<string> = new Set();
 
   constructor(id: string, turtle: string) {
     super(id, turtle);
-    subjTypeToPredArray.forEach(this.createPredicate);
-    this._editor = <Element>this._toJsonRecursive(this.getRoot());
+
+    sdocAllPreds.forEach(this.createPredicate);
+    this.setValue(id, ont.rdf.type, ont.sdoc.Root);
+
+    this._editor = <Editor>this._toJsonRecursive(id);
   }
 
-  public toJson = (): Element => {
+  public toJson = (): Editor => {
     return this._editor;
   };
 
-  public apply = (op: Operation) => {
-    const opCloned = _.cloneDeep(op);
-    const { subjToInsert, subjToRemove } = this._preprocess(opCloned);
+  private _toJsonRecursive(subjectId: string): Node {
+    const subject = this.getSubject(subjectId);
 
-    transform(this._editor, opCloned);
+    const result: Node = subject.toJson();
 
-    for (let node of subjToInsert.values()) {
-      let subject = this.createSubject(node.id);
-      subject.insert(); // TODO
-    }
+    if (Text.isText(result)) return result;
 
-    for (let nodeId of subjToRemove.values()) {
-      let subject = this.getSubject(nodeId);
-      subject.delete();
-    }
-  };
+    let childId = this.getValue(subjectId, ont.sdoc.firstChild);
 
-  private _preprocess(op: Operation) {
-    const subjToInsert = new Set<Node>();
-    const subjToRemove = new Set<string>();
+    while (childId && typeof childId === 'string') {
+      const child = this._toJsonRecursive(childId);
 
-    // TODO: should operation on a deleted subject allowed?
-    switch (op.type) {
-      case 'insert_node':
-        this._preInsertRecursive(op.node, subjToInsert);
-        break;
+      result.children.push(child);
 
-      case 'split_node':
-        this._preInsertRecursive(
-          {
-            id: <string>op.properties.id,
-            type: Node.get(this._editor, op.path).type,
-            children: [], // TODO: this is a workaround
-          },
-          subjToInsert,
-        );
-        break;
-      case 'remove_node':
-        this._preRemoveRecursive(op.path, subjToRemove);
-        break;
-      case 'merge_node':
-        subjToRemove.add(Node.get(this._editor, op.path).id);
-        break;
-    }
-    return { subjToInsert, subjToRemove };
-  }
-
-  private _preInsertRecursive = (node: Node, subjToInsert: Set<Node>) => {
-    if (this._subjectMap.has(node.id)) {
-      throw new Error('Duplicated node insertion: ' + node.id);
-    }
-    subjToInsert.add(node);
-
-    if (Text.isText(node)) return;
-
-    (<Element>node).children.forEach(child => {
-      this._preInsertRecursive(child, subjToInsert);
-    });
-  };
-
-  private _preRemoveRecursive = (path: Path, subjToRemove: Set<string>) => {
-    const node = Node.get(this._editor, path);
-    subjToRemove.add(node.id);
-
-    if (Text.isText(node)) return;
-
-    (<Element>node).children.forEach((_child, index) => {
-      this._preRemoveRecursive([...path, index], subjToRemove);
-    });
-  };
-
-  public update() {
-    this._updateRecursive(this._editor);
-  }
-
-  private _updateRecursive(node: Node, nextNode?: Node) {
-    this.getSubject(node.id).fromJson(node, this._predicateMap);
-
-    if (nextNode) {
-      this.setValue(node.id, ont.sdoc.next, nextNode.id);
-    }
-
-    if (!node.children) return;
-
-    node.children.forEach((childNode: Node, index: number) => {
-      this._updateRecursive(childNode, node.children[index + 1]);
-    });
-  }
-
-  public undo() {
-    super.undo();
-    this._editor = <Element>this._toJsonRecursive(this.getRoot());
-  }
-
-  private _toJsonRecursive(subject: Subject): Node {
-    let result = subject.toJson();
-    if (!result.children) return result;
-
-    let child = this._getRelative(subject, 'firstChild');
-
-    while (child) {
-      result.children.push(this._toJsonRecursive(child));
-      child = this._getRelative(child, 'next');
+      childId = this.getValue(childId, ont.sdoc.next);
     }
 
     return result;
   }
 
-  private _getRelative(
-    subject: Subject,
-    label: 'firstChild' | 'next',
-  ): Subject | undefined {
-    const relId = this.getValue(subject.id, labelToId[label]);
-    if (relId === undefined) {
-      return undefined;
+  public apply = (op: Operation) => {
+    try {
+      this._preprocess(op);
+
+      transform(this._editor, op);
+
+      this._update();
+    } catch (e) {
+      this.undo();
+
+      throw e;
     }
-    return this._subjectMap.get(<string>relId);
+  };
+
+  private _preprocess(op: Operation) {
+    switch (op.type) {
+      case 'insert_text':
+      case 'remove_text':
+      case 'set_node': {
+        this._addDirtyPath(op.path);
+        break;
+      }
+
+      case 'insert_node': {
+        for (let [n, p] of Node.nodes(op.node)) {
+          this._insertNode(<Node>n, [...op.path, ...p]);
+        }
+        break;
+      }
+
+      case 'remove_node': {
+        const node = Node.get(this._editor, op.path);
+        for (let [n, p] of Node.nodes(node)) {
+          this._removeNode(<string>n.id, [...op.path, ...p]);
+        }
+        break;
+      }
+
+      case 'move_node': {
+        this._addDirtyPath(Path.transform(op.path, op));
+        this._addDirtyPath(Path.transform(Path.anchor(op.path), op));
+        this._addDirtyPath(Path.transform(Path.anchor(op.newPath), op));
+
+        break;
+      }
+
+      case 'merge_node': {
+        const { node, prev } = Node.getContext(this._editor, op.path);
+        this._removeNode(node.id, op.path);
+
+        Text.isText(prev) ||
+          this._addDirtyPath(Path.lastChild(prev, Path.previous(op.path)));
+        break;
+      }
+
+      case 'split_node': {
+        const { node } = Node.getContext(this._editor, op.path);
+        this._insertNode(
+          { id: <string>op.properties.id, type: node.type, text: '' }, // TODO: workaround
+          Path.next(op.path),
+        );
+
+        Text.isText(node) ||
+          this._addDirtyPath(Path.anchor([...op.path, op.position]));
+        break;
+      }
+    }
+  }
+
+  private _insertNode(node: Node, path: Path) {
+    if (!node.id || !node.type) {
+      throw new Error('Invalid node to insert: ' + JSON.stringify(node));
+    }
+    this.createSubject(node.id);
+    this._addDirtyPath(path);
+    this._addDirtyPath(Path.anchor(path));
+  }
+
+  private _removeNode(nodeId: string, path: Path) {
+    this.deleteSubject(nodeId);
+    this._addDirtyPath(Path.anchor(path));
+  }
+
+  private _addDirtyPath(path: Path | null) {
+    if (!path) return;
+    this._dirtyPaths.add(path.join(','));
+  }
+
+  private _update() {
+    this._updateModifiedTime();
+
+    for (let path of this._dirtyPaths.values()) {
+      path.length === 0
+        ? this._updateNode([])
+        : this._updateNode(path.split(',').map(v => parseInt(v, 10)));
+    }
+
+    this._dirtyPaths.clear();
+  }
+
+  private _updateModifiedTime() {
+    const timestamp = Date.parse(new Date().toISOString());
+
+    this.setValue(this._id, ont.dct.modified, timestamp);
+    this._editor.modified = timestamp;
+
+    this._addDirtyPath([]);
+  }
+
+  private _updateNode(path: Path) {
+    const { node, next, firstChild } = Node.getContext(this._editor, path);
+
+    const subject = this.getSubject(node.id);
+    this._updatedSubjs.add(subject); // TODO: better done in _addDirtyPath()?
+
+    subject.fromJson(node, this._predicateMap);
+    next && this.setValue(node.id, ont.sdoc.next, next.id);
+    firstChild && this.setValue(node.id, ont.sdoc.firstChild, firstChild.id);
+  }
+
+  public undo() {
+    super.undo();
+    this._editor = <Editor>this._toJsonRecursive(this._id);
+    this._dirtyPaths.clear();
   }
 }
 
